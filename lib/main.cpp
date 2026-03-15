@@ -1,23 +1,31 @@
 #include "window.hpp"
+#include "camera.hpp"
 #include "raylib.h"
+#include "raymath.h"
 
 int main() {
     game_window window(1600, 800, "Alcubierre");
 
-    // 3D Camera setup
-    Camera3D camera = { 0 };
-    camera.position = { 5.0f, 5.0f, 5.0f };
-    camera.target = { 0.0f, 0.0f, 0.0f };
-    camera.up = { 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    // Create 3D camera
+    camera_3d camera(
+        { 5.0f, 5.0f, 5.0f },  // position
+        { 0.0f, 0.0f, 0.0f },  // target
+        { 0.0f, 1.0f, 0.0f },  // up
+        45.0f                  // fovy
+    );
+    camera.set_mode_free();
 
     while (!window.should_close()) {
+        const float dt = GetFrameTime();
+        
         window.begin_drawing();
         window.clear_background(25, 25, 25);
 
+        // Update camera input
+        camera.update(dt);
+
         // Begin 3D mode
-        window.begin_mode_3d(camera);
+        window.begin_mode_3d(camera.get_camera());
 
         // Draw grid on the ground plane
         window.draw_grid(1.0f, 20);

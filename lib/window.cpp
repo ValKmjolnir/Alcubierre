@@ -3,8 +3,10 @@
 
 game_window::game_window(int width, int height, const char* title):
     width_(width), height_(height) {
+    SetConfigFlags(FLAG_MSAA_4X_HINT);  // enable 4x MSAA
     InitWindow(width_, height_, title);
     SetTargetFPS(120);
+    DisableCursor();  // hide cursor and lock to window
 }
 
 game_window::~game_window() {
