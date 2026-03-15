@@ -1,5 +1,7 @@
-#ifndef GAME_WINDOW_H
-#define GAME_WINDOW_H
+#pragma once
+
+#include "raylib.h"
+#include "raymath.h"
 
 class game_window {
 public:
@@ -10,10 +12,14 @@ public:
     void begin_drawing();
     void end_drawing();
     void clear_background(int r, int g, int b);
+    
+    // 3D camera methods
+    void begin_mode_3d(const Camera3D& camera);
+    void end_mode_3d();
+    void draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b);
+    void draw_grid(float spacing, int slices);
 
 private:
     int width_;
     int height_;
 };
-
-#endif // GAME_WINDOW_H
