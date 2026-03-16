@@ -37,20 +37,21 @@ public:
     void set_firing(bool firing);
     bool is_firing() const;
 
-    // Animation
-    void set_jitter_enabled(bool enabled);
-    bool is_jitter_enabled() const;
-    void set_jitter_amount(float amount);
-    float jitter_amount() const;
-
+    // Pulse animation
     void set_pulse_enabled(bool enabled);
     bool is_pulse_enabled() const;
     void set_pulse_speed(float speed);
     float pulse_speed() const;
 
+    // Shader
+    void load_shader(const char* vs_path, const char* fs_path);
+    void unload_shader();
+    bool is_shader_loaded() const;
+
     // Update and draw
     void update(float dt);
     void draw() const;
+    void draw_with_shader(const Camera3D& camera) const;
 
 private:
     Vector3 start_;
@@ -63,15 +64,21 @@ private:
     float intensity_;
     bool active_;
     bool firing_;
-    bool jitter_enabled_;
-    float jitter_amount_;
-    Vector3 jitter_offset_;
-    float jitter_time_;
     bool pulse_enabled_;
     float pulse_speed_;
     float pulse_phase_;
+    
+    // Shader members
+    Shader shader_;
+    bool shader_loaded_;
+    int loc_mvp;
+    int loc_color;
+    int loc_intensity;
+    int loc_glow_radius;
+    int loc_line_start;
+    int loc_line_end;
 
-    Vector3 calculate_jitter(float dt) const;
     int calculate_pulse_alpha() const;
-    void draw_beam_layer(const Vector3& start, const Vector3& end, float layer_width, int alpha) const;
+    void draw_beam_legacy() const;
+    void draw_with_shader_internal() const;
 };

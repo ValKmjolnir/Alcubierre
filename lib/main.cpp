@@ -18,25 +18,24 @@ int main() {
 
     // Create laser beam
     laser_beam beam(
-        { 0.0f, 2.0f, 0.0f },   // start position (weapon)
-        { 15.0f, 1.0f, 0.0f },  // end position (target)
+        { 0.0f, 1.5f, 0.0f },   // start position (weapon)
+        { 16.0f, 1.0f, 0.0f },  // end position (target)
         255, 50, 50, 255        // color (red with alpha)
     );
-    beam.set_width(0.015f);
-    beam.set_intensity(1.2f);
-    beam.set_jitter_enabled(true);
-    beam.set_jitter_amount(0.08f);
+    beam.set_width(0.05f);
     beam.set_pulse_enabled(true);
-    beam.set_pulse_speed(15.0f);
+    beam.set_pulse_speed(1.5f);
     beam.set_firing(true);
 
     // Second laser beam (blue)
     laser_beam beam2(
-        { -5.0f, 2.0f, 3.0f },
-        { 10.0f, 0.5f, -5.0f },
+        { 0.5f, 1.0f, 0.5f },
+        { 16.0f, 0.5f, 0.0f },
         50, 100, 255, 255
     );
-    beam2.set_width(0.02f);
+    beam2.set_width(0.1f);
+    beam2.set_pulse_enabled(true);
+    beam2.set_pulse_speed(1.5f);
     beam2.set_firing(true);
 
     while (!window.should_close()) {

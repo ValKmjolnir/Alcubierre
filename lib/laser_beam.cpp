@@ -10,17 +10,21 @@ laser_beam::laser_beam()
     , color_g_(0)
     , color_b_(0)
     , color_alpha_(255)
-    , width_(0.01f)
+    , width_(0.05f)
     , intensity_(1.0f)
     , active_(true)
     , firing_(false)
-    , jitter_enabled_(true)
-    , jitter_amount_(0.05f)
-    , jitter_offset_{ 0.0f, 0.0f, 0.0f }
-    , jitter_time_(0.0f)
     , pulse_enabled_(false)
     , pulse_speed_(10.0f)
     , pulse_phase_(0.0f)
+    , shader_{ 0 }
+    , shader_loaded_(false)
+    , loc_mvp(-1)
+    , loc_color(-1)
+    , loc_intensity(-1)
+    , loc_glow_radius(-1)
+    , loc_line_start(-1)
+    , loc_line_end(-1)
 {
 }
 
@@ -31,21 +35,27 @@ laser_beam::laser_beam(const Vector3& start, const Vector3& end, int r, int g, i
     , color_g_(g)
     , color_b_(b)
     , color_alpha_(alpha)
-    , width_(0.01f)
+    , width_(0.05f)
     , intensity_(1.0f)
     , active_(true)
     , firing_(false)
-    , jitter_enabled_(true)
-    , jitter_amount_(0.05f)
-    , jitter_offset_{ 0.0f, 0.0f, 0.0f }
-    , jitter_time_(0.0f)
     , pulse_enabled_(false)
     , pulse_speed_(10.0f)
     , pulse_phase_(0.0f)
+    , shader_{ 0 }
+    , shader_loaded_(false)
+    , loc_mvp(-1)
+    , loc_color(-1)
+    , loc_intensity(-1)
+    , loc_glow_radius(-1)
+    , loc_line_start(-1)
+    , loc_line_end(-1)
 {
 }
 
-laser_beam::~laser_beam() = default;
+laser_beam::~laser_beam() {
+    unload_shader();
+}
 
 Vector3 laser_beam::start() const {
     return start_;
@@ -123,22 +133,6 @@ void laser_beam::set_firing(bool firing) {
     firing_ = firing;
 }
 
-bool laser_beam::is_jitter_enabled() const {
-    return jitter_enabled_;
-}
-
-void laser_beam::set_jitter_enabled(bool enabled) {
-    jitter_enabled_ = enabled;
-}
-
-float laser_beam::jitter_amount() const {
-    return jitter_amount_;
-}
-
-void laser_beam::set_jitter_amount(float amount) {
-    jitter_amount_ = amount;
-}
-
 bool laser_beam::is_pulse_enabled() const {
     return pulse_enabled_;
 }
@@ -155,16 +149,33 @@ void laser_beam::set_pulse_speed(float speed) {
     pulse_speed_ = speed;
 }
 
-Vector3 laser_beam::calculate_jitter(float dt) const {
-    if (!jitter_enabled_ || !firing_) {
-        return { 0.0f, 0.0f, 0.0f };
+void laser_beam::load_shader(const char* vs_path, const char* fs_path) {
+    if (shader_loaded_) {
+        unload_shader();
     }
+    
+    shader_ = LoadShader(vs_path, fs_path);
+    shader_loaded_ = true;
+    
+    // Get uniform locations
+    loc_mvp = GetShaderLocation(shader_, "mvp");
+    loc_color = GetShaderLocation(shader_, "color");
+    loc_intensity = GetShaderLocation(shader_, "intensity");
+    loc_glow_radius = GetShaderLocation(shader_, "glowRadius");
+    loc_line_start = GetShaderLocation(shader_, "lineStart");
+    loc_line_end = GetShaderLocation(shader_, "lineEnd");
+}
 
-    Vector3 jitter;
-    jitter.x = (GetRandomValue(-1000, 1000) / 1000.0f) * jitter_amount_;
-    jitter.y = (GetRandomValue(-1000, 1000) / 1000.0f) * jitter_amount_;
-    jitter.z = (GetRandomValue(-1000, 1000) / 1000.0f) * jitter_amount_;
-    return jitter;
+void laser_beam::unload_shader() {
+    if (shader_loaded_) {
+        UnloadShader(shader_);
+        shader_ = { 0 };
+        shader_loaded_ = false;
+    }
+}
+
+bool laser_beam::is_shader_loaded() const {
+    return shader_loaded_;
 }
 
 int laser_beam::calculate_pulse_alpha() const {
@@ -174,56 +185,90 @@ int laser_beam::calculate_pulse_alpha() const {
 
     const float pulse = sinf(pulse_phase_);
     const float pulse_factor = 0.5f + 0.5f * pulse;
-    return static_cast<int>(color_alpha_ * intensity_ * pulse_factor);
+    return static_cast<int>(color_alpha_ * pulse_factor);
 }
 
-void laser_beam::draw_beam_layer(const Vector3& start, const Vector3& end, float layer_width, int alpha) const {
-    if (alpha <= 0) return;
-
-    const Color layer_color = {
+void laser_beam::draw_beam_legacy() const {
+    const int base_alpha = pulse_enabled_ ? calculate_pulse_alpha() : color_alpha_;
+    
+    if (base_alpha <= 0) return;
+    
+    const Color beam_color = {
         static_cast<unsigned char>(color_r_),
         static_cast<unsigned char>(color_g_),
         static_cast<unsigned char>(color_b_),
-        static_cast<unsigned char>(alpha)
+        static_cast<unsigned char>(base_alpha)
     };
-
-    const float radius = layer_width * 0.5f;
-    DrawCylinderEx(start, end, radius, radius, 8, layer_color);
+    
+    const float radius = width_ * 0.5f;
+    DrawCylinderEx(start_, end_, radius, radius, 8, beam_color);
 }
 
 void laser_beam::update(float dt) {
     if (!active_) return;
 
-    jitter_time_ += dt;
     pulse_phase_ += pulse_speed_ * dt;
-
-    if (jitter_enabled_ && firing_) {
-        jitter_offset_ = calculate_jitter(dt);
-    } else {
-        jitter_offset_ = { 0.0f, 0.0f, 0.0f };
-    }
 }
 
 void laser_beam::draw() const {
     if (!active_ || !firing_) return;
 
-    Vector3 draw_start = start_;
-    Vector3 draw_end = end_;
-
-    if (firing_ && jitter_enabled_) {
-        draw_end = {
-            end_.x + jitter_offset_.x,
-            end_.y + jitter_offset_.y,
-            end_.z + jitter_offset_.z
-        };
+    // Lazy load shader on first draw
+    if (!shader_loaded_) {
+        laser_beam* mutable_this = const_cast<laser_beam*>(this);
+        mutable_this->load_shader(
+            "build_cmake/shaders/laser_beam.vs",
+            "build_cmake/shaders/laser_beam.fs"
+        );
     }
 
+    if (shader_loaded_) {
+        draw_with_shader_internal();
+    } else {
+        TraceLog(LOG_ERROR, "Failed to load shader");
+        draw_beam_legacy();
+    }
+}
+
+void laser_beam::draw_with_shader(const Camera3D& camera) const {
+    (void)camera;
+    draw_with_shader_internal();
+}
+
+void laser_beam::draw_with_shader_internal() const {
     const int base_alpha = pulse_enabled_ ? calculate_pulse_alpha() : color_alpha_;
 
-    if (base_alpha <= 0) return;
+    if (base_alpha <= 0) {
+        draw_beam_legacy();
+        return;
+    }
 
-    draw_beam_layer(draw_start, draw_end, width_ * 4.0f, static_cast<int>(base_alpha * 0.3f * intensity_));
-    draw_beam_layer(draw_start, draw_end, width_ * 2.5f, static_cast<int>(base_alpha * 0.5f * intensity_));
-    draw_beam_layer(draw_start, draw_end, width_ * 1.5f, static_cast<int>(base_alpha * 0.8f * intensity_));
-    draw_beam_layer(draw_start, draw_end, width_, base_alpha);
+    // Begin shader drawing mode
+    BeginShaderMode(shader_);
+
+    // Set shader uniforms
+    float color_vec4[4] = {
+        color_r_ / 255.0f,
+        color_g_ / 255.0f,
+        color_b_ / 255.0f,
+        base_alpha / 255.0f
+    };
+    SetShaderValue(shader_, loc_color, color_vec4, SHADER_UNIFORM_VEC4);
+
+    SetShaderValue(shader_, loc_intensity, &intensity_, SHADER_UNIFORM_FLOAT);
+
+    float glow = 12.0f;  // Wider glow
+    SetShaderValue(shader_, loc_glow_radius, &glow, SHADER_UNIFORM_FLOAT);
+
+    float start_vec3[3] = { start_.x, start_.y, start_.z };
+    SetShaderValue(shader_, loc_line_start, start_vec3, SHADER_UNIFORM_VEC3);
+
+    float end_vec3[3] = { end_.x, end_.y, end_.z };
+    SetShaderValue(shader_, loc_line_end, end_vec3, SHADER_UNIFORM_VEC3);
+
+    // Draw the laser beam as a cylinder
+    const float radius = width_ * 0.5f;
+    DrawCylinderEx(start_, end_, radius, radius, 8, WHITE);
+
+    EndShaderMode();
 }

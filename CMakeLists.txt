@@ -25,7 +25,10 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Link raylib and required system libraries
 target_link_directories(${PROJECT_NAME} PRIVATE ${RAYLIB_LIB_DIR})
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
     raylib
     winmm
 )
+
+# Copy shaders to build directory
+file(COPY ${CMAKE_SOURCE_DIR}/shaders DESTINATION ${CMAKE_BINARY_DIR})
