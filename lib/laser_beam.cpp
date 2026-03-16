@@ -188,22 +188,6 @@ int laser_beam::calculate_pulse_alpha() const {
     return static_cast<int>(color_alpha_ * pulse_factor);
 }
 
-void laser_beam::draw_beam_legacy() const {
-    const int base_alpha = pulse_enabled_ ? calculate_pulse_alpha() : color_alpha_;
-    
-    if (base_alpha <= 0) return;
-    
-    const Color beam_color = {
-        static_cast<unsigned char>(color_r_),
-        static_cast<unsigned char>(color_g_),
-        static_cast<unsigned char>(color_b_),
-        static_cast<unsigned char>(base_alpha)
-    };
-    
-    const float radius = width_ * 0.5f;
-    DrawCylinderEx(start_, end_, radius, radius, 8, beam_color);
-}
-
 void laser_beam::update(float dt) {
     if (!active_) return;
 
@@ -225,23 +209,16 @@ void laser_beam::draw() const {
     if (shader_loaded_) {
         draw_with_shader_internal();
     } else {
-        TraceLog(LOG_ERROR, "Failed to load shader");
-        draw_beam_legacy();
+        TraceLog(LOG_FATAL, "laser_beam: Failed to load shader");
     }
 }
 
-void laser_beam::draw_with_shader(const Camera3D& camera) const {
-    (void)camera;
+void laser_beam::draw_with_shader() const {
     draw_with_shader_internal();
 }
 
 void laser_beam::draw_with_shader_internal() const {
     const int base_alpha = pulse_enabled_ ? calculate_pulse_alpha() : color_alpha_;
-
-    if (base_alpha <= 0) {
-        draw_beam_legacy();
-        return;
-    }
 
     // Begin shader drawing mode
     BeginShaderMode(shader_);

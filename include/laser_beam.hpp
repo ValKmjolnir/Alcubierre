@@ -51,7 +51,7 @@ public:
     // Update and draw
     void update(float dt);
     void draw() const;
-    void draw_with_shader(const Camera3D& camera) const;
+    void draw_with_shader() const;
 
 private:
     Vector3 start_;
@@ -79,6 +79,5 @@ private:
     int loc_line_end;
 
     int calculate_pulse_alpha() const;
-    void draw_beam_legacy() const;
     void draw_with_shader_internal() const;
 };

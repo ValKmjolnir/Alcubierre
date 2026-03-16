@@ -33,9 +33,9 @@ int main() {
         { 16.0f, 0.5f, 0.0f },
         50, 100, 255, 255
     );
-    beam2.set_width(0.1f);
-    beam2.set_pulse_enabled(true);
-    beam2.set_pulse_speed(1.5f);
+    beam2.set_width(0.07f);
+    // beam2.set_pulse_enabled(true);
+    // beam2.set_pulse_speed(1.5f);
     beam2.set_firing(true);
 
     while (!window.should_close()) {
