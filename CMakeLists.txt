@@ -16,6 +16,7 @@ include_directories(${RAYLIB_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 set(SOURCES
     lib/window.cpp
     lib/camera.cpp
+    lib/laser_beam.cpp
     lib/main.cpp
 )
 
