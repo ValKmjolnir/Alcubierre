@@ -4,6 +4,8 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#include <vector>
+
 int main() {
     game_window window(1600, 800, "Alcubierre");
 
@@ -24,7 +26,7 @@ int main() {
     );
     beam.set_width(0.05f);
     beam.set_pulse_enabled(true);
-    beam.set_pulse_speed(1.5f);
+    beam.set_pulse_speed(2.0f);
     beam.set_firing(true);
 
     // Second laser beam (blue)
@@ -34,9 +36,21 @@ int main() {
         50, 100, 255, 255
     );
     beam2.set_width(0.07f);
-    // beam2.set_pulse_enabled(true);
-    // beam2.set_pulse_speed(1.5f);
     beam2.set_firing(true);
+
+    std::vector<laser_beam> beams;
+    for (int i = 0; i < 10; i++) {
+        auto tmp = laser_beam(
+            { 16.0f, -15.0f, -5.0f + i },
+            { 0.0f, 1.0f, 0.0f },
+            i, i * 10, i * 10, 255
+        );
+        tmp.set_width(0.05f);
+        tmp.set_pulse_enabled(true);
+        tmp.set_pulse_speed(2.0f);
+        tmp.set_firing(true);
+        beams.push_back(tmp);
+    }
 
     while (!window.should_close()) {
         const float dt = GetFrameTime();
@@ -55,6 +69,9 @@ int main() {
         // Update laser beams
         beam.update(dt);
         beam2.update(dt);
+        for (auto& b : beams) {
+            b.update(dt);
+        }
 
         window.begin_drawing();
         window.clear_background(25, 25, 25);
@@ -71,9 +88,14 @@ int main() {
         // Draw another cuboid
         window.draw_cube({ 16.0f, 0.5f, 0.0f }, 1.0f, 1.0f, 1.0f, 255, 128, 0);
 
+        window.draw_cube({ 16.0f, -15.0f, 0.0f }, 10.0f, 3.0f, 15.0f, 0, 255, 128);
+
         // Draw laser beams
         beam.draw();
         beam2.draw();
+        for (const auto& b : beams) {
+            b.draw();
+        }
 
         // End 3D mode
         window.end_mode_3d();
