@@ -1,6 +1,7 @@
 #include "window.hpp"
 #include "camera.hpp"
 #include "laser_beam.hpp"
+#include "skybox.hpp"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -17,6 +18,9 @@ int main() {
         45.0f                  // fovy
     );
     camera.set_mode_free();
+
+    // Create skybox (procedural gradient sky)
+    skybox sky;
 
     // Create laser beam
     laser_beam beam(
@@ -78,6 +82,9 @@ int main() {
 
         // Begin 3D mode
         window.begin_mode_3d(camera.get_camera());
+
+        // Draw skybox first (background)
+        sky.draw(camera.get_camera());
 
         // Draw grid on the ground plane
         window.draw_grid(1.0f, 40);

@@ -17,6 +17,8 @@ set(SOURCES
     lib/window.cpp
     lib/camera.cpp
     lib/laser_beam.cpp
+    lib/shader_loader.cpp
+    lib/skybox.cpp
     lib/main.cpp
 )
 

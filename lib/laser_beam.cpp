@@ -1,6 +1,8 @@
 #include "laser_beam.hpp"
 #include "raylib.h"
 #include "raymath.h"
+
+#include "shader_loader.hpp"
 #include <cmath>
 
 laser_beam::laser_beam()
@@ -154,9 +156,14 @@ void laser_beam::load_shader(const char* vs_path, const char* fs_path) {
         unload_shader();
     }
     
-    shader_ = LoadShader(vs_path, fs_path);
-    shader_loaded_ = true;
-    
+    auto load_res = try_load_shader(vs_path, fs_path);
+    shader_ = load_res.shader;
+    shader_loaded_ = load_res.success;
+    if (!shader_loaded_) {
+        TraceLog(LOG_FATAL, "laser_beam: Failed to load shader");
+        return;
+    }
+
     // Get uniform locations
     loc_mvp = GetShaderLocation(shader_, "mvp");
     loc_color = GetShaderLocation(shader_, "color");
@@ -200,10 +207,7 @@ void laser_beam::draw() const {
     // Lazy load shader on first draw
     if (!shader_loaded_) {
         laser_beam* mutable_this = const_cast<laser_beam*>(this);
-        mutable_this->load_shader(
-            "build_cmake/shaders/laser_beam.vs",
-            "build_cmake/shaders/laser_beam.fs"
-        );
+        mutable_this->load_shader("laser_beam.vs", "laser_beam.fs");
     }
 
     if (shader_loaded_) {
