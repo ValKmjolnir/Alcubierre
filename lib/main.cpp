@@ -1,6 +1,7 @@
 #include "window.hpp"
 #include "camera.hpp"
 #include "laser_beam.hpp"
+#include "projectile.hpp"
 #include "skybox.hpp"
 #include "raylib.h"
 #include "raymath.h"
@@ -56,6 +57,30 @@ int main() {
         beams.push_back(tmp);
     }
 
+    // Create projectile (orange)
+    projectile proj1(
+        { -3.0f, 2.0f, 0.0f },   // start position
+        { 15.0f, 0.0f, 0.0f },   // velocity (moving right)
+        255, 150, 0, 255         // color (orange)
+    );
+    proj1.set_radius(0.05f);
+    proj1.set_lifetime(1.5f);
+    proj1.set_trail_enabled(true);
+    proj1.set_trail_length(2.0f);
+    proj1.set_trail_color(255, 100, 0, 180);
+
+    // Create second projectile (blue)
+    projectile proj2(
+        { -3.0f, 2.0f, 2.0f },
+        { 12.0f, 2.0f, 0.0f },   // velocity with slight upward angle
+        50, 150, 255, 255        // color (blue)
+    );
+    proj2.set_radius(0.05f);
+    proj2.set_lifetime(2.0f);
+    proj2.set_trail_enabled(true);
+    proj2.set_trail_length(1.5f);
+    proj2.set_trail_color(0, 100, 255, 160);
+
     while (!window.should_close()) {
         const float dt = GetFrameTime();
 
@@ -75,6 +100,22 @@ int main() {
         beam2.update(dt);
         for (auto& b : beams) {
             b.update(dt);
+        }
+
+        // Update projectiles
+        proj1.update(dt);
+        proj2.update(dt);
+
+        // Reset projectiles if they become inactive
+        if (!proj1.is_active()) {
+            proj1.set_position({ -3.0f, 2.0f, 0.0f });
+            proj1.set_active(true);
+            proj1.set_age(0.0f);
+        }
+        if (!proj2.is_active()) {
+            proj2.set_position({ -3.0f, 2.0f, 2.0f });
+            proj2.set_active(true);
+            proj2.set_age(0.0f);
         }
 
         window.begin_drawing();
@@ -104,13 +145,18 @@ int main() {
             b.draw();
         }
 
+        // Draw projectiles
+        proj1.draw();
+        proj2.draw();
+
         // End 3D mode
         window.end_mode_3d();
 
         // Draw UI
         DrawFPS(10, 10);
         DrawText("Press SPACE to toggle laser firing", 10, 40, 20, WHITE);
-        DrawText(beam.is_firing() ? "LASER: FIRING" : "LASER: OFF", 10, 70, 20,
+        DrawText("Projectiles auto-fire and reset", 10, 65, 20, WHITE);
+        DrawText(beam.is_firing() ? "LASER: FIRING" : "LASER: OFF", 10, 95, 20,
                  beam.is_firing() ? RED : DARKGRAY);
 
         window.end_drawing();
