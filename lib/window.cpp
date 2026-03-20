@@ -26,19 +26,13 @@ game_window::~game_window() {
 }
 
 void game_window::init_bloom() {
-    // Create render textures
-    // Scene texture at full resolution for MSAA compatibility
-    // Bloom textures at half resolution for performance
-    int bloom_width = width_ / 2;
-    int bloom_height = height_ / 2;
-
     // Full resolution scene texture - preserves MSAA quality
-    scene_texture_ = LoadRenderTexture(width_, height_);
+    scene_texture_ = LoadRenderTexture(width_ * 2, height_ * 2);
 
     // Half resolution bloom textures - performance optimization
-    bright_texture_ = LoadRenderTexture(bloom_width, bloom_height);
-    bloom_h_texture_ = LoadRenderTexture(bloom_width, bloom_height);
-    bloom_v_texture_ = LoadRenderTexture(bloom_width, bloom_height);
+    bright_texture_ = LoadRenderTexture(width_, height_);
+    bloom_h_texture_ = LoadRenderTexture(width_, height_);
+    bloom_v_texture_ = LoadRenderTexture(width_, height_);
 
     // Set texture filtering
     SetTextureFilter(scene_texture_.texture, TEXTURE_FILTER_BILINEAR);
@@ -47,17 +41,21 @@ void game_window::init_bloom() {
     SetTextureFilter(bloom_v_texture_.texture, TEXTURE_FILTER_BILINEAR);
 
     // Load bloom shaders
-    bloom_extract_shader_ = try_load_shader("bloom.vs", "bloom_extract.fs").shader;
-    bloom_blur_h_shader_ = try_load_shader("bloom.vs", "bloom_blur_h.fs").shader;
-    bloom_blur_v_shader_ = try_load_shader("bloom.vs", "bloom_blur_v.fs").shader;
-    bloom_composite_shader_ = try_load_shader("bloom.vs", "bloom.fs").shader;
+    auto bloom_extract_res = try_load_shader("bloom.vs", "bloom_extract.fs");
+    auto bloom_blur_h_res = try_load_shader("bloom.vs", "bloom_blur_h.fs");
+    auto bloom_blur_v_res = try_load_shader("bloom.vs", "bloom_blur_v.fs");
+    auto bloom_composite_res = try_load_shader("bloom.vs", "bloom.fs");
+
+    bloom_extract_shader_ = bloom_extract_res.shader;
+    bloom_blur_h_shader_ = bloom_blur_h_res.shader;
+    bloom_blur_v_shader_ = bloom_blur_v_res.shader;
+    bloom_composite_shader_ = bloom_composite_res.shader;
 
     // Check if all shaders are valid
-    bloom_shaders_loaded_ = IsShaderValid(bloom_extract_shader_) &&
-                            IsShaderValid(bloom_blur_h_shader_) &&
-                            IsShaderValid(bloom_blur_v_shader_) &&
-                            IsShaderValid(bloom_composite_shader_);
-
+    bloom_shaders_loaded_ = bloom_extract_res.success &&
+                            bloom_blur_h_res.success &&
+                            bloom_blur_v_res.success &&
+                            bloom_composite_res.success;
     if (!bloom_shaders_loaded_) {
         TraceLog(LOG_WARNING, "Bloom shaders failed to load, bloom disabled");
         return;

@@ -11,6 +11,8 @@
 int main() {
     game_window window(1600, 800, "Alcubierre");
 
+    // TraceLogLevel(LOG_DEBUG);
+
     // Create 3D camera
     camera_3d camera(
         { 5.0f, 5.0f, 5.0f },  // position
@@ -66,25 +68,25 @@ int main() {
     // Create projectile (orange)
     projectile proj1(
         { -3.0f, 2.0f, 0.0f },   // start position
-        { 15.0f, 0.0f, 0.0f },   // velocity (moving right)
+        { 200.0f, 0.0f, 0.0f },   // velocity (moving right)
         255, 150, 0, 255         // color (orange)
     );
-    proj1.set_radius(0.05f);
+    proj1.set_radius(0.1f);
     proj1.set_lifetime(1.5f);
     proj1.set_trail_enabled(true);
-    proj1.set_trail_length(2.0f);
+    proj1.set_trail_length(5.0f);
     proj1.set_trail_color(255, 100, 0, 180);
 
     // Create second projectile (blue)
     projectile proj2(
         { -3.0f, 2.0f, 2.0f },
-        { 12.0f, 2.0f, 0.0f },   // velocity with slight upward angle
+        { 120.0f, 10.0f, 0.0f },   // velocity with slight upward angle
         50, 150, 255, 255        // color (blue)
     );
-    proj2.set_radius(0.05f);
+    proj2.set_radius(0.1f);
     proj2.set_lifetime(2.0f);
     proj2.set_trail_enabled(true);
-    proj2.set_trail_length(1.5f);
+    proj2.set_trail_length(5.5f);
     proj2.set_trail_color(0, 100, 255, 160);
 
     bool draw_grid = true;

@@ -58,7 +58,7 @@ void main()
     }
     
     // Apply intensity boost and color
-    float brightness = color.a * glowFactor * intensity * 1.2;
+    float brightness = color.a * glowFactor * intensity;
     
     // Add white-hot core for extra brightness - make it wider
     vec3 finalColor = color.rgb;

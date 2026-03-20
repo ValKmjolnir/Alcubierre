@@ -191,7 +191,7 @@ int laser_beam::calculate_pulse_alpha() const {
     }
 
     const float pulse = sinf(pulse_phase_);
-    const float pulse_factor = 0.5f + 0.5f * pulse;
+    const float pulse_factor = 0.5f + 0.5f * (pulse < 0.0f? -1.0f : pulse);
     return static_cast<int>(color_alpha_ * pulse_factor);
 }
 
@@ -223,6 +223,9 @@ void laser_beam::draw_with_shader() const {
 
 void laser_beam::draw_with_shader_internal() const {
     const int base_alpha = pulse_enabled_ ? calculate_pulse_alpha() : color_alpha_;
+    if (base_alpha <= 0) {
+        return;
+    }
 
     // Begin shader drawing mode
     BeginShaderMode(shader_);
