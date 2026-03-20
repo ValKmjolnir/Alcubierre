@@ -170,8 +170,8 @@ int main() {
 
         // Draw UI (on top of bloom)
         DrawFPS(10, 10);
-        DrawText("Press SPACE to toggle grid", 10, 40, 14, WHITE);
-        DrawText("Press B to toggle Bloom", 10, 60, 14, window.is_bloom_enabled() ? GREEN : GRAY);
+        DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);
+        DrawText("Press B to toggle Bloom", 10, 60, 16, window.is_bloom_enabled() ? GREEN : GRAY);
 
         window.end_drawing();
     }

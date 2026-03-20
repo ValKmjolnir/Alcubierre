@@ -26,14 +26,19 @@ game_window::~game_window() {
 }
 
 void game_window::init_bloom() {
-    // Create render textures (at half resolution for performance)
-    int tex_width = width_ / 2;
-    int tex_height = height_ / 2;
+    // Create render textures
+    // Scene texture at full resolution for MSAA compatibility
+    // Bloom textures at half resolution for performance
+    int bloom_width = width_ / 2;
+    int bloom_height = height_ / 2;
 
-    scene_texture_ = LoadRenderTexture(tex_width, tex_height);
-    bright_texture_ = LoadRenderTexture(tex_width, tex_height);
-    bloom_h_texture_ = LoadRenderTexture(tex_width, tex_height);
-    bloom_v_texture_ = LoadRenderTexture(tex_width, tex_height);
+    // Full resolution scene texture - preserves MSAA quality
+    scene_texture_ = LoadRenderTexture(width_, height_);
+
+    // Half resolution bloom textures - performance optimization
+    bright_texture_ = LoadRenderTexture(bloom_width, bloom_height);
+    bloom_h_texture_ = LoadRenderTexture(bloom_width, bloom_height);
+    bloom_v_texture_ = LoadRenderTexture(bloom_width, bloom_height);
 
     // Set texture filtering
     SetTextureFilter(scene_texture_.texture, TEXTURE_FILTER_BILINEAR);
@@ -52,7 +57,7 @@ void game_window::init_bloom() {
                             IsShaderValid(bloom_blur_h_shader_) &&
                             IsShaderValid(bloom_blur_v_shader_) &&
                             IsShaderValid(bloom_composite_shader_);
-    
+
     if (!bloom_shaders_loaded_) {
         TraceLog(LOG_WARNING, "Bloom shaders failed to load, bloom disabled");
         return;
@@ -128,10 +133,12 @@ void game_window::end_bloom_pass() {
 }
 
 void game_window::apply_bloom() {
-    int tex_width = scene_texture_.texture.width;
-    int tex_height = scene_texture_.texture.height;
-    
-    // Step 1: Extract bright areas
+    int scene_width = scene_texture_.texture.width;
+    int scene_height = scene_texture_.texture.height;
+    int bloom_width = bright_texture_.texture.width;
+    int bloom_height = bright_texture_.texture.height;
+
+    // Step 1: Extract bright areas (downsample to half resolution)
     BeginTextureMode(bright_texture_);
     ClearBackground(BLACK);
 
@@ -140,8 +147,8 @@ void game_window::apply_bloom() {
     BeginShaderMode(bloom_extract_shader_);
     DrawTexturePro(
         scene_texture_.texture,
-        { 0, 0, (float)tex_width, -(float)tex_height },
-        { 0, 0, (float)tex_width, (float)tex_height },
+        { 0, 0, (float)scene_width, -(float)scene_height },
+        { 0, 0, (float)bloom_width, (float)bloom_height },
         { 0, 0 },
         0.0f,
         WHITE
@@ -153,15 +160,15 @@ void game_window::apply_bloom() {
     BeginTextureMode(bloom_h_texture_);
     ClearBackground(BLACK);
 
-    float texel_size_h[2] = { 1.0f / (float)tex_width, 0.0f };
+    float texel_size_h[2] = { 1.0f / (float)bloom_width, 0.0f };
     SetShaderValue(bloom_blur_h_shader_, loc_texel_size_, texel_size_h, SHADER_UNIFORM_VEC2);
     SetShaderValue(bloom_blur_h_shader_, loc_blur_radius_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
 
     BeginShaderMode(bloom_blur_h_shader_);
     DrawTexturePro(
         bright_texture_.texture,
-        { 0, 0, (float)tex_width, -(float)tex_height },
-        { 0, 0, (float)tex_width, (float)tex_height },
+        { 0, 0, (float)bloom_width, -(float)bloom_height },
+        { 0, 0, (float)bloom_width, (float)bloom_height },
         { 0, 0 },
         0.0f,
         WHITE
@@ -173,15 +180,15 @@ void game_window::apply_bloom() {
     BeginTextureMode(bloom_v_texture_);
     ClearBackground(BLACK);
 
-    float texel_size_v[2] = { 0.0f, 1.0f / (float)tex_height };
+    float texel_size_v[2] = { 0.0f, 1.0f / (float)bloom_height };
     SetShaderValue(bloom_blur_v_shader_, loc_texel_size_, texel_size_v, SHADER_UNIFORM_VEC2);
     SetShaderValue(bloom_blur_v_shader_, loc_blur_radius_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
 
     BeginShaderMode(bloom_blur_v_shader_);
     DrawTexturePro(
         bloom_h_texture_.texture,
-        { 0, 0, (float)tex_width, -(float)tex_height },
-        { 0, 0, (float)tex_width, (float)tex_height },
+        { 0, 0, (float)bloom_width, -(float)bloom_height },
+        { 0, 0, (float)bloom_width, (float)bloom_height },
         { 0, 0 },
         0.0f,
         WHITE
@@ -193,7 +200,7 @@ void game_window::apply_bloom() {
     // First, draw scene to screen
     DrawTexturePro(
         scene_texture_.texture,
-        { 0, 0, (float)tex_width, -(float)tex_height },
+        { 0, 0, (float)scene_width, -(float)scene_height },
         { 0, 0, (float)width_, (float)height_ },
         { 0, 0 },
         0.0f,
@@ -208,7 +215,7 @@ void game_window::apply_bloom() {
 
     DrawTexturePro(
         bloom_v_texture_.texture,
-        { 0, 0, (float)tex_width, -(float)tex_height },
+        { 0, 0, (float)bloom_width, -(float)bloom_height },
         { 0, 0, (float)width_, (float)height_ },
         { 0, 0 },
         0.0f,
