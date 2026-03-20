@@ -57,6 +57,12 @@ int main() {
         beams.push_back(tmp);
     }
 
+    // Enable bloom post-processing
+    window.set_bloom_enabled(true);
+    window.set_bloom_threshold(0.3f);      // Lower threshold = more bloom
+    window.set_bloom_intensity(1.5f);      // Bloom strength
+    window.set_bloom_blur_radius(6.0f);    // Blur spread
+
     // Create projectile (orange)
     projectile proj1(
         { -3.0f, 2.0f, 0.0f },   // start position
@@ -81,6 +87,8 @@ int main() {
     proj2.set_trail_length(1.5f);
     proj2.set_trail_color(0, 100, 255, 160);
 
+    bool draw_grid = true;
+
     while (!window.should_close()) {
         const float dt = GetFrameTime();
 
@@ -89,10 +97,12 @@ int main() {
 
         // Toggle firing with space key
         if (IsKeyPressed(KEY_SPACE)) {
-            const bool new_state = !beam.is_firing();
-            beam.set_firing(new_state);
-            beam2.set_firing(new_state);
-            TraceLog(LOG_INFO, "SPACE pressed - firing state: %s", new_state ? "ON" : "OFF");
+            draw_grid = !draw_grid;
+        }
+
+        // Toggle bloom with B key
+        if (IsKeyPressed(KEY_B)) {
+            window.set_bloom_enabled(!window.is_bloom_enabled());
         }
 
         // Update laser beams
@@ -118,7 +128,8 @@ int main() {
             proj2.set_age(0.0f);
         }
 
-        window.begin_drawing();
+        // Begin bloom render pass (renders to texture)
+        window.begin_bloom_pass();
         window.clear_background(25, 25, 25);
 
         // Begin 3D mode
@@ -128,7 +139,9 @@ int main() {
         sky.draw(camera.get_camera());
 
         // Draw grid on the ground plane
-        window.draw_grid(1.0f, 40);
+        if (draw_grid) {
+            window.draw_grid(1.0f, 40);
+        }
 
         // Draw a cuboid at the origin
         window.draw_cube({ 0.0f, 1.0f, 0.0f }, 2.0f, 2.0f, 2.0f, 0, 128, 255);
@@ -152,12 +165,13 @@ int main() {
         // End 3D mode
         window.end_mode_3d();
 
-        // Draw UI
+        // End bloom pass (applies bloom effect and draws to screen)
+        window.end_bloom_pass();
+
+        // Draw UI (on top of bloom)
         DrawFPS(10, 10);
-        DrawText("Press SPACE to toggle laser firing", 10, 40, 20, WHITE);
-        DrawText("Projectiles auto-fire and reset", 10, 65, 20, WHITE);
-        DrawText(beam.is_firing() ? "LASER: FIRING" : "LASER: OFF", 10, 95, 20,
-                 beam.is_firing() ? RED : DARKGRAY);
+        DrawText("Press SPACE to toggle grid", 10, 40, 14, WHITE);
+        DrawText("Press B to toggle Bloom", 10, 60, 14, window.is_bloom_enabled() ? GREEN : GRAY);
 
         window.end_drawing();
     }
