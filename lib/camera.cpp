@@ -1,5 +1,6 @@
 #include "camera.hpp"
 #include "raylib.h"
+#include "raymath.h"
 
 camera_3d::camera_3d() {
     camera_.position = { 5.0f, 5.0f, 5.0f };
@@ -7,7 +8,6 @@ camera_3d::camera_3d() {
     camera_.up = { 0.0f, 1.0f, 0.0f };
     camera_.fovy = 45.0f;
     camera_.projection = CAMERA_PERSPECTIVE;
-    is_free_mode_ = true;
 }
 
 camera_3d::camera_3d(const Vector3& position, const Vector3& target, const Vector3& up, float fovy) {
@@ -16,7 +16,6 @@ camera_3d::camera_3d(const Vector3& position, const Vector3& target, const Vecto
     camera_.up = up;
     camera_.fovy = fovy;
     camera_.projection = CAMERA_PERSPECTIVE;
-    is_free_mode_ = true;
 }
 
 const Camera3D& camera_3d::get_camera() const {
@@ -68,19 +67,28 @@ void camera_3d::set_projection(int projection) {
 }
 
 void camera_3d::update(float dt) {
-    if (is_free_mode_) {
-        UpdateCamera(&camera_, CAMERA_THIRD_PERSON);
-    } else {
-        const Vector3 movement = { GetMouseWheelMove() * 5.0f, 0.0f, 0.0f };
-        const Vector3 rotation = { GetMouseDelta().x * 0.005f, GetMouseDelta().y * 0.005f, 0.0f };
-        UpdateCameraPro(&camera_, movement, rotation, 0.0f);
-    }
-}
+    // UpdateCamera(&camera_, CAMERA_THIRD_PERSON);
+    // Vector3 movement = { 0.0f, 0.0f, 0.0f };
+    // if (IsKeyDown(KEY_W)) { movement.x += 0.1f; }
+    // if (IsKeyDown(KEY_S)) { movement.x -= 0.1f; }
+    // if (IsKeyDown(KEY_A)) { movement.y -= 0.1f; }
+    // if (IsKeyDown(KEY_D)) { movement.y += 0.1f; }
 
-void camera_3d::set_mode_free() {
-    is_free_mode_ = true;
-}
+    // Vector3 rotation = { 0.0f, 0.0f, 0.0f };
+    // rotation.y = GetMouseDelta().y * 0.05f;
+    // rotation.z = GetMouseDelta().x * 0.05f;
 
-void camera_3d::set_mode_orbital() {
-    is_free_mode_ = false;
+    // float zoom_speed = 0.05f;
+    // float zoom = GetMouseWheelMove() * zoom_speed;
+
+    // UpdateCameraPro(&camera_, movement, rotation, zoom);
+
+    float distance = Vector3Distance(camera_.position, camera_.target);
+    distance += GetMouseWheelMove() * 0.00005f;
+    distance = Clamp(distance, 10.0f, 100.0f);
+
+    Vector3 forward = Vector3Normalize(Vector3Subtract(camera_.target, camera_.position));
+    camera_.position = Vector3Add(camera_.target, Vector3Scale(forward, -distance));
+
+    UpdateCamera(&camera_, CAMERA_THIRD_PERSON);
 }

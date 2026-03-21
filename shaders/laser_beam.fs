@@ -59,7 +59,7 @@ void main()
     
     // Apply intensity boost and color
     float brightness = color.a * glowFactor * intensity;
-    
+
     // Add white-hot core for extra brightness - make it wider
     vec3 finalColor = color.rgb;
     float whiteCoreRadius = coreRadius * 0.5;
@@ -68,7 +68,7 @@ void main()
         float whiteFactor = 1.0 - (dist / whiteCoreRadius);
         finalColor = mix(finalColor, vec3(1.0), whiteFactor * 0.8);
     }
-    
+
     // Boost color brightness
     finalColor *= brightness;
     

@@ -29,10 +29,7 @@ public:
     
     // Camera control
     void update(float dt);
-    void set_mode_free();
-    void set_mode_orbital();
 
 private:
     Camera3D camera_;
-    bool is_free_mode_;
 };

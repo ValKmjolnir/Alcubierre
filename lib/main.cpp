@@ -15,12 +15,11 @@ int main() {
 
     // Create 3D camera
     camera_3d camera(
-        { 5.0f, 5.0f, 5.0f },  // position
+        { 10.0f, 10.0f, 10.0f },  // position
         { 0.0f, 0.0f, 0.0f },  // target
         { 0.0f, 1.0f, 0.0f },  // up
         45.0f                  // fovy
     );
-    camera.set_mode_free();
 
     // Create skybox (procedural gradient sky)
     skybox sky;
@@ -61,8 +60,8 @@ int main() {
 
     // Enable bloom post-processing
     window.set_bloom_enabled(true);
-    window.set_bloom_threshold(0.3f);      // Lower threshold = more bloom
-    window.set_bloom_intensity(1.5f);      // Bloom strength
+    window.set_bloom_threshold(0.7f);      // Only lasers bloom
+    window.set_bloom_intensity(1.5f);      // Normal intensity
     window.set_bloom_blur_radius(6.0f);    // Blur spread
 
     // Create projectile (orange)
@@ -146,12 +145,12 @@ int main() {
         }
 
         // Draw a cuboid at the origin
-        window.draw_cube({ 0.0f, 1.0f, 0.0f }, 2.0f, 2.0f, 2.0f, 0, 128, 255);
+        window.draw_cube({ 0.0f, 1.0f, 0.0f }, 2.0f, 2.0f, 2.0f, 0, 100, 255);
 
         // Draw another cuboid
-        window.draw_cube({ 16.0f, 0.5f, 0.0f }, 1.0f, 1.0f, 1.0f, 255, 128, 0);
+        window.draw_cube({ 16.0f, 0.5f, 0.0f }, 1.0f, 1.0f, 1.0f, 255, 100, 0);
 
-        window.draw_cube({ 16.0f, -15.0f, 0.0f }, 10.0f, 3.0f, 15.0f, 0, 255, 128);
+        window.draw_cube({ 16.0f, -15.0f, 0.0f }, 10.0f, 3.0f, 15.0f, 0, 255, 100);
 
         // Draw laser beams
         beam.draw();

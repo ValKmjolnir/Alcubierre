@@ -24,7 +24,7 @@ skybox::~skybox() {
 
 void skybox::init_mesh() {
     // Create a large cube for the skybox
-    mesh_ = GenMeshCube(100.0f, 100.0f, 100.0f);
+    mesh_ = GenMeshCube(500.0f, 500.0f, 500.0f);
 
     // Upload mesh to GPU
     UploadMesh(&mesh_, false);
