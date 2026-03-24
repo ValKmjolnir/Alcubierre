@@ -3,6 +3,7 @@
 #include "laser_beam.hpp"
 #include "projectile.hpp"
 #include "skybox.hpp"
+
 #include "raylib.h"
 #include "raymath.h"
 
@@ -58,7 +59,7 @@ int main() {
     // Create projectile (orange)
     projectile proj1(
         { -3.0f, 2.0f, 0.0f },   // start position
-        { 200.0f, 0.0f, 0.0f },   // velocity (moving right)
+        { 50.0f, 0.0f, 0.0f },   // velocity (moving right)
         255, 150, 0, 255         // color (orange)
     );
     proj1.set_radius(0.1f);
@@ -70,7 +71,7 @@ int main() {
     // Create second projectile (blue)
     projectile proj2(
         { -3.0f, 2.0f, 2.0f },
-        { 120.0f, 10.0f, 0.0f },   // velocity with slight upward angle
+        { 30.0f, 2.5f, 0.0f },   // velocity with slight upward angle
         50, 150, 255, 255        // color (blue)
     );
     proj2.set_radius(0.1f);

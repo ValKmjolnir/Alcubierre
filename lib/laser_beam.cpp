@@ -6,7 +6,8 @@
 #include <cmath>
 
 laser_beam::laser_beam()
-    : start_{ 0.0f, 0.0f, 0.0f }
+    : object(true)
+    , start_{ 0.0f, 0.0f, 0.0f }
     , end_{ 0.0f, 0.0f, 10.0f }
     , color_r_(255)
     , color_g_(0)
@@ -31,7 +32,8 @@ laser_beam::laser_beam()
 }
 
 laser_beam::laser_beam(const Vector3& start, const Vector3& end, int r, int g, int b, int alpha)
-    : start_(start)
+    : object(true)
+    , start_(start)
     , end_(end)
     , color_r_(r)
     , color_g_(g)

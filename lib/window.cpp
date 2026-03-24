@@ -24,12 +24,14 @@ void game_window::init_bloom() {
 
     // Half resolution bloom textures - performance optimization
     bright_texture_ = LoadRenderTexture(width_, height_);
+    bloom_mask_texture_ = LoadRenderTexture(width_, height_);
     bloom_h_texture_ = LoadRenderTexture(width_, height_);
     bloom_v_texture_ = LoadRenderTexture(width_, height_);
 
     // Set texture filtering
     SetTextureFilter(scene_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bright_texture_.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(bloom_mask_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_h_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_v_texture_.texture, TEXTURE_FILTER_BILINEAR);
 
@@ -70,6 +72,7 @@ void game_window::unload_bloom() {
 
         UnloadRenderTexture(scene_texture_);
         UnloadRenderTexture(bright_texture_);
+        UnloadRenderTexture(bloom_mask_texture_);
         UnloadRenderTexture(bloom_h_texture_);
         UnloadRenderTexture(bloom_v_texture_);
 

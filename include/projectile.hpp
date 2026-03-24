@@ -3,7 +3,9 @@
 #include "raylib.h"
 #include "raymath.h"
 
-class projectile {
+#include "object.hpp"
+
+class projectile: public object {
 public:
     projectile();
     projectile(const Vector3& position, const Vector3& velocity, int r = 255, int g = 100, int b = 0, int alpha = 255);

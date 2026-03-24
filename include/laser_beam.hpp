@@ -3,7 +3,9 @@
 #include "raylib.h"
 #include "raymath.h"
 
-class laser_beam {
+#include "object.hpp"
+
+class laser_beam: public object {
 public:
     laser_beam();
     laser_beam(const Vector3& start, const Vector3& end, int r = 255, int g = 0, int b = 0, int alpha = 255);
