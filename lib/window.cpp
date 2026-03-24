@@ -3,14 +3,7 @@
 #include "shader_loader.hpp"
 
 game_window::game_window(int width, int height, const char* title):
-    width_(width),
-    height_(height),
-    bloom_enabled_(false),
-    bloom_threshold_(0.7f),
-    bloom_intensity_(1.0f),
-    bloom_blur_radius_(4.0f),
-    bloom_shaders_loaded_(false)
-{
+    width_(width), height_(height) {
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // enable 4x MSAA
     InitWindow(width_, height_, title);
     SetTargetFPS(120);
@@ -229,11 +222,11 @@ bool game_window::should_close() const {
 }
 
 void game_window::begin_drawing() {
-    ::BeginDrawing();
+    BeginDrawing();
 }
 
 void game_window::end_drawing() {
-    ::EndDrawing();
+    EndDrawing();
 }
 
 void game_window::clear_background(int r, int g, int b) {
@@ -243,15 +236,15 @@ void game_window::clear_background(int r, int g, int b) {
         static_cast<unsigned char>(b),
         255
     };
-    ::ClearBackground(bgc);
+    ClearBackground(bgc);
 }
 
 void game_window::begin_mode_3d(const Camera3D& camera) {
-    ::BeginMode3D(camera);
+    BeginMode3D(camera);
 }
 
 void game_window::end_mode_3d() {
-    ::EndMode3D();
+    EndMode3D();
 }
 
 void game_window::draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b) {
@@ -261,10 +254,10 @@ void game_window::draw_cube(const Vector3& position, float width, float height, 
         static_cast<unsigned char>(b),
         255
     };
-    ::DrawCube(position, width, height, length, color);
-    ::DrawCubeWires(position, width, height, length, MAROON);
+    DrawCube(position, width, height, length, color);
+    DrawCubeWires(position, width, height, length, MAROON);
 }
 
 void game_window::draw_grid(float spacing, int slices) {
-    ::DrawGrid(slices, spacing);
+    DrawGrid(slices, spacing);
 }

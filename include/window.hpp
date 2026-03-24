@@ -33,10 +33,10 @@ private:
     int height_;
 
     // Bloom members
-    bool bloom_enabled_;
-    float bloom_threshold_;
-    float bloom_intensity_;
-    float bloom_blur_radius_;
+    bool bloom_enabled_ = false;
+    float bloom_threshold_ = 0.7f;
+    float bloom_intensity_ = 5.0f;
+    float bloom_blur_radius_ = 4.0f;
 
     // Render textures for bloom
     RenderTexture2D scene_texture_;
@@ -50,7 +50,7 @@ private:
     Shader bloom_blur_v_shader_;
     Shader bloom_composite_shader_;
 
-    bool bloom_shaders_loaded_;
+    bool bloom_shaders_loaded_ = false;
     int loc_bloom_intensity_;
     int loc_brightness_threshold_;
     int loc_texel_size_;

@@ -26,23 +26,14 @@ int main() {
 
     // Create laser beam
     laser_beam beam(
-        { 0.0f, 1.5f, 0.0f },   // start position (weapon)
-        { 16.0f, 1.0f, 0.0f },  // end position (target)
+        { 0.5f, 1.0f, 0.5f },   // start position (weapon)
+        { 16.0f, 0.5f, 0.0f },  // end position (target)
         255, 50, 50, 255        // color (red with alpha)
     );
-    beam.set_width(0.05f);
+    beam.set_width(0.07f);
     beam.set_pulse_enabled(true);
     beam.set_pulse_speed(2.0f);
     beam.set_firing(true);
-
-    // Second laser beam (blue)
-    laser_beam beam2(
-        { 0.5f, 1.0f, 0.5f },
-        { 16.0f, 0.5f, 0.0f },
-        50, 100, 255, 255
-    );
-    beam2.set_width(0.07f);
-    beam2.set_firing(true);
 
     std::vector<laser_beam> beams;
     for (int i = 0; i < 10; i++) {
@@ -60,9 +51,9 @@ int main() {
 
     // Enable bloom post-processing
     window.set_bloom_enabled(true);
-    window.set_bloom_threshold(0.7f);      // Only lasers bloom
-    window.set_bloom_intensity(1.5f);      // Normal intensity
-    window.set_bloom_blur_radius(6.0f);    // Blur spread
+    window.set_bloom_threshold(0.7f);   // Only lasers bloom
+    window.set_bloom_intensity(8.0f);   // Normal intensity
+    window.set_bloom_blur_radius(4.0f); // Blur spread
 
     // Create projectile (orange)
     projectile proj1(
@@ -91,6 +82,8 @@ int main() {
     bool draw_grid = true;
 
     while (!window.should_close()) {
+        window.begin_drawing();
+
         const float dt = GetFrameTime();
 
         // Update camera input
@@ -108,7 +101,6 @@ int main() {
 
         // Update laser beams
         beam.update(dt);
-        beam2.update(dt);
         for (auto& b : beams) {
             b.update(dt);
         }
@@ -150,11 +142,10 @@ int main() {
         // Draw another cuboid
         window.draw_cube({ 16.0f, 0.5f, 0.0f }, 1.0f, 1.0f, 1.0f, 255, 100, 0);
 
-        window.draw_cube({ 16.0f, -15.0f, 0.0f }, 10.0f, 3.0f, 15.0f, 0, 255, 100);
+        window.draw_cube({ 16.0f, -15.0f, 0.0f }, 10.0f, 3.0f, 15.0f, 0, 200, 100);
 
         // Draw laser beams
         beam.draw();
-        beam2.draw();
         for (const auto& b : beams) {
             b.draw();
         }

@@ -5,7 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Raylib paths
-set(RAYLIB_DIR "${CMAKE_SOURCE_DIR}/build/raylib-5.5_win64_mingw-w64")
+if (WIN32)
+    set(RAYLIB_DIR "${CMAKE_SOURCE_DIR}/build/raylib-5.5_win64_mingw-w64")
+elseif (APPLE)
+    set(RAYLIB_DIR "${CMAKE_SOURCE_DIR}/build/raylib-5.5_macos")
+endif()
 set(RAYLIB_INCLUDE_DIR "${RAYLIB_DIR}/include")
 set(RAYLIB_LIB_DIR "${RAYLIB_DIR}/lib")
 
@@ -28,10 +32,16 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Link raylib and required system libraries
 target_link_directories(${PROJECT_NAME} PRIVATE ${RAYLIB_LIB_DIR})
-target_link_libraries(${PROJECT_NAME}
-    raylib
-    winmm
-)
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME}
+        raylib
+        winmm
+    )
+elseif (APPLE)
+    target_link_libraries(${PROJECT_NAME}
+        raylib
+    )
+endif()
 
 # Copy shaders to build directory
 file(COPY ${CMAKE_SOURCE_DIR}/shaders DESTINATION ${CMAKE_BINARY_DIR})
