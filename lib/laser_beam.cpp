@@ -219,8 +219,10 @@ void laser_beam::draw() const {
     }
 }
 
-void laser_beam::draw_with_shader() const {
-    draw_with_shader_internal();
+void laser_beam::draw_mask() const {
+    // Draw the laser beam as a cylinder
+    const float radius = width_ * 0.5f;
+    DrawCylinderEx(start_, end_, radius, radius, 8, {1, 0, 0, 255});
 }
 
 void laser_beam::draw_with_shader_internal() const {
@@ -254,7 +256,13 @@ void laser_beam::draw_with_shader_internal() const {
 
     // Draw the laser beam as a cylinder
     const float radius = width_ * 0.5f;
-    DrawCylinderEx(start_, end_, radius, radius, 8, WHITE);
+    const Color color = {
+        static_cast<unsigned char>(color_r_),
+        static_cast<unsigned char>(color_g_),
+        static_cast<unsigned char>(color_b_),
+        static_cast<unsigned char>(base_alpha)
+    };
+    DrawCylinderEx(start_, end_, radius, radius, 8, color);
 
     EndShaderMode();
 }

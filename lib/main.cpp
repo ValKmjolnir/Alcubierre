@@ -160,6 +160,17 @@ int main() {
         // End bloom pass (applies bloom effect and draws to screen)
         window.end_bloom_pass();
 
+        // window.begin_bright_pass();
+        // window.begin_mode_3d(camera.get_camera());
+        // beam.draw_mask();
+        // for (const auto& b : beams) {
+        //     b.draw_mask();
+        // }
+        // window.end_mode_3d();
+        // window.end_bright_pass();
+
+        window.apply_bloom();
+
         // Draw UI (on top of bloom)
         DrawFPS(10, 10);
         DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);

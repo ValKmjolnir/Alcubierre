@@ -109,10 +109,26 @@ void game_window::begin_bloom_pass() {
 
 void game_window::end_bloom_pass() {
     EndTextureMode();
+}
 
-    if (bloom_enabled_ && bloom_shaders_loaded_) {
-        apply_bloom();
-    } else {
+void game_window::begin_bright_pass() {
+    // Always render to texture, regardless of bloom enabled state
+    // This allows toggling bloom without changing the render path
+    BeginTextureMode(bright_texture_);
+    ClearBackground(BLACK);
+}
+
+void game_window::end_bright_pass() {
+    EndTextureMode();
+}
+
+void game_window::apply_bloom() {
+    int scene_width = scene_texture_.texture.width;
+    int scene_height = scene_texture_.texture.height;
+    int bloom_width = bright_texture_.texture.width;
+    int bloom_height = bright_texture_.texture.height;
+
+    if (!bloom_enabled_ || !bloom_shaders_loaded_) {
         // Draw scene texture directly to screen without bloom
         // Don't use BeginShaderMode with null shader - just draw directly
         DrawTexturePro(
@@ -123,14 +139,8 @@ void game_window::end_bloom_pass() {
             0.0f,
             WHITE
         );
+        return;
     }
-}
-
-void game_window::apply_bloom() {
-    int scene_width = scene_texture_.texture.width;
-    int scene_height = scene_texture_.texture.height;
-    int bloom_width = bright_texture_.texture.width;
-    int bloom_height = bright_texture_.texture.height;
 
     // Step 1: Extract bright areas (downsample to half resolution)
     BeginTextureMode(bright_texture_);

@@ -26,6 +26,11 @@ public:
     void set_bloom_blur_radius(float radius);
     void begin_bloom_pass();
     void end_bloom_pass();
+    void begin_bright_pass();
+    void end_bright_pass();
+
+    // Bloom
+    void apply_bloom();
 
 private:
     int width_;
@@ -58,5 +63,4 @@ private:
 
     void init_bloom();
     void unload_bloom();
-    void apply_bloom();
 };
