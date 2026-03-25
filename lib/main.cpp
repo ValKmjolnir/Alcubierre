@@ -124,7 +124,6 @@ int main() {
 
         // Begin bloom render pass (renders to texture)
         window.begin_bloom_pass();
-        window.clear_background(25, 25, 25);
 
         // Begin 3D mode
         window.begin_mode_3d(camera.get_camera());

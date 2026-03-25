@@ -232,16 +232,6 @@ void game_window::end_drawing() {
     EndDrawing();
 }
 
-void game_window::clear_background(int r, int g, int b) {
-    const Color bgc = {
-        static_cast<unsigned char>(r),
-        static_cast<unsigned char>(g),
-        static_cast<unsigned char>(b),
-        255
-    };
-    ClearBackground(bgc);
-}
-
 void game_window::begin_mode_3d(const Camera3D& camera) {
     BeginMode3D(camera);
 }

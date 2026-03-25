@@ -11,7 +11,6 @@ public:
     bool should_close() const;
     void begin_drawing();
     void end_drawing();
-    void clear_background(int r, int g, int b);
 
     // 3D camera methods
     void begin_mode_3d(const Camera3D& camera);
