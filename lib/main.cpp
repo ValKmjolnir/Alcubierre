@@ -31,9 +31,9 @@ int main() {
         { 16.0f, 0.5f, 0.0f },  // end position (target)
         255, 50, 50, 255        // color (red with alpha)
     );
-    beam.set_width(0.07f);
+    beam.set_width(0.03f);
     beam.set_pulse_enabled(true);
-    beam.set_pulse_speed(2.0f);
+    beam.set_pulse_speed(4.0f);
     beam.set_firing(true);
 
     std::vector<laser_beam> beams;
@@ -43,9 +43,9 @@ int main() {
             { 0.0f, 1.0f, 0.0f },
             i, i * 10, i * 10, 255
         );
-        tmp.set_width(0.05f);
+        tmp.set_width(0.03f);
         tmp.set_pulse_enabled(true);
-        tmp.set_pulse_speed(2.0f);
+        tmp.set_pulse_speed(4.0f);
         tmp.set_firing(true);
         beams.push_back(tmp);
     }
