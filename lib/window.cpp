@@ -4,7 +4,6 @@
 
 game_window::game_window(int width, int height, const char* title):
     width_(width), height_(height) {
-    SetConfigFlags(FLAG_MSAA_4X_HINT);  // enable 4x MSAA
     InitWindow(width_, height_, title);
     SetTargetFPS(120);
     DisableCursor();  // hide cursor and lock to window
@@ -100,25 +99,15 @@ void game_window::set_bloom_blur_radius(float radius) {
     bloom_blur_radius_ = radius;
 }
 
-void game_window::begin_bloom_pass() {
+void game_window::begin_scene_pass() {
     // Always render to texture, regardless of bloom enabled state
     // This allows toggling bloom without changing the render path
     BeginTextureMode(scene_texture_);
     ClearBackground(BLACK);
+    SetConfigFlags(FLAG_MSAA_4X_HINT);  // enable 4x MSAA
 }
 
-void game_window::end_bloom_pass() {
-    EndTextureMode();
-}
-
-void game_window::begin_bright_pass() {
-    // Always render to texture, regardless of bloom enabled state
-    // This allows toggling bloom without changing the render path
-    BeginTextureMode(bright_texture_);
-    ClearBackground(BLACK);
-}
-
-void game_window::end_bright_pass() {
+void game_window::end_scene_pass() {
     EndTextureMode();
 }
 

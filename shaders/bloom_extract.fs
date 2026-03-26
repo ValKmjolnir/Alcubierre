@@ -17,7 +17,7 @@ void main()
     float luminance = dot(color, vec3(0.299, 0.587, 0.114));
 
     // Extract only bright pixels
-    float brightness = max(0.0, luminance - brightnessThreshold) / (1.0 - brightnessThreshold);
+    float brightness = smoothstep(brightnessThreshold, brightnessThreshold * 1.3, luminance);
 
     // Preserve color while extracting brightness
     vec3 brightColor = color * brightness;

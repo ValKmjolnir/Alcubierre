@@ -219,12 +219,6 @@ void laser_beam::draw() const {
     }
 }
 
-void laser_beam::draw_mask() const {
-    // Draw the laser beam as a cylinder
-    const float radius = width_ * 0.5f;
-    DrawCylinderEx(start_, end_, radius, radius, 8, {1, 0, 0, 255});
-}
-
 void laser_beam::draw_with_shader_internal() const {
     const int base_alpha = pulse_enabled_ ? calculate_pulse_alpha() : color_alpha_;
     if (base_alpha <= 0) {

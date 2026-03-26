@@ -24,10 +24,8 @@ public:
     void set_bloom_threshold(float threshold);
     void set_bloom_intensity(float intensity);
     void set_bloom_blur_radius(float radius);
-    void begin_bloom_pass();
-    void end_bloom_pass();
-    void begin_bright_pass();
-    void end_bright_pass();
+    void begin_scene_pass();
+    void end_scene_pass();
 
     // Bloom
     void apply_bloom();

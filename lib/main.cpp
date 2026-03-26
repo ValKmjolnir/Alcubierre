@@ -29,10 +29,10 @@ int main() {
     laser_beam beam(
         { 0.5f, 1.0f, 0.5f },   // start position (weapon)
         { 16.0f, 0.5f, 0.0f },  // end position (target)
-        255, 50, 50, 255        // color (red with alpha)
+        255, 100, 100, 255        // color (red with alpha)
     );
     beam.set_width(0.03f);
-    beam.set_pulse_enabled(true);
+    beam.set_pulse_enabled(false);
     beam.set_pulse_speed(4.0f);
     beam.set_firing(true);
 
@@ -41,20 +41,20 @@ int main() {
         auto tmp = laser_beam(
             { 16.0f, -15.0f, -5.0f + i },
             { 0.0f, 1.0f, 0.0f },
-            i, i * 10, i * 10, 255
+            255, 100 + i * 10, i * 20, 255
         );
         tmp.set_width(0.03f);
         tmp.set_pulse_enabled(true);
-        tmp.set_pulse_speed(4.0f);
+        tmp.set_pulse_speed(2.0f);
         tmp.set_firing(true);
         beams.push_back(tmp);
     }
 
     // Enable bloom post-processing
     window.set_bloom_enabled(true);
-    window.set_bloom_threshold(0.7f);   // Only lasers bloom
-    window.set_bloom_intensity(8.0f);   // Normal intensity
-    window.set_bloom_blur_radius(4.0f); // Blur spread
+    window.set_bloom_threshold(0.8f);   // Only lasers bloom
+    window.set_bloom_intensity(2.5f);   // Normal intensity
+    window.set_bloom_blur_radius(40.0f); // Blur spread
 
     // Create projectile (orange)
     projectile proj1(
@@ -62,7 +62,7 @@ int main() {
         { 50.0f, 0.0f, 0.0f },   // velocity (moving right)
         255, 150, 0, 255         // color (orange)
     );
-    proj1.set_radius(0.1f);
+    proj1.set_radius(0.04f);
     proj1.set_lifetime(1.5f);
     proj1.set_trail_enabled(true);
     proj1.set_trail_length(5.0f);
@@ -74,7 +74,7 @@ int main() {
         { 30.0f, 2.5f, 0.0f },   // velocity with slight upward angle
         50, 150, 255, 255        // color (blue)
     );
-    proj2.set_radius(0.1f);
+    proj2.set_radius(0.04f);
     proj2.set_lifetime(2.0f);
     proj2.set_trail_enabled(true);
     proj2.set_trail_length(5.5f);
@@ -122,10 +122,8 @@ int main() {
             proj2.set_age(0.0f);
         }
 
-        // Begin bloom render pass (renders to texture)
-        window.begin_bloom_pass();
-
-        // Begin 3D mode
+        // Begin render pass (renders to scene texture)
+        window.begin_scene_pass();
         window.begin_mode_3d(camera.get_camera());
 
         // Draw skybox first (background)
@@ -133,16 +131,13 @@ int main() {
 
         // Draw grid on the ground plane
         if (draw_grid) {
-            window.draw_grid(1.0f, 40);
+            window.draw_grid(2.0f, 40);
         }
 
-        // Draw a cuboid at the origin
-        window.draw_cube({ 0.0f, 1.0f, 0.0f }, 2.0f, 2.0f, 2.0f, 0, 100, 255);
-
-        // Draw another cuboid
-        window.draw_cube({ 16.0f, 0.5f, 0.0f }, 1.0f, 1.0f, 1.0f, 255, 100, 0);
-
-        window.draw_cube({ 16.0f, -15.0f, 0.0f }, 10.0f, 3.0f, 15.0f, 0, 200, 100);
+        // Draw cuboid
+        window.draw_cube({ 0.0f, 1.0f, 0.0f }, 2.0f, 2.0f, 2.0f, 0, 50, 125);
+        window.draw_cube({ 16.0f, 0.5f, 0.0f }, 1.0f, 1.0f, 1.0f, 125, 50, 0);
+        window.draw_cube({ 16.0f, -15.0f, 0.0f }, 10.0f, 3.0f, 15.0f, 0, 100, 50);
 
         // Draw laser beams
         beam.draw();
@@ -154,21 +149,8 @@ int main() {
         proj1.draw();
         proj2.draw();
 
-        // End 3D mode
         window.end_mode_3d();
-
-        // End bloom pass (applies bloom effect and draws to screen)
-        window.end_bloom_pass();
-
-        // window.begin_bright_pass();
-        // window.begin_mode_3d(camera.get_camera());
-        // beam.draw_mask();
-        // for (const auto& b : beams) {
-        //     b.draw_mask();
-        // }
-        // window.end_mode_3d();
-        // window.end_bright_pass();
-
+        window.end_scene_pass();
         window.apply_bloom();
 
         // Draw UI (on top of bloom)

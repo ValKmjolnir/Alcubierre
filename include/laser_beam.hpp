@@ -53,7 +53,6 @@ public:
     // Update and draw
     void update(float dt);
     void draw() const;
-    void draw_mask() const;
 
 private:
     Vector3 start_;
