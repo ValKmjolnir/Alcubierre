@@ -30,6 +30,16 @@ public:
     // Bloom
     void apply_bloom();
 
+    // Relativistic post-processing
+    void set_relativistic_enabled(bool enabled);
+    bool is_relativistic_enabled() const;
+    void set_velocity(const Vector3& velocity);
+    Vector3 get_velocity() const;
+    void set_exposure(float exposure);
+    float get_exposure() const;
+    void apply_relativistic();
+    void apply_relativistic_to_texture(const RenderTexture2D& texture);
+
 private:
     int width_;
     int height_;
@@ -46,6 +56,7 @@ private:
     RenderTexture2D bloom_mask_texture_;
     RenderTexture2D bloom_h_texture_;
     RenderTexture2D bloom_v_texture_;
+    RenderTexture2D bloom_composite_texture_;
 
     // Bloom shaders
     Shader bloom_extract_shader_;
@@ -59,6 +70,19 @@ private:
     int loc_texel_size_;
     int loc_blur_radius_;
 
+    // Relativistic shaders
+    Shader relativistic_shader_;
+    bool relativistic_shaders_loaded_ = false;
+    int loc_velocity_;
+    int loc_exposure_;
+
+    // Relativistic settings
+    bool relativistic_enabled_ = false;
+    Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
+    float exposure_ = 1.0f;
+
     void init_bloom();
     void unload_bloom();
+    void init_relativistic();
+    void unload_relativistic();
 };

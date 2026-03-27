@@ -8,12 +8,14 @@ game_window::game_window(int width, int height, const char* title):
     SetTargetFPS(120);
     DisableCursor();  // hide cursor and lock to window
 
-    // Initialize bloom
+    // Initialize bloom and relativistic effects
     init_bloom();
+    init_relativistic();
 }
 
 game_window::~game_window() {
     unload_bloom();
+    unload_relativistic();
     CloseWindow();
 }
 
@@ -26,6 +28,7 @@ void game_window::init_bloom() {
     bloom_mask_texture_ = LoadRenderTexture(width_, height_);
     bloom_h_texture_ = LoadRenderTexture(width_, height_);
     bloom_v_texture_ = LoadRenderTexture(width_, height_);
+    bloom_composite_texture_ = LoadRenderTexture(width_, height_);
 
     // Set texture filtering
     SetTextureFilter(scene_texture_.texture, TEXTURE_FILTER_BILINEAR);
@@ -33,6 +36,7 @@ void game_window::init_bloom() {
     SetTextureFilter(bloom_mask_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_h_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_v_texture_.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(bloom_composite_texture_.texture, TEXTURE_FILTER_BILINEAR);
 
     // Load bloom shaders
     auto bloom_extract_res = try_load_shader("bloom.vs", "bloom_extract.fs");
@@ -74,9 +78,61 @@ void game_window::unload_bloom() {
         UnloadRenderTexture(bloom_mask_texture_);
         UnloadRenderTexture(bloom_h_texture_);
         UnloadRenderTexture(bloom_v_texture_);
+        UnloadRenderTexture(bloom_composite_texture_);
 
         bloom_shaders_loaded_ = false;
     }
+}
+
+void game_window::init_relativistic() {
+    // Load relativistic shaders
+    auto relativistic_vs_res = try_load_shader("relativistic.vs", "relativistic.fs");
+    
+    relativistic_shader_ = relativistic_vs_res.shader;
+    relativistic_shaders_loaded_ = relativistic_vs_res.success;
+    
+    if (!relativistic_shaders_loaded_) {
+        TraceLog(LOG_WARNING, "Relativistic shaders failed to load");
+        return;
+    }
+
+    // Get uniform locations
+    loc_velocity_ = GetShaderLocation(relativistic_shader_, "velocity");
+    loc_exposure_ = GetShaderLocation(relativistic_shader_, "exposure");
+    
+    // Set default exposure
+    set_exposure(1.0f);
+}
+
+void game_window::unload_relativistic() {
+    if (relativistic_shaders_loaded_) {
+        UnloadShader(relativistic_shader_);
+        relativistic_shaders_loaded_ = false;
+    }
+}
+
+void game_window::set_relativistic_enabled(bool enabled) {
+    relativistic_enabled_ = enabled;
+}
+
+bool game_window::is_relativistic_enabled() const {
+    return relativistic_enabled_;
+}
+
+void game_window::set_velocity(const Vector3& velocity) {
+    velocity_ = velocity;
+}
+
+Vector3 game_window::get_velocity() const {
+    return velocity_;
+}
+
+void game_window::set_exposure(float exposure) {
+    exposure_ = exposure;
+}
+
+float game_window::get_exposure() const {
+    return exposure_;
 }
 
 void game_window::set_bloom_enabled(bool enabled) {
@@ -118,16 +174,19 @@ void game_window::apply_bloom() {
     int bloom_height = bright_texture_.texture.height;
 
     if (!bloom_enabled_ || !bloom_shaders_loaded_) {
-        // Draw scene texture directly to screen without bloom
-        // Don't use BeginShaderMode with null shader - just draw directly
-        DrawTexturePro(
-            scene_texture_.texture,
-            { 0, 0, (float)scene_texture_.texture.width, -(float)scene_texture_.texture.height },
-            { 0, 0, (float)width_, (float)height_ },
-            { 0, 0 },
-            0.0f,
-            WHITE
-        );
+        // No bloom - just apply relativistic to scene texture and draw
+        // if (relativistic_enabled_ && relativistic_shaders_loaded_) {
+        //     apply_relativistic();
+        // } else {
+            DrawTexturePro(
+                scene_texture_.texture,
+                { 0, 0, (float)scene_texture_.texture.width, -(float)scene_texture_.texture.height },
+                { 0, 0, (float)width_, (float)height_ },
+                { 0, 0 },
+                0.0f,
+                WHITE
+            );
+        // }
         return;
     }
 
@@ -189,6 +248,9 @@ void game_window::apply_bloom() {
     EndShaderMode();
     EndTextureMode();
 
+    BeginTextureMode(bloom_composite_texture_);
+    ClearBackground(BLACK);
+
     // Step 4: Composite - combine scene with bloom
     // First, draw scene to screen
     DrawTexturePro(
@@ -216,6 +278,61 @@ void game_window::apply_bloom() {
     );
 
     EndBlendMode();
+    EndShaderMode();
+    EndTextureMode();
+
+    // Step 5: Apply relativistic effect if enabled, otherwise draw directly
+    if (relativistic_enabled_ && relativistic_shaders_loaded_) {
+        apply_relativistic_to_texture(bloom_composite_texture_);
+    } else {
+        // Draw the composited texture to screen
+        DrawTexturePro(
+            bloom_composite_texture_.texture,
+            { 0, 0, (float)width_, -(float)height_ },
+            { 0, 0, (float)width_, (float)height_ },
+            { 0, 0 },
+            0.0f,
+            WHITE
+        );
+    }
+}
+
+void game_window::apply_relativistic() {
+    apply_relativistic_to_texture(scene_texture_);
+}
+
+void game_window::apply_relativistic_to_texture(const RenderTexture2D& texture) {
+    if (!relativistic_enabled_ || !relativistic_shaders_loaded_) {
+        // Just draw the texture directly
+        DrawTexturePro(
+            texture.texture,
+            { 0, 0, (float)texture.texture.width, -(float)texture.texture.height },
+            { 0, 0, (float)width_, (float)height_ },
+            { 0, 0 },
+            0.0f,
+            WHITE
+        );
+        return;
+    }
+
+    int tex_width = texture.texture.width;
+    int tex_height = texture.texture.height;
+
+    // Set shader uniforms
+    float velocity_vec[3] = { velocity_.x, velocity_.y, velocity_.z };
+    SetShaderValue(relativistic_shader_, loc_velocity_, velocity_vec, SHADER_UNIFORM_VEC3);
+    SetShaderValue(relativistic_shader_, loc_exposure_, &exposure_, SHADER_UNIFORM_FLOAT);
+
+    // Apply relativistic effect
+    BeginShaderMode(relativistic_shader_);
+    DrawTexturePro(
+        texture.texture,
+        { 0, 0, (float)tex_width, -(float)tex_height },
+        { 0, 0, (float)width_, (float)height_ },
+        { 0, 0 },
+        0.0f,
+        WHITE
+    );
     EndShaderMode();
 }
 

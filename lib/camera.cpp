@@ -90,7 +90,7 @@ void camera_3d::update(float dt) {
     }
 
     float wheel = GetMouseWheelMove();
-    const float zoom_speed = 0.5f;
+    const float zoom_speed = 1.5f;
     distance_ -= wheel * zoom_speed;
     distance_ = Clamp(distance_, 10.0f, 100.0f);
 

@@ -56,6 +56,11 @@ int main() {
     window.set_bloom_intensity(2.5f);   // Normal intensity
     window.set_bloom_blur_radius(20.0f); // Blur spread
 
+    // Enable relativistic post-processing
+    window.set_relativistic_enabled(true);
+    window.set_velocity({ 0.0f, 0.0f, -0.8f });  // High velocity in -Z direction
+    window.set_exposure(1.0f);
+
     // Create projectile (orange)
     projectile proj1(
         { -3.0f, 2.0f, 0.0f },   // start position
@@ -99,6 +104,33 @@ int main() {
         if (IsKeyPressed(KEY_B)) {
             window.set_bloom_enabled(!window.is_bloom_enabled());
         }
+
+        // Toggle relativistic with R key
+        if (IsKeyPressed(KEY_R)) {
+            window.set_relativistic_enabled(!window.is_relativistic_enabled());
+        }
+
+        // Adjust velocity with arrow keys
+        Vector3 vel = window.get_velocity();
+        float vel_step = 0.0025f;
+        if (IsKeyDown(KEY_UP)) {
+            vel.z -= vel_step;
+        }
+        if (IsKeyDown(KEY_DOWN)) {
+            vel.z += vel_step;
+        }
+        if (IsKeyDown(KEY_RIGHT)) {
+            vel.x += vel_step;
+        }
+        if (IsKeyDown(KEY_LEFT)) {
+            vel.x -= vel_step;
+        }
+        // Clamp velocity magnitude to < 1.0 (subluminal)
+        float vel_len = Vector3Length(vel);
+        if (vel_len > 0.99f) {
+            vel = Vector3Scale(Vector3Normalize(vel), 0.99f);
+        }
+        window.set_velocity(vel);
 
         // Update laser beams
         beam.update(dt);
@@ -157,6 +189,13 @@ int main() {
         DrawFPS(10, 10);
         DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);
         DrawText("Press B to toggle Bloom", 10, 60, 16, window.is_bloom_enabled() ? GREEN : GRAY);
+        DrawText("Press R to toggle Relativistic", 10, 80, 16, window.is_relativistic_enabled() ? GREEN : GRAY);
+
+        // Display current velocity
+        char vel_text[64];
+        sprintf(vel_text, "Velocity: (%.2f, %.2f, %.2f)", vel.x, vel.y, vel.z);
+        DrawText(vel_text, 10, 100, 16, WHITE);
+        DrawText("Use Arrow Keys to adjust velocity", 10, 120, 16, GRAY);
 
         window.end_drawing();
     }
