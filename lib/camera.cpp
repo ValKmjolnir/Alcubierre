@@ -67,28 +67,34 @@ void camera_3d::set_projection(int projection) {
 }
 
 void camera_3d::update(float dt) {
-    // UpdateCamera(&camera_, CAMERA_THIRD_PERSON);
-    // Vector3 movement = { 0.0f, 0.0f, 0.0f };
-    // if (IsKeyDown(KEY_W)) { movement.x += 0.1f; }
-    // if (IsKeyDown(KEY_S)) { movement.x -= 0.1f; }
-    // if (IsKeyDown(KEY_A)) { movement.y -= 0.1f; }
-    // if (IsKeyDown(KEY_D)) { movement.y += 0.1f; }
+    if (!initialized_) {
+        Vector3 offset = Vector3Subtract(camera_.position, camera_.target);
+        distance_ = Vector3Length(offset);
+        yaw_ = atan2f(offset.x, offset.z);
+        float horizontal = sqrtf(offset.x * offset.x + offset.z * offset.z);
+        pitch_ = atan2f(offset.y, horizontal);
+        initialized_ = true;
+    }
 
-    // Vector3 rotation = { 0.0f, 0.0f, 0.0f };
-    // rotation.y = GetMouseDelta().y * 0.05f;
-    // rotation.z = GetMouseDelta().x * 0.05f;
+    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        Vector2 delta = GetMouseDelta();
+        float rotate_speed = 0.003f;
+        const float dead_zone = 2.0f;
 
-    // float zoom_speed = 0.05f;
-    // float zoom = GetMouseWheelMove() * zoom_speed;
+        yaw_ -= delta.x * rotate_speed;
+        if (fabsf(delta.y) > dead_zone) {
+            pitch_ += delta.y * rotate_speed;
+        }
 
-    // UpdateCameraPro(&camera_, movement, rotation, zoom);
+        pitch_ = Clamp(pitch_, -1.5f, 1.5f);
+    }
 
-    float distance = Vector3Distance(camera_.position, camera_.target);
-    distance += GetMouseWheelMove() * 0.00005f;
-    distance = Clamp(distance, 10.0f, 100.0f);
+    float wheel = GetMouseWheelMove();
+    const float zoom_speed = 0.5f;
+    distance_ -= wheel * zoom_speed;
+    distance_ = Clamp(distance_, 10.0f, 100.0f);
 
-    Vector3 forward = Vector3Normalize(Vector3Subtract(camera_.target, camera_.position));
-    camera_.position = Vector3Add(camera_.target, Vector3Scale(forward, -distance));
-
-    UpdateCamera(&camera_, CAMERA_THIRD_PERSON);
+    camera_.position.x = camera_.target.x + distance_ * cosf(pitch_) * sinf(yaw_);
+    camera_.position.y = camera_.target.y + distance_ * sinf(pitch_);
+    camera_.position.z = camera_.target.z + distance_ * cosf(pitch_) * cosf(yaw_);
 }

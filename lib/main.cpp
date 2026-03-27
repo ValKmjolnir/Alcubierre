@@ -54,7 +54,7 @@ int main() {
     window.set_bloom_enabled(true);
     window.set_bloom_threshold(0.8f);   // Only lasers bloom
     window.set_bloom_intensity(2.5f);   // Normal intensity
-    window.set_bloom_blur_radius(40.0f); // Blur spread
+    window.set_bloom_blur_radius(20.0f); // Blur spread
 
     // Create projectile (orange)
     projectile proj1(

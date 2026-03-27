@@ -32,4 +32,9 @@ public:
 
 private:
     Camera3D camera_;
+
+    float distance_;
+    float yaw_;
+    float pitch_;
+    bool initialized_ = false;
 };
