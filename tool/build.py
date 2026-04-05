@@ -8,7 +8,9 @@ if sys.platform == "win32":
     if not os.path.exists("build/raylib-5.5_win64_mingw-w64"):
         os.chdir("build")
         subprocess.run([
-            "unzip", "../bin/raylib-5.5_win64_mingw-w64.zip"
+            "powershell", "-Command",
+            "Expand-Archive", "../bin/raylib-5.5_win64_mingw-w64.zip",
+            "-DestinationPath", "."
         ])
         os.chdir("..")
 elif sys.platform == "darwin":
@@ -36,7 +38,7 @@ if __name__ == "__main__":
         ]).check_returncode()
     if sys.platform == "win32":
         subprocess.run([
-            "make.exe", "-j4"
+            "mingw32-make.exe", "-j4"
         ]).check_returncode()
     else:
         subprocess.run([
