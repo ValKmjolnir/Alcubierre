@@ -1,25 +1,26 @@
 #version 330
 
-// Alcubierre Warp Drive - 引力透镜与泡壁光学效应
-// 泡壁固定在屏幕中心（飞船内部视角），速度只影响多普勒和聚束方向
+// Alcubierre Warp Drive - Gravitational Lensing and Bubble Wall Optics
+// The bubble wall is fixed at screen center (interior observer perspective).
+// Velocity direction only affects Doppler shift and relativistic beaming.
 
 in vec2 fragTexCoord;
 
-uniform sampler2D texture0;       // 输入纹理（bloom后的场景）
-uniform vec3 velocity;            // 速度方向与大小
-uniform float warpFactor;         // 曲速因子 (1.0=静止, >1=超光速)
-uniform float bubbleRadius;       // 曲速泡半径 (屏幕空间, 0.3~0.8)
-uniform float wallThickness;      // 泡壁厚度
-uniform float exposure;           // 曝光
+uniform sampler2D texture0;       // Input texture (bloomed scene)
+uniform vec3 velocity;            // Velocity direction; magnitude = beta = v/c (0~0.99)
+uniform float warpFactor;         // Warp factor (1.0 = stationary, >1 = superluminal)
+uniform float bubbleRadius;       // Warp bubble radius (screen space, 0.3~0.8)
+uniform float wallThickness;      // Bubble wall thickness
+uniform float exposure;           // Exposure
 
 out vec4 fragColor;
 
 // ============================================================================
-// 核心光学效应
+// Core optical effects
 // ============================================================================
 
-// 泡壁折射 - 引力透镜核心扭曲
-// 泡壁固定在屏幕中心，不随速度方向变化
+// Bubble wall refraction — gravitational lensing distortion.
+// The bubble wall is fixed at screen center and does not follow velocity.
 vec2 applyBubbleRefraction(vec2 uv, float warpF) {
     vec2 center = vec2(0.5);
     vec2 delta = uv - center;
@@ -29,22 +30,22 @@ vec2 applyBubbleRefraction(vec2 uv, float warpF) {
 
     vec2 radialDir = delta / dist;
 
-    // 泡壁影响区域: 以 bubbleRadius 为中心的环形带
+    // Annular region of influence centered at bubbleRadius
     float wallInner = max(0.01, bubbleRadius - wallThickness);
     float wallOuter = min(0.99, bubbleRadius + wallThickness);
 
-    // 在环形带内最强
+    // Strongest within the annular band
     float wallFactor = smoothstep(wallInner - 0.08, wallInner, dist) *
                        (1.0 - smoothstep(wallOuter, wallOuter + 0.08, dist));
 
-    // 爱因斯坦角偏移
+    // Einstein deflection angle (analogous to gravitational lensing)
     float einsteinAngle = warpF * 0.1;
     float distortion = einsteinAngle * wallFactor / (dist + 0.02);
 
-    // 径向扭曲 - 光线向泡壁偏折
+    // Radial distortion — light bends toward the bubble wall
     uv -= radialDir * distortion * 0.5;
 
-    // 切向漩涡 - 产生弧形畸变
+    // Tangential swirl — produces arc-like distortion
     vec2 tangentDir = vec2(-delta.y, delta.x) / dist;
     float tangentialDistortion = einsteinAngle * wallFactor * 0.12;
     uv += tangentDir * tangentialDistortion;
@@ -52,7 +53,7 @@ vec2 applyBubbleRefraction(vec2 uv, float warpF) {
     return uv;
 }
 
-// 色差效应 - 不同波长折射率不同
+// Chromatic aberration — wavelength-dependent refraction index.
 vec3 applyChromaticAberration(vec2 uv, float warpF) {
     float distortion = warpF * 0.006;
 
@@ -63,43 +64,42 @@ vec3 applyChromaticAberration(vec2 uv, float warpF) {
     return vec3(r, g, b);
 }
 
-// 多普勒频移 - 基于速度方向
-vec3 applyDopplerShift(vec3 color, vec2 uv, vec3 velDir, float warpF) {
-    // 屏幕中心为"前方"，越靠近边缘越"侧方/后方"
+// Doppler shift — depends on velocity direction.
+// `beta` comes from the velocity vector magnitude (v/c).
+vec3 applyDopplerShift(vec3 color, vec2 uv, vec3 velDir, float beta) {
+    // Screen center = forward direction; edges = lateral / aft
     vec2 fromCenter = uv - 0.5;
     float distFromCenter = length(fromCenter);
 
-    // 速度在屏幕上的投影方向
+    // Projected velocity direction on screen
     vec3 normVel = normalize(velDir + 0.001);
     vec2 velProj = normalize(normVel.xy + 0.001);
 
-    // 视线与速度方向的余弦
+    // Cosine between view direction and velocity direction
     float cosTheta;
     if (distFromCenter > 0.001) {
         vec2 viewProj = normalize(fromCenter);
         cosTheta = dot(viewProj, velProj);
     } else {
-        cosTheta = 1.0; // 正前方
+        cosTheta = 1.0; // dead ahead
     }
 
-    // 有效 beta
-    float beta = clamp((warpF - 1.0) / warpF, 0.0, 0.99);
     float gamma = 1.0 / sqrt(max(0.001, 1.0 - beta * beta));
 
-    // 多普勒因子
+    // Doppler factor
     float doppler = 1.0 / (gamma * (1.0 - beta * cosTheta + 0.001));
 
-    // 色温映射
+    // Color temperature mapping
     vec3 shifted;
     if (doppler > 1.0) {
-        // 蓝移: 增强蓝
+        // Blueshift: enhance blue channel
         shifted = vec3(
             color.r * 0.8,
             color.g * doppler * 0.9,
             color.b * doppler * 1.1
         );
     } else {
-        // 红移: 增强红
+        // Redshift: enhance red channel
         float redShift = 1.0 / max(0.1, doppler);
         shifted = vec3(
             color.r * redShift * 1.0,
@@ -111,25 +111,25 @@ vec3 applyDopplerShift(vec3 color, vec2 uv, vec3 velDir, float warpF) {
     return clamp(shifted, 0.0, 5.0);
 }
 
-// 聚束效应 - 向速度方向汇聚
-float applyBeaming(vec2 uv, vec3 velDir, float warpF) {
+// Relativistic beaming — light converges toward velocity direction.
+// `beta` comes from the velocity vector magnitude (v/c).
+float applyBeaming(vec2 uv, vec3 velDir, float beta) {
     vec2 fromCenter = uv - 0.5;
     float dist = length(fromCenter);
-    if (dist < 0.001) return pow(warpF, 2.0);
+    if (dist < 0.001) return 1.0 / pow(max(0.001, 1.0 - beta), 2.0);
 
     vec3 normVel = normalize(velDir + 0.001);
     vec2 velProj = normalize(normVel.xy + 0.001);
     vec2 viewProj = normalize(fromCenter);
 
     float cosTheta = dot(viewProj, velProj);
-    float beta = clamp((warpF - 1.0) / warpF, 0.0, 0.99);
     float gamma = 1.0 / sqrt(max(0.001, 1.0 - beta * beta));
     float doppler = 1.0 / (gamma * (1.0 - beta * cosTheta + 0.001));
 
     return pow(max(doppler, 0.0), 2.5);
 }
 
-// 前方聚光亮斑 - 固定在屏幕中心
+// Forward glow — bright spot fixed at screen center.
 vec3 forwardGlow(vec2 uv, float warpF) {
     float dist = length(uv - 0.5);
     float glowRadius = 0.25 / max(warpF, 2.0);
@@ -138,7 +138,7 @@ vec3 forwardGlow(vec2 uv, float warpF) {
     return vec3(0.4, 0.6, 1.0) * glow * (warpF - 1.0) * 0.6;
 }
 
-// 弓形波辐射 - 从中心向外扩散
+// Bow wave radiation — expands outward from center.
 vec3 bowWave(vec2 uv, float warpF) {
     vec2 fromCenter = uv - 0.5;
     float dist = length(fromCenter);
@@ -146,8 +146,8 @@ vec3 bowWave(vec2 uv, float warpF) {
 
     vec2 dir = fromCenter / dist;
 
-    // 环形辐射，前方更强
-    float forwardCos = dir.y; // 假设上方为前方
+    // Annular radiation, stronger in the forward direction
+    float forwardCos = dir.y; // assume upward is forward
     float forwardFactor = max(forwardCos, 0.0);
 
     float radialFade = exp(-dist * 3.0);
@@ -156,13 +156,13 @@ vec3 bowWave(vec2 uv, float warpF) {
     return vec3(0.3, 0.5, 0.9) * coneShape * radialFade * (warpF - 1.0) * 0.25;
 }
 
-// 泡壁环形亮带 - 固定在屏幕中心
+// Bubble wall annular glow — fixed at screen center.
 float bubbleWallGlow(vec2 uv, float warpF) {
     float dist = length(uv - 0.5) * 2.0;
     float wallInner = max(0.01, bubbleRadius - wallThickness);
     float wallOuter = min(0.99, bubbleRadius + wallThickness);
 
-    // 环形高斯分布
+    // Gaussian distribution along the ring
     float wallCenter = (wallInner + wallOuter) * 0.5;
     float wallSigma = (wallOuter - wallInner) * 0.5 + 0.02;
     float glow = exp(-pow(dist - wallCenter, 2.0) / (2.0 * wallSigma * wallSigma));
@@ -170,7 +170,7 @@ float bubbleWallGlow(vec2 uv, float warpF) {
     return glow * warpF * 0.35;
 }
 
-// 泡壁内部区域 - 平坦时空区
+// Bubble interior — flat spacetime region.
 float bubbleInterior(vec2 uv) {
     float dist = length(uv - 0.5) * 2.0;
     float interiorEdge = max(0.01, bubbleRadius - wallThickness);
@@ -178,15 +178,14 @@ float bubbleInterior(vec2 uv) {
 }
 
 // ============================================================================
-// 主函数
+// Main
 // ============================================================================
 
 void main() {
-    float speed = length(velocity);
-    float effectiveWarp = max(warpFactor, speed);
+    float beta = clamp(length(velocity), 0.0, 0.99);
 
-    // 静止或低速时直接输出
-    if (effectiveWarp < 1.05) {
+    // Passthrough for sub-relativistic speeds
+    if (beta < 0.01 && warpFactor < 1.05) {
         fragColor = texture(texture0, fragTexCoord);
         return;
     }
@@ -194,35 +193,35 @@ void main() {
     vec3 velDir = normalize(velocity + 0.0001);
     vec2 uv = fragTexCoord;
 
-    // --- 第一步：泡壁折射扭曲（固定中心） ---
-    vec2 distortedUV = applyBubbleRefraction(uv, effectiveWarp);
+    // Step 1: Bubble wall refraction (driven by warpFactor)
+    vec2 distortedUV = applyBubbleRefraction(uv, warpFactor);
     distortedUV = clamp(distortedUV, 0.0, 1.0);
 
-    // --- 第二步：色差采样 ---
-    vec3 color = applyChromaticAberration(distortedUV, effectiveWarp);
+    // Step 2: Chromatic aberration (driven by warpFactor)
+    vec3 color = applyChromaticAberration(distortedUV, warpFactor);
 
-    // --- 第三步：多普勒频移（依赖速度方向） ---
-    color = applyDopplerShift(color, distortedUV, velDir, effectiveWarp);
+    // Step 3: Doppler shift (driven by beta = v/c)
+    color = applyDopplerShift(color, distortedUV, velDir, beta);
 
-    // --- 第四步：聚束效应（依赖速度方向） ---
-    float beam = applyBeaming(distortedUV, velDir, effectiveWarp);
+    // Step 4: Relativistic beaming (driven by beta = v/c)
+    float beam = applyBeaming(distortedUV, velDir, beta);
     color *= beam;
 
-    // --- 第五步：前方聚光亮斑（固定中心） ---
-    color += forwardGlow(uv, effectiveWarp);
+    // Step 5: Forward glow (driven by warpFactor)
+    color += forwardGlow(uv, warpFactor);
 
-    // --- 第六步：弓形波辐射 ---
-    color += bowWave(uv, effectiveWarp);
+    // Step 6: Bow wave radiation (driven by warpFactor)
+    color += bowWave(uv, warpFactor);
 
-    // --- 第七步：泡壁环形发光（固定中心） ---
-    float wallGlow = bubbleWallGlow(uv, effectiveWarp);
+    // Step 7: Bubble wall annular glow (driven by warpFactor)
+    float wallGlow = bubbleWallGlow(uv, warpFactor);
     color += vec3(0.3, 0.5, 1.0) * wallGlow;
 
-    // --- 第八步：泡壁内部略微提亮（平坦时空区） ---
+    // Step 8: Slight interior brightening (flat spacetime region)
     float interior = bubbleInterior(uv);
     color = mix(color, color * 1.1, interior * 0.3);
 
-    // --- 第九步：色调映射 + 曝光 ---
+    // Step 9: Tone mapping + exposure
     color = color / (1.0 + color);  // Reinhard
     color *= exposure;
 
