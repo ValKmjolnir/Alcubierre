@@ -2,10 +2,12 @@ import os
 import sys
 import subprocess
 
-if not os.path.exists("build"):
-    os.mkdir("build")
-if sys.platform == "win32":
-    if not os.path.exists("build/raylib-5.5_win64_mingw-w64"):
+def extract_raylib():
+    if not os.path.exists("build"):
+        os.mkdir("build")
+    if sys.platform == "win32":
+        if os.path.exists("build/raylib-5.5_win64_mingw-w64"):
+            return
         os.chdir("build")
         subprocess.run([
             "powershell", "-Command",
@@ -13,18 +15,18 @@ if sys.platform == "win32":
             "-DestinationPath", "."
         ])
         os.chdir("..")
-elif sys.platform == "darwin":
-    if not os.path.exists("build/raylib-5.5_macos"):
+    elif sys.platform == "darwin":
+        if os.path.exists("build/raylib-5.5_macos"):
+            return
         os.chdir("build")
         subprocess.run([
             "tar", "-xvzf", "../bin/raylib-5.5_macos.tar.gz"
         ])
         os.chdir("..")
 
-if not os.path.exists("build_cmake"):
-    os.mkdir("build_cmake")
-
-if __name__ == "__main__":
+def build_cmake():
+    if not os.path.exists("build_cmake"):
+        os.mkdir("build_cmake")
     os.chdir("build_cmake")
     if sys.platform == "win32":
         subprocess.run([
@@ -45,3 +47,7 @@ if __name__ == "__main__":
             "make", "-j4"
         ]).check_returncode()
     os.chdir("..")
+
+if __name__ == "__main__":
+    extract_raylib()
+    build_cmake()
