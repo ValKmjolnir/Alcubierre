@@ -11,6 +11,7 @@ uniform vec3 velocity;            // Velocity direction; magnitude = beta = v/c 
 uniform float warpFactor;         // Warp factor (1.0 = stationary, >1 = superluminal)
 uniform float bubbleRadius;       // Warp bubble radius (screen space, 0.3~0.8)
 uniform float wallThickness;      // Bubble wall thickness
+uniform float aspectRatio;        // Screen aspect ratio (width / height)
 uniform float exposure;           // Exposure
 
 out vec4 fragColor;
@@ -19,11 +20,16 @@ out vec4 fragColor;
 // Core optical effects
 // ============================================================================
 
+// Correct UV delta for screen aspect ratio so that distances are isotropic.
+vec2 correctAspect(vec2 delta, float ar) {
+    return vec2(delta.x * ar * 0.8, delta.y);
+}
+
 // Bubble wall refraction — gravitational lensing distortion.
 // The bubble wall is fixed at screen center and does not follow velocity.
 vec2 applyBubbleRefraction(vec2 uv, float warpF) {
     vec2 center = vec2(0.5);
-    vec2 delta = uv - center;
+    vec2 delta = correctAspect(uv - center, aspectRatio);
     float dist = length(delta);
 
     if (dist < 0.001) return uv;
@@ -158,7 +164,7 @@ vec3 bowWave(vec2 uv, float warpF) {
 
 // Bubble wall annular glow — fixed at screen center.
 float bubbleWallGlow(vec2 uv, float warpF) {
-    float dist = length(uv - 0.5) * 2.0;
+    float dist = length(correctAspect(uv - 0.5, aspectRatio)) * 2.0;
     float wallInner = max(0.01, bubbleRadius - wallThickness);
     float wallOuter = min(0.99, bubbleRadius + wallThickness);
 
@@ -172,7 +178,7 @@ float bubbleWallGlow(vec2 uv, float warpF) {
 
 // Bubble interior — flat spacetime region.
 float bubbleInterior(vec2 uv) {
-    float dist = length(uv - 0.5) * 2.0;
+    float dist = length(correctAspect(uv - 0.5, aspectRatio)) * 2.0;
     float interiorEdge = max(0.01, bubbleRadius - wallThickness);
     return 1.0 - smoothstep(interiorEdge - 0.05, interiorEdge, dist);
 }

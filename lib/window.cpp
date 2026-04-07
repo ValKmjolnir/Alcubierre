@@ -101,6 +101,7 @@ void game_window::init_warp() {
     loc_warp_factor_ = GetShaderLocation(warp_shader_, "warpFactor");
     loc_bubble_radius_ = GetShaderLocation(warp_shader_, "bubbleRadius");
     loc_wall_thickness_ = GetShaderLocation(warp_shader_, "wallThickness");
+    loc_aspect_ratio_ = GetShaderLocation(warp_shader_, "aspectRatio");
     loc_exposure_ = GetShaderLocation(warp_shader_, "exposure");
 
     // Set defaults
@@ -323,10 +324,12 @@ void game_window::apply_warp_to_texture(const RenderTexture2D& texture) {
 
     // Set shader uniforms
     float velocity_vec[3] = { velocity_.x, velocity_.y, velocity_.z };
+    float aspect = static_cast<float>(width_) / static_cast<float>(height_);
     SetShaderValue(warp_shader_, loc_velocity_, velocity_vec, SHADER_UNIFORM_VEC3);
     SetShaderValue(warp_shader_, loc_warp_factor_, &warp_factor_, SHADER_UNIFORM_FLOAT);
     SetShaderValue(warp_shader_, loc_bubble_radius_, &bubble_radius_, SHADER_UNIFORM_FLOAT);
     SetShaderValue(warp_shader_, loc_wall_thickness_, &wall_thickness_, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(warp_shader_, loc_aspect_ratio_, &aspect, SHADER_UNIFORM_FLOAT);
     SetShaderValue(warp_shader_, loc_exposure_, &exposure_, SHADER_UNIFORM_FLOAT);
 
     // Apply warp lens effect

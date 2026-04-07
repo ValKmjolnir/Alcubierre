@@ -82,6 +82,7 @@ private:
     int loc_warp_factor_;
     int loc_bubble_radius_;
     int loc_wall_thickness_;
+    int loc_aspect_ratio_;
     int loc_exposure_;
 
     // Warp settings
