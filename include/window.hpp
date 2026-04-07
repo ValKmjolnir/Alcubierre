@@ -31,7 +31,6 @@ public:
     void apply_bloom();
 
     // Alcubierre warp lens post-processing
-    void set_warp_enabled(bool enabled);
     bool is_warp_enabled() const;
     void set_velocity(const Vector3& velocity);
     Vector3 get_velocity() const;

@@ -209,8 +209,11 @@ int main() {
         char vel_text[256];
         snprintf(vel_text, 255, "Velocity: %.2f,%.2f,%.2f", window.get_velocity().x, window.get_velocity().y, window.get_velocity().z);
         DrawText(vel_text, 10, 120, 16, WHITE);
+        char cam_text[256];
+        snprintf(cam_text, 255, "Camera: %.2f,%.2f,%.2f", camera.position().x, camera.position().y, camera.position().z);
+        DrawText(cam_text, 10, 140, 16, WHITE);
 
-        DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 140, 16, GREEN);
+        DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 160, 16, GREEN);
 
         window.end_drawing();
     }
