@@ -31,9 +31,12 @@ public:
     void apply_bloom();
 
     // Alcubierre warp lens post-processing
+    void set_warp_enabled(bool enabled);
     bool is_warp_enabled() const;
     void set_velocity(const Vector3& velocity);
     Vector3 get_velocity() const;
+    void set_view_direction(const Vector3& viewDir);
+    Vector3 get_view_direction() const;
     void update_warp_factor();
     float get_warp_factor() const;
     void set_bubble_radius(float radius);
@@ -78,6 +81,7 @@ private:
     Shader warp_shader_;
     bool warp_shaders_loaded_ = false;
     int loc_velocity_;
+    int loc_view_direction_;
     int loc_warp_factor_;
     int loc_bubble_radius_;
     int loc_wall_thickness_;
@@ -87,6 +91,7 @@ private:
     // Warp settings
     bool warp_enabled_ = false;
     Vector3 velocity_ = { 0.0f, 0.0f, 1.0f };
+    Vector3 view_direction_ = { 0.0f, 0.0f, -1.0f };
     float warp_factor_ = 0.0f;
     float bubble_radius_ = 0.5f;
     float wall_thickness_ = 0.1f;

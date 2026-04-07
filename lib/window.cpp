@@ -98,6 +98,7 @@ void game_window::init_warp() {
 
     // Get uniform locations
     loc_velocity_ = GetShaderLocation(warp_shader_, "velocity");
+    loc_view_direction_ = GetShaderLocation(warp_shader_, "viewDirection");
     loc_warp_factor_ = GetShaderLocation(warp_shader_, "warpFactor");
     loc_bubble_radius_ = GetShaderLocation(warp_shader_, "bubbleRadius");
     loc_wall_thickness_ = GetShaderLocation(warp_shader_, "wallThickness");
@@ -159,6 +160,14 @@ void game_window::set_velocity(const Vector3& velocity) {
 
 Vector3 game_window::get_velocity() const {
     return velocity_;
+}
+
+void game_window::set_view_direction(const Vector3& viewDir) {
+    view_direction_ = viewDir;
+}
+
+Vector3 game_window::get_view_direction() const {
+    return view_direction_;
 }
 
 void game_window::update_warp_factor() {
@@ -330,8 +339,10 @@ void game_window::apply_warp_to_texture(const RenderTexture2D& texture) {
 
     // Set shader uniforms
     float velocity_vec[3] = { velocity_.x, velocity_.y, velocity_.z };
+    float view_dir_vec[3] = { view_direction_.x, view_direction_.y, view_direction_.z };
     float aspect = static_cast<float>(width_) / static_cast<float>(height_);
     SetShaderValue(warp_shader_, loc_velocity_, velocity_vec, SHADER_UNIFORM_VEC3);
+    SetShaderValue(warp_shader_, loc_view_direction_, view_dir_vec, SHADER_UNIFORM_VEC3);
     SetShaderValue(warp_shader_, loc_warp_factor_, &warp_factor_, SHADER_UNIFORM_FLOAT);
     SetShaderValue(warp_shader_, loc_bubble_radius_, &bubble_radius_, SHADER_UNIFORM_FLOAT);
     SetShaderValue(warp_shader_, loc_wall_thickness_, &wall_thickness_, SHADER_UNIFORM_FLOAT);

@@ -7,7 +7,8 @@
 in vec2 fragTexCoord;
 
 uniform sampler2D texture0;       // Input texture (bloomed scene)
-uniform vec3 velocity;            // Velocity direction; magnitude = beta = v/c (0~0.99)
+uniform vec3 velocity;            // Velocity direction; magnitude = beta = v/c
+uniform vec3 viewDirection;       // Camera forward direction (normalized)
 uniform float warpFactor;         // Warp factor (1.0 = stationary, >1 = superluminal)
 uniform float bubbleRadius;       // Warp bubble radius (screen space, 0.3~0.8)
 uniform float wallThickness;      // Bubble wall thickness
@@ -23,6 +24,31 @@ out vec4 fragColor;
 // Correct UV delta for screen aspect ratio so that distances are isotropic.
 vec2 correctAspect(vec2 delta, float ar) {
     return vec2(delta.x * ar * 0.8, delta.y);
+}
+
+// Project a 3D direction onto screen UV, given the camera view direction.
+// Returns UV in [0,1] with center at (0.5, 0.5). Returns (-1,-1) if behind camera.
+vec2 projectToScreen(vec3 worldDir, vec3 viewDir, float ar) {
+    // Build camera basis from viewDirection
+    vec3 forward = normalize(viewDir);
+    vec3 worldUp = vec3(0.0, 1.0, 0.0);
+    vec3 right = normalize(cross(forward, worldUp));
+    vec3 up = cross(right, forward);
+
+    // Express worldDir in camera local space
+    float x = dot(worldDir, right);
+    float y = dot(worldDir, up);
+    float z = dot(worldDir, forward);
+
+    // Behind camera
+    if (z <= 0.0) return vec2(-1.0);
+
+    // Perspective projection
+    float fovScale = 1.0;  // matches the ~45 deg FOV
+    vec2 ndc = vec2(x, y) / (z * fovScale);
+
+    // Convert to UV [0,1] with aspect correction
+    return vec2(ndc.x / ar * 0.8 + 0.5, -ndc.y + 0.5);
 }
 
 // Bubble wall refraction — gravitational lensing distortion.
@@ -70,25 +96,11 @@ vec3 applyChromaticAberration(vec2 uv, float warpF) {
     return vec3(r, g, b);
 }
 
-// Doppler shift — depends on velocity direction.
+// Doppler shift — depends on angle between view direction and velocity.
 // `beta` comes from the velocity vector magnitude (v/c).
-vec3 applyDopplerShift(vec3 color, vec2 uv, vec3 velDir, float beta) {
-    // Screen center = forward direction; edges = lateral / aft
-    vec2 fromCenter = uv - 0.5;
-    float distFromCenter = length(fromCenter);
-
-    // Projected velocity direction on screen
-    vec3 normVel = normalize(velDir + 0.001);
-    vec2 velProj = normalize(normVel.xy + 0.001);
-
+vec3 applyDopplerShift(vec3 color, vec2 uv, vec3 velDir, vec3 viewDir, float beta) {
     // Cosine between view direction and velocity direction
-    float cosTheta;
-    if (distFromCenter > 0.001) {
-        vec2 viewProj = normalize(fromCenter);
-        cosTheta = dot(viewProj, velProj);
-    } else {
-        cosTheta = 1.0; // dead ahead
-    }
+    float cosTheta = dot(normalize(viewDir + 0.001), normalize(velDir + 0.001));
 
     float gamma = 1.0 / sqrt(max(0.001, 1.0 - beta * beta));
 
@@ -117,18 +129,10 @@ vec3 applyDopplerShift(vec3 color, vec2 uv, vec3 velDir, float beta) {
     return clamp(shifted, 0.0, 5.0);
 }
 
-// Relativistic beaming — light converges toward velocity direction.
+// Relativistic beaming — brightness boost when looking along velocity.
 // `beta` comes from the velocity vector magnitude (v/c).
-float applyBeaming(vec2 uv, vec3 velDir, float beta) {
-    vec2 fromCenter = uv - 0.5;
-    float dist = length(fromCenter);
-    if (dist < 0.001) return 1.0 / pow(max(0.001, 1.0 - beta), 2.0);
-
-    vec3 normVel = normalize(velDir + 0.001);
-    vec2 velProj = normalize(normVel.xy + 0.001);
-    vec2 viewProj = normalize(fromCenter);
-
-    float cosTheta = dot(viewProj, velProj);
+float applyBeaming(vec3 velDir, vec3 viewDir, float beta) {
+    float cosTheta = dot(normalize(viewDir + 0.001), normalize(velDir + 0.001));
     float gamma = 1.0 / sqrt(max(0.001, 1.0 - beta * beta));
     float doppler = 1.0 / (gamma * (1.0 - beta * cosTheta + 0.001));
 
@@ -144,29 +148,22 @@ vec3 forwardGlow(vec2 uv, float warpF) {
     return vec3(0.4, 0.6, 1.0) * glow * (warpF - 1.0) * 0.6;
 }
 
-// Bow wave radiation — compressed spacetime ahead.
-// Radially symmetric when looking head-on; subtle directional
-// asymmetry only when there is significant transverse velocity.
-vec3 bowWave(vec2 uv, vec3 velDir, float warpF) {
-    vec2 fromCenter = correctAspect(uv - 0.5, aspectRatio);
+// Bow wave radiation — compressed spacetime ahead of the ship.
+// Positioned at the screen-projected velocity direction.
+vec3 bowWave(vec2 uv, vec3 velDir, vec3 viewDir, float warpF) {
+    // Where does the velocity direction land on screen?
+    vec2 velScreenPos = projectToScreen(velDir, viewDir, aspectRatio);
+    if (velScreenPos.x < -0.5) return vec3(0.0); // behind camera
+
+    // Aspect-corrected distance from bow wave center
+    vec2 fromCenter = correctAspect(uv - velScreenPos, aspectRatio);
     float dist = length(fromCenter);
     if (dist < 0.001) return vec3(0.0);
 
-    // Base radial glow — bright ring ahead of the ship
+    // Radial ring glow — peaks at mid distance
     float radialGlow = exp(-dist * 2.5) * dist * 2.72;  // peaks near dist~0.4
 
-    // Subtle directional asymmetry from transverse velocity
-    vec3 normVel = normalize(velDir + 0.001);
-    float transverse = length(vec2(normVel.x, normVel.y));
-    if (transverse > 0.01) {
-        vec2 velScreen = normalize(correctAspect(vec2(normVel.x, normVel.y), aspectRatio));
-        vec2 dir = fromCenter / dist;
-        float forwardCos = dot(dir, velScreen);
-        float asymmetry = 0.7 + 0.3 * forwardCos;
-        radialGlow *= asymmetry;
-    }
-
-    return vec3(0.3, 0.5, 0.9) * radialGlow * (warpF - 1.0) * 0.25;
+    return vec3(0.3, 0.5, 0.9) * radialGlow * (warpF - 1.0) * 0.3;
 }
 
 // Bubble wall annular glow — fixed at screen center.
@@ -204,6 +201,7 @@ void main() {
     }
 
     vec3 velDir = normalize(velocity + 0.0001);
+    vec3 viewDir = normalize(viewDirection + 0.0001);
     vec2 uv = fragTexCoord;
 
     // Step 1: Bubble wall refraction (driven by warpFactor)
@@ -213,20 +211,20 @@ void main() {
     // Step 2: Chromatic aberration (driven by warpFactor)
     vec3 color = applyChromaticAberration(distortedUV, warpFactor);
 
-    // Step 3: Doppler shift (driven by beta = v/c)
-    color = applyDopplerShift(color, distortedUV, velDir, beta);
+    // Step 3: Doppler shift (driven by viewDir vs velDir angle)
+    color = applyDopplerShift(color, distortedUV, velDir, viewDir, beta);
 
-    // Step 4: Relativistic beaming (driven by beta = v/c)
-    float beam = applyBeaming(distortedUV, velDir, beta);
+    // Step 4: Relativistic beaming (driven by viewDir vs velDir angle)
+    float beam = applyBeaming(velDir, viewDir, beta);
     color *= beam;
 
-    // Step 5: Forward glow (driven by warpFactor)
+    // Step 5: Forward glow (driven by warpFactor, centered on screen)
     color += forwardGlow(uv, warpFactor);
 
-    // Step 6: Bow wave radiation (velocity-dependent)
-    color += bowWave(uv, velDir, warpFactor);
+    // Step 6: Bow wave radiation (positioned at projected velocity on screen)
+    color += bowWave(uv, velDir, viewDir, warpFactor);
 
-    // Step 7: Bubble wall annular glow (driven by warpFactor)
+    // Step 7: Bubble wall annular glow (driven by warpFactor, centered on screen)
     float wallGlow = bubbleWallGlow(uv, warpFactor);
     color += vec3(0.3, 0.5, 1.0) * wallGlow;
 

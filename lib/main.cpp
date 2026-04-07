@@ -139,6 +139,10 @@ int main() {
         vel.z = dirZ * beta;
         window.set_velocity(vel);
 
+        // Update view direction from camera
+        Vector3 camForward = Vector3Normalize(Vector3Subtract(camera.target(), camera.position()));
+        window.set_view_direction(camForward);
+
         // Update laser beams
         beam.update(dt);
         for (auto& b : beams) {
