@@ -139,9 +139,13 @@ float applyBeaming(vec3 velDir, vec3 viewDir, float beta) {
     return pow(max(doppler, 0.0), 2.5);
 }
 
-// Forward glow — bright spot fixed at screen center.
-vec3 forwardGlow(vec2 uv, float warpF) {
-    float dist = length(uv - 0.5);
+// Forward glow — bright spot at the projected velocity direction on screen.
+vec3 forwardGlow(vec2 uv, vec3 velDir, vec3 viewDir, float warpF) {
+    vec2 velScreenPos = projectToScreen(velDir, viewDir, aspectRatio);
+    if (velScreenPos.x < -0.5) return vec3(0.0); // behind camera
+
+    vec2 fromPos = correctAspect(uv - velScreenPos, aspectRatio);
+    float dist = length(fromPos);
     float glowRadius = 0.25 / max(warpF, 2.0);
     float glow = exp(-dist * dist / (glowRadius * glowRadius));
 
@@ -218,8 +222,8 @@ void main() {
     float beam = applyBeaming(velDir, viewDir, beta);
     color *= beam;
 
-    // Step 5: Forward glow (driven by warpFactor, centered on screen)
-    color += forwardGlow(uv, warpFactor);
+    // Step 5: Forward glow (positioned at projected velocity on screen)
+    color += forwardGlow(uv, velDir, viewDir, warpFactor);
 
     // Step 6: Bow wave radiation (positioned at projected velocity on screen)
     color += bowWave(uv, velDir, viewDir, warpFactor);
