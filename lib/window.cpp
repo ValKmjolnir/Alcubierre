@@ -111,6 +111,38 @@ void game_window::unload_relativistic() {
     }
 }
 
+void game_window::draw_texture_on_main_screen(const RenderTexture2D& texture) {
+    const Rectangle src = {
+        0.0f,
+        0.0f,
+        static_cast<float>(texture.texture.width),
+        -static_cast<float>(texture.texture.height)
+    };
+    const Rectangle dst = {
+        0.0f,
+        0.0f,
+        static_cast<float>(width_),
+        static_cast<float>(height_)
+    };
+    DrawTexturePro(texture.texture, src, dst, { 0.0f, 0.0f }, 0.0f, WHITE);
+}
+
+void game_window::draw_texture_to_specific_screen(const RenderTexture2D& texture, int width, int height) {
+    const Rectangle src = {
+        0.0f,
+        0.0f,
+        static_cast<float>(texture.texture.width),
+        -static_cast<float>(texture.texture.height)
+    };
+    const Rectangle dst = {
+        0.0f,
+        0.0f,
+        static_cast<float>(width),
+        static_cast<float>(height)
+    };
+    DrawTexturePro(texture.texture, src, dst, { 0.0f, 0.0f }, 0.0f, WHITE);
+}
+
 void game_window::set_relativistic_enabled(bool enabled) {
     relativistic_enabled_ = enabled;
 }
@@ -168,42 +200,21 @@ void game_window::end_scene_pass() {
 }
 
 void game_window::apply_bloom() {
-    int scene_width = scene_texture_.texture.width;
-    int scene_height = scene_texture_.texture.height;
-    int bloom_width = bright_texture_.texture.width;
-    int bloom_height = bright_texture_.texture.height;
-
     if (!bloom_enabled_ || !bloom_shaders_loaded_) {
         // No bloom - just apply relativistic to scene texture and draw
-        // if (relativistic_enabled_ && relativistic_shaders_loaded_) {
-        //     apply_relativistic();
-        // } else {
-            DrawTexturePro(
-                scene_texture_.texture,
-                { 0, 0, (float)scene_texture_.texture.width, -(float)scene_texture_.texture.height },
-                { 0, 0, (float)width_, (float)height_ },
-                { 0, 0 },
-                0.0f,
-                WHITE
-            );
-        // }
+        draw_texture_on_main_screen(scene_texture_);
         return;
     }
 
     // Step 1: Extract bright areas (downsample to half resolution)
     BeginTextureMode(bright_texture_);
     ClearBackground(BLACK);
-
     SetShaderValue(bloom_extract_shader_, loc_brightness_threshold_, &bloom_threshold_, SHADER_UNIFORM_FLOAT);
-
     BeginShaderMode(bloom_extract_shader_);
-    DrawTexturePro(
-        scene_texture_.texture,
-        { 0, 0, (float)scene_width, -(float)scene_height },
-        { 0, 0, (float)bloom_width, (float)bloom_height },
-        { 0, 0 },
-        0.0f,
-        WHITE
+    draw_texture_to_specific_screen(
+        scene_texture_,
+        bright_texture_.texture.width,
+        bright_texture_.texture.height
     );
     EndShaderMode();
     EndTextureMode();
@@ -211,19 +222,14 @@ void game_window::apply_bloom() {
     // Step 2: Horizontal blur
     BeginTextureMode(bloom_h_texture_);
     ClearBackground(BLACK);
-
-    float texel_size_h[2] = { 1.0f / (float)bloom_width, 0.0f };
+    float texel_size_h[2] = { 1.0f / (float)bright_texture_.texture.width, 0.0f };
     SetShaderValue(bloom_blur_h_shader_, loc_texel_size_, texel_size_h, SHADER_UNIFORM_VEC2);
     SetShaderValue(bloom_blur_h_shader_, loc_blur_radius_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
-
     BeginShaderMode(bloom_blur_h_shader_);
-    DrawTexturePro(
-        bright_texture_.texture,
-        { 0, 0, (float)bloom_width, -(float)bloom_height },
-        { 0, 0, (float)bloom_width, (float)bloom_height },
-        { 0, 0 },
-        0.0f,
-        WHITE
+    draw_texture_to_specific_screen(
+        bright_texture_,
+        bloom_h_texture_.texture.width,
+        bloom_h_texture_.texture.height
     );
     EndShaderMode();
     EndTextureMode();
@@ -231,52 +237,36 @@ void game_window::apply_bloom() {
     // Step 3: Vertical blur
     BeginTextureMode(bloom_v_texture_);
     ClearBackground(BLACK);
-
-    float texel_size_v[2] = { 0.0f, 1.0f / (float)bloom_height };
+    float texel_size_v[2] = { 0.0f, 1.0f / (float)bright_texture_.texture.height };
     SetShaderValue(bloom_blur_v_shader_, loc_texel_size_, texel_size_v, SHADER_UNIFORM_VEC2);
     SetShaderValue(bloom_blur_v_shader_, loc_blur_radius_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
-
     BeginShaderMode(bloom_blur_v_shader_);
-    DrawTexturePro(
-        bloom_h_texture_.texture,
-        { 0, 0, (float)bloom_width, -(float)bloom_height },
-        { 0, 0, (float)bloom_width, (float)bloom_height },
-        { 0, 0 },
-        0.0f,
-        WHITE
+    draw_texture_to_specific_screen(
+        bloom_h_texture_,
+        bloom_v_texture_.texture.width,
+        bloom_v_texture_.texture.height
     );
     EndShaderMode();
     EndTextureMode();
 
+    // Step 4: Composite - combine scene with bloom
     BeginTextureMode(bloom_composite_texture_);
     ClearBackground(BLACK);
-
-    // Step 4: Composite - combine scene with bloom
     // First, draw scene to screen
-    DrawTexturePro(
-        scene_texture_.texture,
-        { 0, 0, (float)scene_width, -(float)scene_height },
-        { 0, 0, (float)width_, (float)height_ },
-        { 0, 0 },
-        0.0f,
-        WHITE
+    draw_texture_to_specific_screen(
+        scene_texture_,
+        width_,
+        height_
     );
-
     // Then, draw bloom on top with additive blending
     SetShaderValue(bloom_composite_shader_, loc_bloom_intensity_, &bloom_intensity_, SHADER_UNIFORM_FLOAT);
-
     BeginShaderMode(bloom_composite_shader_);
     BeginBlendMode(BLEND_ADDITIVE);
-
-    DrawTexturePro(
-        bloom_v_texture_.texture,
-        { 0, 0, (float)bloom_width, -(float)bloom_height },
-        { 0, 0, (float)width_, (float)height_ },
-        { 0, 0 },
-        0.0f,
-        WHITE
+    draw_texture_to_specific_screen(
+        bloom_v_texture_,
+        width_,
+        height_
     );
-
     EndBlendMode();
     EndShaderMode();
     EndTextureMode();
@@ -286,14 +276,7 @@ void game_window::apply_bloom() {
         apply_relativistic_to_texture(bloom_composite_texture_);
     } else {
         // Draw the composited texture to screen
-        DrawTexturePro(
-            bloom_composite_texture_.texture,
-            { 0, 0, (float)width_, -(float)height_ },
-            { 0, 0, (float)width_, (float)height_ },
-            { 0, 0 },
-            0.0f,
-            WHITE
-        );
+        draw_texture_on_main_screen(bloom_composite_texture_);
     }
 }
 
@@ -304,19 +287,9 @@ void game_window::apply_relativistic() {
 void game_window::apply_relativistic_to_texture(const RenderTexture2D& texture) {
     if (!relativistic_enabled_ || !relativistic_shaders_loaded_) {
         // Just draw the texture directly
-        DrawTexturePro(
-            texture.texture,
-            { 0, 0, (float)texture.texture.width, -(float)texture.texture.height },
-            { 0, 0, (float)width_, (float)height_ },
-            { 0, 0 },
-            0.0f,
-            WHITE
-        );
+        draw_texture_on_main_screen(texture);
         return;
     }
-
-    int tex_width = texture.texture.width;
-    int tex_height = texture.texture.height;
 
     // Set shader uniforms
     float velocity_vec[3] = { velocity_.x, velocity_.y, velocity_.z };
@@ -325,14 +298,7 @@ void game_window::apply_relativistic_to_texture(const RenderTexture2D& texture) 
 
     // Apply relativistic effect
     BeginShaderMode(relativistic_shader_);
-    DrawTexturePro(
-        texture.texture,
-        { 0, 0, (float)tex_width, -(float)tex_height },
-        { 0, 0, (float)width_, (float)height_ },
-        { 0, 0 },
-        0.0f,
-        WHITE
-    );
+    draw_texture_on_main_screen(texture);
     EndShaderMode();
 }
 

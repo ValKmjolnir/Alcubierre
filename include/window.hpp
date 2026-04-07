@@ -85,4 +85,7 @@ private:
     void unload_bloom();
     void init_relativistic();
     void unload_relativistic();
+
+    void draw_texture_on_main_screen(const RenderTexture2D& texture);
+    void draw_texture_to_specific_screen(const RenderTexture2D& texture, int width, int height);
 };
