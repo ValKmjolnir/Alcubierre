@@ -144,22 +144,29 @@ vec3 forwardGlow(vec2 uv, float warpF) {
     return vec3(0.4, 0.6, 1.0) * glow * (warpF - 1.0) * 0.6;
 }
 
-// Bow wave radiation — expands outward from center.
-vec3 bowWave(vec2 uv, float warpF) {
-    vec2 fromCenter = uv - 0.5;
+// Bow wave radiation — compressed spacetime ahead.
+// Radially symmetric when looking head-on; subtle directional
+// asymmetry only when there is significant transverse velocity.
+vec3 bowWave(vec2 uv, vec3 velDir, float warpF) {
+    vec2 fromCenter = correctAspect(uv - 0.5, aspectRatio);
     float dist = length(fromCenter);
     if (dist < 0.001) return vec3(0.0);
 
-    vec2 dir = fromCenter / dist;
+    // Base radial glow — bright ring ahead of the ship
+    float radialGlow = exp(-dist * 2.5) * dist * 2.72;  // peaks near dist~0.4
 
-    // Annular radiation, stronger in the forward direction
-    float forwardCos = dir.y; // assume upward is forward
-    float forwardFactor = max(forwardCos, 0.0);
+    // Subtle directional asymmetry from transverse velocity
+    vec3 normVel = normalize(velDir + 0.001);
+    float transverse = length(vec2(normVel.x, normVel.y));
+    if (transverse > 0.01) {
+        vec2 velScreen = normalize(correctAspect(vec2(normVel.x, normVel.y), aspectRatio));
+        vec2 dir = fromCenter / dist;
+        float forwardCos = dot(dir, velScreen);
+        float asymmetry = 0.7 + 0.3 * forwardCos;
+        radialGlow *= asymmetry;
+    }
 
-    float radialFade = exp(-dist * 3.0);
-    float coneShape = pow(forwardFactor, 1.5);
-
-    return vec3(0.3, 0.5, 0.9) * coneShape * radialFade * (warpF - 1.0) * 0.25;
+    return vec3(0.3, 0.5, 0.9) * radialGlow * (warpF - 1.0) * 0.25;
 }
 
 // Bubble wall annular glow — fixed at screen center.
@@ -216,8 +223,8 @@ void main() {
     // Step 5: Forward glow (driven by warpFactor)
     color += forwardGlow(uv, warpFactor);
 
-    // Step 6: Bow wave radiation (driven by warpFactor)
-    color += bowWave(uv, warpFactor);
+    // Step 6: Bow wave radiation (velocity-dependent)
+    color += bowWave(uv, velDir, warpFactor);
 
     // Step 7: Bubble wall annular glow (driven by warpFactor)
     float wallGlow = bubbleWallGlow(uv, warpFactor);

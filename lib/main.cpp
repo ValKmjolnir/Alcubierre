@@ -57,9 +57,7 @@ int main() {
     window.set_bloom_blur_radius(20.0f); // Blur spread
 
     // Enable warp lens post-processing
-    window.set_warp_enabled(true);
     window.set_velocity({ 0.0f, 0.0f, 0.8f });       // beta = v/c = 0.8 (80% light speed), direction +Z
-    window.set_warp_factor(5.0f);                     // Warp factor 5 (bubble geometry intensity)
     window.set_bubble_radius(0.5f);
     window.set_wall_thickness(0.1f);
     window.set_exposure(1.0f);
@@ -108,21 +106,8 @@ int main() {
             window.set_bloom_enabled(!window.is_bloom_enabled());
         }
 
-        // Toggle warp with W key
-        if (IsKeyPressed(KEY_W)) {
-            window.set_warp_enabled(!window.is_warp_enabled());
-        }
-
-        // Adjust warp factor (bubble geometry) with PAGE UP / PAGE DOWN
-        float warp_factor = window.get_warp_factor();
-        float warp_step = 0.2f;
-        if (IsKeyDown(KEY_PAGE_UP)) {
-            warp_factor = fminf(warp_factor + warp_step, 10.0f);
-        }
-        if (IsKeyDown(KEY_PAGE_DOWN)) {
-            warp_factor = fmaxf(warp_factor - warp_step, 1.0f);
-        }
-        window.set_warp_factor(warp_factor);
+        // Adjust warp factor (bubble geometry)
+        window.update_warp_factor();
 
         // Adjust velocity (beta = v/c) with UP/DOWN, direction with LEFT/RIGHT
         Vector3 vel = window.get_velocity();
@@ -132,7 +117,7 @@ int main() {
             dirX = vel.x / beta;
             dirZ = vel.z / beta;
         }
-        float beta_step = 0.005f;
+        float beta_step = 0.001f;
         if (IsKeyDown(KEY_UP)) {
             beta = fminf(beta + beta_step, 10.0f);
         }
@@ -140,12 +125,12 @@ int main() {
             beta = fmaxf(beta - beta_step, 0.0f);
         }
         if (IsKeyDown(KEY_RIGHT) && beta > 0.001f) {
-            float angle = atan2f(dirX, dirZ) + 0.02f;
+            float angle = atan2f(dirX, dirZ) + 0.001f;
             dirX = sinf(angle);
             dirZ = cosf(angle);
         }
         if (IsKeyDown(KEY_LEFT) && beta > 0.001f) {
-            float angle = atan2f(dirX, dirZ) - 0.02f;
+            float angle = atan2f(dirX, dirZ) - 0.001f;
             dirX = sinf(angle);
             dirZ = cosf(angle);
         }
@@ -211,7 +196,6 @@ int main() {
         DrawFPS(10, 10);
         DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);
         DrawText("Press B to toggle Bloom", 10, 60, 16, window.is_bloom_enabled() ? GREEN : GRAY);
-        DrawText("Press W to toggle Warp Lens", 10, 80, 16, window.is_warp_enabled() ? GREEN : GRAY);
 
         // Display current parameters
         char info_text[256];
@@ -222,7 +206,7 @@ int main() {
         snprintf(vel_text, 255, "Velocity: %.2f,%.2f,%.2f", window.get_velocity().x, window.get_velocity().y, window.get_velocity().z);
         DrawText(vel_text, 10, 120, 16, WHITE);
 
-        DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 140, 16, GRAY);
+        DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 140, 16, GREEN);
 
         window.end_drawing();
     }

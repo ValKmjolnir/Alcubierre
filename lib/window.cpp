@@ -105,7 +105,6 @@ void game_window::init_warp() {
     loc_exposure_ = GetShaderLocation(warp_shader_, "exposure");
 
     // Set defaults
-    set_warp_factor(warp_factor_);
     set_bubble_radius(bubble_radius_);
     set_wall_thickness(wall_thickness_);
     set_exposure(1.0f);
@@ -150,10 +149,6 @@ void game_window::draw_texture_to_specific_screen(const RenderTexture2D& texture
     DrawTexturePro(texture.texture, src, dst, { 0.0f, 0.0f }, 0.0f, WHITE);
 }
 
-void game_window::set_warp_enabled(bool enabled) {
-    warp_enabled_ = enabled;
-}
-
 bool game_window::is_warp_enabled() const {
     return warp_enabled_;
 }
@@ -166,8 +161,19 @@ Vector3 game_window::get_velocity() const {
     return velocity_;
 }
 
-void game_window::set_warp_factor(float factor) {
-    warp_factor_ = factor;
+void game_window::update_warp_factor() {
+    float warp_step = 0.01f;
+    if (IsKeyDown(KEY_PAGE_UP)) {
+        warp_factor_ = fminf(warp_factor_ + warp_step, 6.0f);
+    }
+    if (IsKeyDown(KEY_PAGE_DOWN)) {
+        warp_factor_ = fmaxf(warp_factor_ - warp_step, 0.0f);
+    }
+    if (warp_factor_ == 0.0f) {
+        warp_enabled_ = false;
+    } else {
+        warp_enabled_ = true;
+    }
 }
 
 float game_window::get_warp_factor() const {
