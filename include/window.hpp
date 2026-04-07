@@ -30,15 +30,20 @@ public:
     // Bloom
     void apply_bloom();
 
-    // Relativistic post-processing
-    void set_relativistic_enabled(bool enabled);
-    bool is_relativistic_enabled() const;
+    // Alcubierre warp lens post-processing
+    void set_warp_enabled(bool enabled);
+    bool is_warp_enabled() const;
     void set_velocity(const Vector3& velocity);
     Vector3 get_velocity() const;
+    void set_warp_factor(float factor);
+    float get_warp_factor() const;
+    void set_bubble_radius(float radius);
+    float get_bubble_radius() const;
+    void set_wall_thickness(float thickness);
+    float get_wall_thickness() const;
     void set_exposure(float exposure);
     float get_exposure() const;
-    void apply_relativistic();
-    void apply_relativistic_to_texture(const RenderTexture2D& texture);
+    void apply_warp_to_texture(const RenderTexture2D& texture);
 
 private:
     int width_;
@@ -70,21 +75,27 @@ private:
     int loc_texel_size_;
     int loc_blur_radius_;
 
-    // Relativistic shaders
-    Shader relativistic_shader_;
-    bool relativistic_shaders_loaded_ = false;
+    // Alcubierre warp lens shader
+    Shader warp_shader_;
+    bool warp_shaders_loaded_ = false;
     int loc_velocity_;
+    int loc_warp_factor_;
+    int loc_bubble_radius_;
+    int loc_wall_thickness_;
     int loc_exposure_;
 
-    // Relativistic settings
-    bool relativistic_enabled_ = false;
-    Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
+    // Warp settings
+    bool warp_enabled_ = false;
+    Vector3 velocity_ = { 0.0f, 0.0f, 1.0f };
+    float warp_factor_ = 1.0f;
+    float bubble_radius_ = 0.5f;
+    float wall_thickness_ = 0.1f;
     float exposure_ = 1.0f;
 
     void init_bloom();
     void unload_bloom();
-    void init_relativistic();
-    void unload_relativistic();
+    void init_warp();
+    void unload_warp();
 
     void draw_texture_on_main_screen(const RenderTexture2D& texture);
     void draw_texture_to_specific_screen(const RenderTexture2D& texture, int width, int height);

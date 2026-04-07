@@ -56,9 +56,12 @@ int main() {
     window.set_bloom_intensity(2.5f);   // Normal intensity
     window.set_bloom_blur_radius(20.0f); // Blur spread
 
-    // Enable relativistic post-processing
-    window.set_relativistic_enabled(true);
-    window.set_velocity({ 0.0f, 0.0f, -0.8f });  // High velocity in -Z direction
+    // Enable warp lens post-processing
+    window.set_warp_enabled(true);
+    window.set_velocity({ 0.0f, 0.0f, 5.0f });  // Velocity in -Z direction
+    window.set_warp_factor(5.0f);               // Warp factor 5 = superluminal
+    window.set_bubble_radius(0.5f);
+    window.set_wall_thickness(0.1f);
     window.set_exposure(1.0f);
 
     // Create projectile (orange)
@@ -105,30 +108,30 @@ int main() {
             window.set_bloom_enabled(!window.is_bloom_enabled());
         }
 
-        // Toggle relativistic with R key
-        if (IsKeyPressed(KEY_R)) {
-            window.set_relativistic_enabled(!window.is_relativistic_enabled());
+        // Toggle warp with W key
+        if (IsKeyPressed(KEY_W)) {
+            window.set_warp_enabled(!window.is_warp_enabled());
         }
 
-        // Adjust velocity with arrow keys
-        Vector3 vel = window.get_velocity();
-        float vel_step = 0.0025f;
+        // Adjust warp factor with arrow keys
+        float warp_factor = window.get_warp_factor();
+        float warp_step = 0.1f;
         if (IsKeyDown(KEY_UP)) {
-            vel.z -= vel_step;
+            warp_factor = fminf(warp_factor + warp_step, 20.0f);
         }
         if (IsKeyDown(KEY_DOWN)) {
-            vel.z += vel_step;
+            warp_factor = fmaxf(warp_factor - warp_step, 1.0f);
         }
+        window.set_warp_factor(warp_factor);
+
+        // Adjust velocity direction with left/right arrows
+        Vector3 vel = window.get_velocity();
+        float vel_step = 0.05f;
         if (IsKeyDown(KEY_RIGHT)) {
             vel.x += vel_step;
         }
         if (IsKeyDown(KEY_LEFT)) {
             vel.x -= vel_step;
-        }
-        // Clamp velocity magnitude to < 1.0 (subluminal)
-        float vel_len = Vector3Length(vel);
-        if (vel_len > 0.99f) {
-            vel = Vector3Scale(Vector3Normalize(vel), 0.99f);
         }
         window.set_velocity(vel);
 
@@ -189,13 +192,19 @@ int main() {
         DrawFPS(10, 10);
         DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);
         DrawText("Press B to toggle Bloom", 10, 60, 16, window.is_bloom_enabled() ? GREEN : GRAY);
-        DrawText("Press R to toggle Relativistic", 10, 80, 16, window.is_relativistic_enabled() ? GREEN : GRAY);
+        DrawText("Press W to toggle Warp Lens", 10, 80, 16, window.is_warp_enabled() ? GREEN : GRAY);
 
-        // Display current velocity
-        char vel_text[64];
-        sprintf(vel_text, "Velocity: (%.2f, %.2f, %.2f)", vel.x, vel.y, vel.z);
-        DrawText(vel_text, 10, 100, 16, WHITE);
-        DrawText("Use Arrow Keys to adjust velocity", 10, 120, 16, GRAY);
+        // Display current warp parameters
+        char warp_text[256];
+        snprintf(warp_text, 255, "Warp Factor: %.2f", window.get_warp_factor());
+        DrawText(warp_text, 10, 100, 16, WHITE);
+
+        char vel_text[256];
+        snprintf(vel_text, 255, "Velocity: %.2f, %.2f, %.2f", vel.x, vel.y, vel.z);
+        DrawText(vel_text, 10, 120, 16, WHITE);
+
+        DrawText("UP/DOWN to adjust warp factor", 10, 140, 16, GRAY);
+        DrawText("LEFT/RIGHT to adjust velocity direction", 10, 160, 16, GRAY);
 
         window.end_drawing();
     }

@@ -8,14 +8,14 @@ game_window::game_window(int width, int height, const char* title):
     SetTargetFPS(120);
     DisableCursor();  // hide cursor and lock to window
 
-    // Initialize bloom and relativistic effects
+    // Initialize bloom and warp lens effects
     init_bloom();
-    init_relativistic();
+    init_warp();
 }
 
 game_window::~game_window() {
     unload_bloom();
-    unload_relativistic();
+    unload_warp();
     CloseWindow();
 }
 
@@ -84,30 +84,36 @@ void game_window::unload_bloom() {
     }
 }
 
-void game_window::init_relativistic() {
-    // Load relativistic shaders
-    auto relativistic_vs_res = try_load_shader("relativistic.vs", "relativistic.fs");
-    
-    relativistic_shader_ = relativistic_vs_res.shader;
-    relativistic_shaders_loaded_ = relativistic_vs_res.success;
-    
-    if (!relativistic_shaders_loaded_) {
-        TraceLog(LOG_WARNING, "Relativistic shaders failed to load");
+void game_window::init_warp() {
+    // Load warp lens shaders
+    auto warp_vs_res = try_load_shader("relativistic.vs", "relativistic.fs");
+
+    warp_shader_ = warp_vs_res.shader;
+    warp_shaders_loaded_ = warp_vs_res.success;
+
+    if (!warp_shaders_loaded_) {
+        TraceLog(LOG_WARNING, "Warp lens shaders failed to load");
         return;
     }
 
     // Get uniform locations
-    loc_velocity_ = GetShaderLocation(relativistic_shader_, "velocity");
-    loc_exposure_ = GetShaderLocation(relativistic_shader_, "exposure");
-    
-    // Set default exposure
+    loc_velocity_ = GetShaderLocation(warp_shader_, "velocity");
+    loc_warp_factor_ = GetShaderLocation(warp_shader_, "warpFactor");
+    loc_bubble_radius_ = GetShaderLocation(warp_shader_, "bubbleRadius");
+    loc_wall_thickness_ = GetShaderLocation(warp_shader_, "wallThickness");
+    loc_exposure_ = GetShaderLocation(warp_shader_, "exposure");
+
+    // Set defaults
+    set_warp_factor(warp_factor_);
+    set_bubble_radius(bubble_radius_);
+    set_wall_thickness(wall_thickness_);
     set_exposure(1.0f);
 }
 
-void game_window::unload_relativistic() {
-    if (relativistic_shaders_loaded_) {
-        UnloadShader(relativistic_shader_);
-        relativistic_shaders_loaded_ = false;
+void game_window::unload_warp() {
+    if (warp_shaders_loaded_) {
+        UnloadShader(warp_shader_);
+        warp_shaders_loaded_ = false;
     }
 }
 
@@ -143,12 +149,12 @@ void game_window::draw_texture_to_specific_screen(const RenderTexture2D& texture
     DrawTexturePro(texture.texture, src, dst, { 0.0f, 0.0f }, 0.0f, WHITE);
 }
 
-void game_window::set_relativistic_enabled(bool enabled) {
-    relativistic_enabled_ = enabled;
+void game_window::set_warp_enabled(bool enabled) {
+    warp_enabled_ = enabled;
 }
 
-bool game_window::is_relativistic_enabled() const {
-    return relativistic_enabled_;
+bool game_window::is_warp_enabled() const {
+    return warp_enabled_;
 }
 
 void game_window::set_velocity(const Vector3& velocity) {
@@ -157,6 +163,30 @@ void game_window::set_velocity(const Vector3& velocity) {
 
 Vector3 game_window::get_velocity() const {
     return velocity_;
+}
+
+void game_window::set_warp_factor(float factor) {
+    warp_factor_ = factor;
+}
+
+float game_window::get_warp_factor() const {
+    return warp_factor_;
+}
+
+void game_window::set_bubble_radius(float radius) {
+    bubble_radius_ = radius;
+}
+
+float game_window::get_bubble_radius() const {
+    return bubble_radius_;
+}
+
+void game_window::set_wall_thickness(float thickness) {
+    wall_thickness_ = thickness;
+}
+
+float game_window::get_wall_thickness() const {
+    return wall_thickness_;
 }
 
 void game_window::set_exposure(float exposure) {
@@ -201,8 +231,12 @@ void game_window::end_scene_pass() {
 
 void game_window::apply_bloom() {
     if (!bloom_enabled_ || !bloom_shaders_loaded_) {
-        // No bloom - just apply relativistic to scene texture and draw
-        draw_texture_on_main_screen(scene_texture_);
+        // No bloom - just apply warp to scene texture and draw
+        if (warp_enabled_ && warp_shaders_loaded_) {
+            apply_warp_to_texture(scene_texture_);
+        } else {
+            draw_texture_on_main_screen(scene_texture_);
+        }
         return;
     }
 
@@ -271,21 +305,17 @@ void game_window::apply_bloom() {
     EndShaderMode();
     EndTextureMode();
 
-    // Step 5: Apply relativistic effect if enabled, otherwise draw directly
-    if (relativistic_enabled_ && relativistic_shaders_loaded_) {
-        apply_relativistic_to_texture(bloom_composite_texture_);
+    // Step 5: Apply warp lens effect if enabled, otherwise draw directly
+    if (warp_enabled_ && warp_shaders_loaded_) {
+        apply_warp_to_texture(bloom_composite_texture_);
     } else {
         // Draw the composited texture to screen
         draw_texture_on_main_screen(bloom_composite_texture_);
     }
 }
 
-void game_window::apply_relativistic() {
-    apply_relativistic_to_texture(scene_texture_);
-}
-
-void game_window::apply_relativistic_to_texture(const RenderTexture2D& texture) {
-    if (!relativistic_enabled_ || !relativistic_shaders_loaded_) {
+void game_window::apply_warp_to_texture(const RenderTexture2D& texture) {
+    if (!warp_enabled_ || !warp_shaders_loaded_) {
         // Just draw the texture directly
         draw_texture_on_main_screen(texture);
         return;
@@ -293,11 +323,14 @@ void game_window::apply_relativistic_to_texture(const RenderTexture2D& texture) 
 
     // Set shader uniforms
     float velocity_vec[3] = { velocity_.x, velocity_.y, velocity_.z };
-    SetShaderValue(relativistic_shader_, loc_velocity_, velocity_vec, SHADER_UNIFORM_VEC3);
-    SetShaderValue(relativistic_shader_, loc_exposure_, &exposure_, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(warp_shader_, loc_velocity_, velocity_vec, SHADER_UNIFORM_VEC3);
+    SetShaderValue(warp_shader_, loc_warp_factor_, &warp_factor_, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(warp_shader_, loc_bubble_radius_, &bubble_radius_, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(warp_shader_, loc_wall_thickness_, &wall_thickness_, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(warp_shader_, loc_exposure_, &exposure_, SHADER_UNIFORM_FLOAT);
 
-    // Apply relativistic effect
-    BeginShaderMode(relativistic_shader_);
+    // Apply warp lens effect
+    BeginShaderMode(warp_shader_);
     draw_texture_on_main_screen(texture);
     EndShaderMode();
 }
