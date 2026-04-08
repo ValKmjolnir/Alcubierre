@@ -51,6 +51,4 @@ private:
     int loc_intensity;
     int loc_glow_radius;
     int loc_star_position;
-
-    void draw_with_shader_internal() const;
 };

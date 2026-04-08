@@ -129,47 +129,8 @@ bool star::is_shader_loaded() const {
 void star::draw() const {
     if (!active_) return;
 
-    // Lazy load shader on first draw
-    if (!shader_loaded_) {
-        star* mutable_this = const_cast<star*>(this);
-        mutable_this->load_shader("star.vs", "star.fs");
-    }
-
-    if (shader_loaded_) {
-        draw_with_shader_internal();
-    } else {
-        TraceLog(LOG_WARNING, "star: Shader not loaded, using default rendering");
-        DrawSphere(position_, radius_, Color {
-            static_cast<unsigned char>(color_r_),
-            static_cast<unsigned char>(color_g_),
-            static_cast<unsigned char>(color_b_),
-            static_cast<unsigned char>(color_alpha_)
-        });
-    }
-}
-
-void star::draw_with_shader_internal() const {
-    // Begin shader drawing mode
-    BeginShaderMode(shader_);
-
-    // Set shader uniforms
-    float color_vec4[4] = {
-        color_r_ / 255.0f,
-        color_g_ / 255.0f,
-        color_b_ / 255.0f,
-        color_alpha_ / 255.0f
-    };
-    SetShaderValue(shader_, loc_color, color_vec4, SHADER_UNIFORM_VEC4);
-
-    SetShaderValue(shader_, loc_intensity, &intensity_, SHADER_UNIFORM_FLOAT);
-
-    float glow_radius = 20.0f;
-    SetShaderValue(shader_, loc_glow_radius, &glow_radius, SHADER_UNIFORM_FLOAT);
-
-    float position_vec3[3] = { position_.x, position_.y, position_.z };
-    SetShaderValue(shader_, loc_star_position, position_vec3, SHADER_UNIFORM_VEC3);
-
-    // Draw the star as a sphere
+    // Draw as a simple colored sphere - no internal glow
+    // The star acts as a light source via lighting_system, not via emissive rendering
     const Color color = {
         static_cast<unsigned char>(color_r_),
         static_cast<unsigned char>(color_g_),
@@ -177,6 +138,4 @@ void star::draw_with_shader_internal() const {
         static_cast<unsigned char>(color_alpha_)
     };
     DrawSphere(position_, radius_, color);
-
-    EndShaderMode();
 }

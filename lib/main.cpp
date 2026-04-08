@@ -33,7 +33,7 @@ int main() {
         2.0f,                       // radius
         255, 240, 200, 255          // color (warm white)
     );
-    main_star.set_intensity(2.5f);
+    main_star.set_intensity(10.0f);
 
     // Create laser beam
     laser_beam beam(
