@@ -10,7 +10,7 @@ skybox::skybox() : is_loaded_(false) {
     TraceLog(LOG_DEBUG, "Creating skybox...");
     init_mesh();
     load_shader();
-    TraceLog(LOG_DEBUG, "Skybox creation complete, is_loaded_ = %d", is_loaded_);
+    TraceLog(LOG_DEBUG, "Skybox created, is_loaded_ = %d", is_loaded_);
 }
 
 skybox::~skybox() {
