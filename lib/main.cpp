@@ -3,6 +3,7 @@
 #include "laser_beam.hpp"
 #include "projectile.hpp"
 #include "skybox.hpp"
+#include "star.hpp"
 
 #include "raylib.h"
 #include "raymath.h"
@@ -24,6 +25,14 @@ int main() {
 
     // Create skybox (procedural gradient sky)
     skybox sky;
+
+    // Create star (will become the primary light source)
+    star main_star(
+        { 0.0f, 10.0f, 200.0f },  // position (high up and back)
+        2.0f,                       // radius
+        255, 240, 200, 255          // color (warm white)
+    );
+    main_star.set_intensity(2.5f);
 
     // Create laser beam
     laser_beam beam(
@@ -149,6 +158,9 @@ int main() {
             b.update(dt);
         }
 
+        // Update star
+        main_star.update(dt);
+
         // Update projectiles
         proj1.update(dt);
         proj2.update(dt);
@@ -171,6 +183,9 @@ int main() {
 
         // Draw skybox first (background)
         sky.draw(camera.get_camera());
+
+        // Draw star (before other objects, will become light source)
+        main_star.draw();
 
         // Draw grid on the ground plane
         if (draw_grid) {
