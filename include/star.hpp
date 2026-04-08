@@ -3,9 +3,10 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#include "light_base.hpp"
 #include "object.hpp"
 
-class star : public object {
+class star : public point_light, public object {
 public:
     star();
     star(const Vector3& position, float radius, int r = 255, int g = 200, int b = 100, int alpha = 255);
@@ -27,28 +28,19 @@ public:
     float intensity() const;
     void set_intensity(float intensity);
 
-    // Light source properties (for future lighting system)
-    Vector3 get_light_position() const;
-    Vector3 get_light_color() const;
-    float get_light_intensity() const;
-
     // Shader
     void load_shader(const char* vs_path, const char* fs_path);
     void unload_shader();
     bool is_shader_loaded() const;
 
-    // Update and draw
-    void update(float dt);
     void draw() const;
 
 private:
-    Vector3 position_;
     float radius_;
     int color_r_;
     int color_g_;
     int color_b_;
     int color_alpha_;
-    float intensity_;
     bool active_;
 
     // Shader members

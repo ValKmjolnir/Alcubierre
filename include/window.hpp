@@ -3,6 +3,8 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#include <memory>
+
 class game_window {
 public:
     game_window(int width = 800, int height = 600, const char* title = "Game Window");
@@ -15,6 +17,8 @@ public:
     // 3D camera methods
     void begin_mode_3d(const Camera3D& camera);
     void end_mode_3d();
+
+    // Draw methods using lit shader
     void draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b);
     void draw_grid(float spacing, int slices);
 
@@ -87,6 +91,17 @@ private:
     int loc_aspect_ratio_;
     int loc_exposure_;
 
+    // Lit object shader (for cubes, grid, etc.)
+    Shader lit_shader_;
+    bool lit_shader_loaded_ = false;
+    int loc_object_color_;
+    int loc_ambient_strength_;
+
+    // Cached meshes for lit rendering
+    Mesh cube_mesh_;
+    Mesh grid_mesh_;
+    bool cube_mesh_ready_ = false;
+
     // Warp settings
     bool warp_enabled_ = false;
     Vector3 velocity_ = { 0.0f, 0.0f, 1.0f };
@@ -100,6 +115,8 @@ private:
     void unload_bloom();
     void init_warp();
     void unload_warp();
+    void init_lit_shader();
+    void unload_lit_shader();
 
     void draw_texture_on_main_screen(const RenderTexture2D& texture);
     void draw_texture_to_specific_screen(const RenderTexture2D& texture, int width, int height);

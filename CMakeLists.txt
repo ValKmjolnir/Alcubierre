@@ -23,6 +23,8 @@ set(SOURCES
     lib/laser_beam.cpp
     lib/projectile.cpp
     lib/star.cpp
+    lib/light_base.cpp
+    lib/lighting_system.cpp
     lib/shader_loader.cpp
     lib/skybox.cpp
     lib/main.cpp

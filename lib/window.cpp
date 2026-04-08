@@ -1,5 +1,7 @@
 #include "window.hpp"
+#include "lighting_system.hpp"
 #include "raylib.h"
+#include "raymath.h"
 #include "shader_loader.hpp"
 
 game_window::game_window(int width, int height, const char* title):
@@ -11,11 +13,13 @@ game_window::game_window(int width, int height, const char* title):
     // Initialize bloom and warp lens effects
     init_bloom();
     init_warp();
+    init_lit_shader();
 }
 
 game_window::~game_window() {
     unload_bloom();
     unload_warp();
+    unload_lit_shader();
     CloseWindow();
 }
 
@@ -376,16 +380,67 @@ void game_window::end_mode_3d() {
 }
 
 void game_window::draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b) {
-    const Color color = {
-        static_cast<unsigned char>(r),
-        static_cast<unsigned char>(g),
-        static_cast<unsigned char>(b),
-        255
-    };
-    DrawCube(position, width, height, length, color);
+    if (lit_shader_loaded_ && cube_mesh_ready_) {
+        // Pass lighting data from lighting_system
+        lighting_system::instance().apply_to_shader(lit_shader_);
+
+        // Set object-specific uniforms
+        float color_vec3[3] = { r / 255.0f, g / 255.0f, b / 255.0f };
+        SetShaderValue(lit_shader_, loc_object_color_, color_vec3, SHADER_UNIFORM_VEC3);
+
+        float ambient = 0.15f;
+        SetShaderValue(lit_shader_, loc_ambient_strength_, &ambient, SHADER_UNIFORM_FLOAT);
+
+        // Draw cube with transform
+        Matrix transform = MatrixScale(width, height, length);
+        transform = MatrixMultiply(transform, MatrixTranslate(position.x, position.y, position.z));
+
+        // Create a material with our lit shader
+        Material mat = LoadMaterialDefault();
+        mat.shader = lit_shader_;
+        DrawMesh(cube_mesh_, mat, transform);
+    } else {
+        // Fallback to raylib default
+        const Color color = {
+            static_cast<unsigned char>(r),
+            static_cast<unsigned char>(g),
+            static_cast<unsigned char>(b),
+            255
+        };
+        DrawCube(position, width, height, length, color);
+    }
     DrawCubeWires(position, width, height, length, MAROON);
 }
 
 void game_window::draw_grid(float spacing, int slices) {
     DrawGrid(slices, spacing);
+}
+
+void game_window::init_lit_shader() {
+    auto lit_vs_res = try_load_shader("lit_object.vs", "lit_object.fs");
+    lit_shader_ = lit_vs_res.shader;
+    lit_shader_loaded_ = lit_vs_res.success;
+
+    if (!lit_shader_loaded_) {
+        TraceLog(LOG_WARNING, "Lit object shader failed to load, falling back to raylib default");
+        return;
+    }
+
+    loc_object_color_ = GetShaderLocation(lit_shader_, "objectColor");
+    loc_ambient_strength_ = GetShaderLocation(lit_shader_, "ambientStrength");
+
+    // Create cube mesh (unit cube, will be scaled)
+    cube_mesh_ = GenMeshCube(1.0f, 1.0f, 1.0f);
+    cube_mesh_ready_ = true;
+}
+
+void game_window::unload_lit_shader() {
+    if (lit_shader_loaded_) {
+        UnloadShader(lit_shader_);
+        lit_shader_loaded_ = false;
+    }
+    if (cube_mesh_ready_) {
+        UnloadMesh(cube_mesh_);
+        cube_mesh_ready_ = false;
+    }
 }

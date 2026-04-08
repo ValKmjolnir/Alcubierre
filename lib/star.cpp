@@ -1,4 +1,5 @@
 #include "star.hpp"
+#include "lighting_system.hpp"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -6,15 +7,12 @@
 #include <cmath>
 
 star::star()
-    : object(true)
-    , position_{ 0.0f, 0.0f, 0.0f }
-    , radius_(1.0f)
+    : point_light()
+    , object(true)
     , color_r_(255)
     , color_g_(200)
     , color_b_(100)
     , color_alpha_(255)
-    , intensity_(1.0f)
-    , active_(true)
     , shader_{ 0 }
     , shader_loaded_(false)
     , loc_mvp(-1)
@@ -23,18 +21,17 @@ star::star()
     , loc_glow_radius(-1)
     , loc_star_position(-1)
 {
+    lighting_system::instance().add_light(std::shared_ptr<star>(this, [](star*){}));
 }
 
 star::star(const Vector3& position, float radius, int r, int g, int b, int alpha)
-    : object(true)
-    , position_(position)
+    : point_light(position, { r / 255.0f, g / 255.0f, b / 255.0f }, 1.0f)
+    , object(true)
     , radius_(radius)
     , color_r_(r)
     , color_g_(g)
     , color_b_(b)
     , color_alpha_(alpha)
-    , intensity_(1.0f)
-    , active_(true)
     , shader_{ 0 }
     , shader_loaded_(false)
     , loc_mvp(-1)
@@ -43,10 +40,12 @@ star::star(const Vector3& position, float radius, int r, int g, int b, int alpha
     , loc_glow_radius(-1)
     , loc_star_position(-1)
 {
+    lighting_system::instance().add_light(std::shared_ptr<star>(this, [](star*){}));
 }
 
 star::~star() {
     unload_shader();
+    lighting_system::instance().remove_light(std::shared_ptr<star>(this, [](star*){}));
 }
 
 Vector3 star::position() const {
@@ -86,6 +85,7 @@ void star::set_color(int r, int g, int b, int alpha) {
     color_g_ = g;
     color_b_ = b;
     color_alpha_ = alpha;
+    color_ = { r / 255.0f, g / 255.0f, b / 255.0f };
 }
 
 float star::intensity() const {
@@ -96,26 +96,7 @@ void star::set_intensity(float intensity) {
     intensity_ = intensity;
 }
 
-Vector3 star::get_light_position() const {
-    return position_;
-}
-
-Vector3 star::get_light_color() const {
-    return {
-        color_r_ / 255.0f,
-        color_g_ / 255.0f,
-        color_b_ / 255.0f
-    };
-}
-
-float star::get_light_intensity() const {
-    return intensity_;
-}
-
 void star::load_shader(const char* vs_path, const char* fs_path) {
-    if (shader_loaded_) {
-        unload_shader();
-    }
 
     auto load_res = try_load_shader(vs_path, fs_path);
     shader_ = load_res.shader;
@@ -143,11 +124,6 @@ void star::unload_shader() {
 
 bool star::is_shader_loaded() const {
     return shader_loaded_;
-}
-
-void star::update(float dt) {
-    if (!active_) return;
-    (void)dt;
 }
 
 void star::draw() const {

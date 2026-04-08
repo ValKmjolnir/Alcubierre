@@ -4,6 +4,7 @@
 #include "projectile.hpp"
 #include "skybox.hpp"
 #include "star.hpp"
+#include "lighting_system.hpp"
 
 #include "raylib.h"
 #include "raymath.h"
@@ -158,8 +159,9 @@ int main() {
             b.update(dt);
         }
 
-        // Update star
+        // Update star (lighting_system auto-updates all lights)
         main_star.update(dt);
+        lighting_system::instance().update(dt);
 
         // Update projectiles
         proj1.update(dt);
@@ -227,6 +229,10 @@ int main() {
         char cam_text[256];
         snprintf(cam_text, 255, "Camera: %.2f,%.2f,%.2f", camForward.x, camForward.y, camForward.z);
         DrawText(cam_text, 10, 140, 16, WHITE);
+
+        char light_info[64];
+        snprintf(light_info, 64, "Active lights: %d", lighting_system::instance().active_light_count());
+        DrawText(light_info, 10, 180, 16, YELLOW);
 
         DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 160, 16, GREEN);
 
