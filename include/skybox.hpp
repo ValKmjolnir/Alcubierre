@@ -14,6 +14,9 @@ public:
     // Check if skybox is loaded
     bool is_loaded() const;
 
+    // Set the random seed for star generation
+    void set_seed(float seed);
+
 private:
     void init_mesh();
     void load_shader();
@@ -21,4 +24,6 @@ private:
     Mesh mesh_;
     Shader shader_;
     bool is_loaded_;
+    float seed_;
+    int seed_location_;
 };

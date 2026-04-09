@@ -6,7 +6,7 @@
 
 #include <cmath>
 
-skybox::skybox() : is_loaded_(false) {
+skybox::skybox() : is_loaded_(false), seed_(42.0f), seed_location_(-1) {
     TraceLog(LOG_DEBUG, "Creating skybox...");
     init_mesh();
     load_shader();
@@ -54,11 +54,19 @@ void skybox::load_shader() {
     int mvp_loc = GetShaderLocation(shader_, "mvp");
     TraceLog(LOG_INFO, "Uniform 'mvp' location = %d", mvp_loc);
 
+    seed_location_ = GetShaderLocation(shader_, "seed");
+    TraceLog(LOG_INFO, "Uniform 'seed' location = %d", seed_location_);
+
     if (mvp_loc == -1) {
         TraceLog(LOG_WARNING, "Skybox shader: 'mvp' uniform not found");
         TraceLog(LOG_WARNING, "Check console for shader compilation errors above");
     } else {
         TraceLog(LOG_INFO, "Skybox shader loaded successfully, mvp_loc = %d", mvp_loc);
+    }
+
+    // Set default seed value
+    if (seed_location_ != -1) {
+        SetShaderValue(shader_, seed_location_, &seed_, 1);
     }
 
     is_loaded_ = true;
@@ -100,6 +108,12 @@ void skybox::draw(const Camera3D& camera) {
     }
 
     SetShaderValueMatrix(shader_, mvp_loc, mvp);
+    
+    // Update seed uniform
+    if (seed_location_ != -1) {
+        SetShaderValue(shader_, seed_location_, &seed_, 1);
+    }
+    
     TraceLog(LOG_DEBUG, "Skybox::draw: MVP uniform set, drawing skybox");
 
     // Disable depth write and depth test for skybox
@@ -124,4 +138,11 @@ void skybox::draw(const Camera3D& camera) {
 
 bool skybox::is_loaded() const {
     return is_loaded_;
+}
+
+void skybox::set_seed(float seed) {
+    seed_ = seed;
+    if (is_loaded_ && seed_location_ != -1) {
+        SetShaderValue(shader_, seed_location_, &seed_, 1);
+    }
 }
