@@ -22,6 +22,7 @@ star::star()
     , loc_star_position(-1)
 {
     lighting_system::instance().add_light(std::shared_ptr<star>(this, [](star*){}));
+    load_shader("star.vs", "star.fs");
 }
 
 star::star(const Vector3& position, float radius, int r, int g, int b, int alpha)
@@ -41,6 +42,7 @@ star::star(const Vector3& position, float radius, int r, int g, int b, int alpha
     , loc_star_position(-1)
 {
     lighting_system::instance().add_light(std::shared_ptr<star>(this, [](star*){}));
+    load_shader("star.vs", "star.fs");
 }
 
 star::~star() {
@@ -97,7 +99,6 @@ void star::set_intensity(float intensity) {
 }
 
 void star::load_shader(const char* vs_path, const char* fs_path) {
-
     auto load_res = try_load_shader(vs_path, fs_path);
     shader_ = load_res.shader;
     shader_loaded_ = load_res.success;
