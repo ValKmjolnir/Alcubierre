@@ -87,7 +87,7 @@ vec2 applyBubbleRefraction(vec2 uv, float warpF) {
 
 // Chromatic aberration — wavelength-dependent refraction index.
 vec3 applyChromaticAberration(vec2 uv, float warpF) {
-    float distortion = warpF * 0.006;
+    float distortion = min(warpF * 0.003, 0.005);
 
     float r = texture(texture0, uv + vec2(distortion, 0.0)).r;
     float g = texture(texture0, uv).g;
@@ -136,7 +136,10 @@ float applyBeaming(vec3 velDir, vec3 viewDir, float beta) {
     float gamma = 1.0 / sqrt(max(0.001, 1.0 - beta * beta));
     float doppler = 1.0 / (gamma * (1.0 - beta * cosTheta + 0.001));
 
-    return pow(max(doppler, 0.0), 2.5);
+    // in fact it should be doppler^3 (always 3.0)
+    // if beta between 0.0 - 0.99, for beautiful effect
+    // we should use this formula to replace 3.0
+    return pow(max(doppler, 0.0), beta * 0.05 + 0.25);
 }
 
 // Forward glow — bright spot at the projected velocity direction on screen.

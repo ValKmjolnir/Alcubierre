@@ -18,7 +18,7 @@ int main() {
 
     // Create 3D camera
     camera_3d camera(
-        { 10.0f, 10.0f, 10.0f },  // position
+        { -10.0f, 10.0f, -10.0f },  // position
         { 0.0f, 0.0f, 0.0f },  // target
         { 0.0f, 1.0f, 0.0f },  // up
         45.0f                  // fovy
@@ -67,7 +67,7 @@ int main() {
     window.set_bloom_blur_radius(20.0f); // Blur spread
 
     // Enable warp lens post-processing
-    window.set_velocity({ 0.0f, 0.0f, 0.8f });       // beta = v/c = 0.8 (80% light speed), direction +Z
+    window.set_velocity({ 0.0f, 0.0f, 0.0f });
     window.set_bubble_radius(0.5f);
     window.set_wall_thickness(0.1f);
     window.set_exposure(1.0f);
@@ -127,7 +127,7 @@ int main() {
             dirX = vel.x / beta;
             dirZ = vel.z / beta;
         }
-        float beta_step = 0.001f;
+        float beta_step = 0.0025f;
         if (IsKeyDown(KEY_UP)) {
             beta = fminf(beta + beta_step, 10.0f);
         }

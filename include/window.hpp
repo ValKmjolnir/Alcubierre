@@ -104,7 +104,7 @@ private:
 
     // Warp settings
     bool warp_enabled_ = false;
-    Vector3 velocity_ = { 0.0f, 0.0f, 1.0f };
+    Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
     Vector3 view_direction_ = { 0.0f, 0.0f, -1.0f };
     float warp_factor_ = 0.0f;
     float bubble_radius_ = 0.5f;

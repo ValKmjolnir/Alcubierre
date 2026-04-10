@@ -175,7 +175,8 @@ Vector3 game_window::get_view_direction() const {
 }
 
 void game_window::update_warp_factor() {
-    float warp_step = 0.01f;
+    float warp_step = 0.01f * (7.0f - warp_factor_);
+
     if (IsKeyDown(KEY_PAGE_UP)) {
         warp_factor_ = fminf(warp_factor_ + warp_step, 6.0f);
     }
