@@ -3,6 +3,8 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#include "rendering/warp.hpp"
+
 #include <memory>
 
 class game_window {
@@ -34,21 +36,7 @@ public:
     // Bloom
     void apply_bloom();
 
-    // Alcubierre warp lens post-processing
-    bool is_warp_enabled() const;
-    void set_velocity(const Vector3& velocity);
-    Vector3 get_velocity() const;
-    void set_view_direction(const Vector3& viewDir);
-    Vector3 get_view_direction() const;
-    void update_warp_factor();
-    float get_warp_factor() const;
-    void set_bubble_radius(float radius);
-    float get_bubble_radius() const;
-    void set_wall_thickness(float thickness);
-    float get_wall_thickness() const;
-    void set_exposure(float exposure);
-    float get_exposure() const;
-    void apply_warp_to_texture(const RenderTexture2D& texture);
+    warp_renderer& get_warp_renderer();
 
 private:
     int width_;
@@ -80,17 +68,6 @@ private:
     int loc_texel_size_;
     int loc_blur_radius_;
 
-    // Alcubierre warp lens shader
-    Shader warp_shader_;
-    bool warp_shaders_loaded_ = false;
-    int loc_velocity_;
-    int loc_view_direction_;
-    int loc_warp_factor_;
-    int loc_bubble_radius_;
-    int loc_wall_thickness_;
-    int loc_aspect_ratio_;
-    int loc_exposure_;
-
     // Lit object shader (for cubes, grid, etc.)
     Shader lit_shader_;
     bool lit_shader_loaded_ = false;
@@ -102,22 +79,10 @@ private:
     Mesh grid_mesh_;
     bool cube_mesh_ready_ = false;
 
-    // Warp settings
-    bool warp_enabled_ = false;
-    Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
-    Vector3 view_direction_ = { 0.0f, 0.0f, -1.0f };
-    float warp_factor_ = 0.0f;
-    float bubble_radius_ = 0.5f;
-    float wall_thickness_ = 0.1f;
-    float exposure_ = 1.0f;
+    warp_renderer warp_renderer_;
 
     void init_bloom();
     void unload_bloom();
-    void init_warp();
-    void unload_warp();
     void init_lit_shader();
     void unload_lit_shader();
-
-    void draw_texture_on_main_screen(const RenderTexture2D& texture);
-    void draw_texture_to_specific_screen(const RenderTexture2D& texture, int width, int height);
 };

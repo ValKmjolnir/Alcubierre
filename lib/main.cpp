@@ -67,10 +67,10 @@ int main() {
     window.set_bloom_blur_radius(20.0f); // Blur spread
 
     // Enable warp lens post-processing
-    window.set_velocity({ 0.0f, 0.0f, 0.0f });
-    window.set_bubble_radius(0.5f);
-    window.set_wall_thickness(0.1f);
-    window.set_exposure(1.0f);
+    window.get_warp_renderer().set_velocity({ 0.0f, 0.0f, 0.0f });
+    window.get_warp_renderer().set_bubble_radius(0.5f);
+    window.get_warp_renderer().set_wall_thickness(0.1f);
+    window.get_warp_renderer().set_exposure(1.0f);
 
     // Create projectile (orange)
     projectile proj1(
@@ -117,10 +117,10 @@ int main() {
         }
 
         // Adjust warp factor (bubble geometry)
-        window.update_warp_factor();
+        window.get_warp_renderer().update_warp_factor();
 
         // Adjust velocity (beta = v/c) with UP/DOWN, direction with LEFT/RIGHT
-        Vector3 vel = window.get_velocity();
+        Vector3 vel = window.get_warp_renderer().get_velocity();
         float beta = Vector3Length(vel);
         float dirX = 0.0f, dirZ = 1.0f;
         if (beta > 0.001f) {
@@ -147,11 +147,11 @@ int main() {
         // Write back the updated velocity
         vel.x = dirX * beta;
         vel.z = dirZ * beta;
-        window.set_velocity(vel);
+        window.get_warp_renderer().set_velocity(vel);
 
         // Update view direction from camera
         Vector3 camForward = Vector3Normalize(Vector3Subtract(camera.target(), camera.position()));
-        window.set_view_direction(camForward);
+        window.get_warp_renderer().set_view_direction(camForward);
 
         // Update laser beams
         beam.update(dt);
@@ -220,11 +220,12 @@ int main() {
 
         // Display current parameters
         char info_text[256];
-        snprintf(info_text, 255, "Warp: %.2f  |  Beta (v/c): %.3f", window.get_warp_factor(), beta);
+        snprintf(info_text, 255, "Warp: %.2f  |  Beta (v/c): %.3f", window.get_warp_renderer().get_warp_factor(), beta);
         DrawText(info_text, 10, 100, 16, WHITE);
 
         char vel_text[256];
-        snprintf(vel_text, 255, "Velocity: %.2f,%.2f,%.2f", window.get_velocity().x, window.get_velocity().y, window.get_velocity().z);
+        const auto warp_vel = window.get_warp_renderer().get_velocity();
+        snprintf(vel_text, 255, "Velocity: %.2f,%.2f,%.2f", warp_vel.x, warp_vel.y, warp_vel.z);
         DrawText(vel_text, 10, 120, 16, WHITE);
         char cam_text[256];
         snprintf(cam_text, 255, "Camera: %.2f,%.2f,%.2f", camForward.x, camForward.y, camForward.z);

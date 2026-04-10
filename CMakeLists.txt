@@ -18,6 +18,7 @@ include_directories(${RAYLIB_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
 # Source files
 set(SOURCES
+    lib/rendering/warp.cpp
     lib/window.cpp
     lib/camera.cpp
     lib/laser_beam.cpp
@@ -28,6 +29,7 @@ set(SOURCES
     lib/shader_loader.cpp
     lib/skybox.cpp
     lib/main.cpp
+    lib/utils.cpp
 )
 
 # Create executable

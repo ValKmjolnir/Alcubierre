@@ -1,8 +1,10 @@
-#include "window.hpp"
-#include "lighting_system.hpp"
 #include "raylib.h"
 #include "raymath.h"
+
+#include "window.hpp"
+#include "lighting_system.hpp"
 #include "shader_loader.hpp"
+#include "utils.hpp"
 
 game_window::game_window(int width, int height, const char* title):
     width_(width), height_(height) {
@@ -12,13 +14,13 @@ game_window::game_window(int width, int height, const char* title):
 
     // Initialize bloom and warp lens effects
     init_bloom();
-    init_warp();
+    warp_renderer_.load();
     init_lit_shader();
 }
 
 game_window::~game_window() {
     unload_bloom();
-    unload_warp();
+    warp_renderer_.unload();
     unload_lit_shader();
     CloseWindow();
 }
@@ -88,136 +90,6 @@ void game_window::unload_bloom() {
     }
 }
 
-void game_window::init_warp() {
-    // Load warp lens shaders
-    auto warp_vs_res = try_load_shader("relativistic.vs", "relativistic.fs");
-
-    warp_shader_ = warp_vs_res.shader;
-    warp_shaders_loaded_ = warp_vs_res.success;
-
-    if (!warp_shaders_loaded_) {
-        TraceLog(LOG_WARNING, "Warp lens shaders failed to load");
-        return;
-    }
-
-    // Get uniform locations
-    loc_velocity_ = GetShaderLocation(warp_shader_, "velocity");
-    loc_view_direction_ = GetShaderLocation(warp_shader_, "viewDirection");
-    loc_warp_factor_ = GetShaderLocation(warp_shader_, "warpFactor");
-    loc_bubble_radius_ = GetShaderLocation(warp_shader_, "bubbleRadius");
-    loc_wall_thickness_ = GetShaderLocation(warp_shader_, "wallThickness");
-    loc_aspect_ratio_ = GetShaderLocation(warp_shader_, "aspectRatio");
-    loc_exposure_ = GetShaderLocation(warp_shader_, "exposure");
-
-    // Set defaults
-    set_bubble_radius(bubble_radius_);
-    set_wall_thickness(wall_thickness_);
-    set_exposure(1.0f);
-}
-
-void game_window::unload_warp() {
-    if (warp_shaders_loaded_) {
-        UnloadShader(warp_shader_);
-        warp_shaders_loaded_ = false;
-    }
-}
-
-void game_window::draw_texture_on_main_screen(const RenderTexture2D& texture) {
-    const Rectangle src = {
-        0.0f,
-        0.0f,
-        static_cast<float>(texture.texture.width),
-        -static_cast<float>(texture.texture.height)
-    };
-    const Rectangle dst = {
-        0.0f,
-        0.0f,
-        static_cast<float>(width_),
-        static_cast<float>(height_)
-    };
-    DrawTexturePro(texture.texture, src, dst, { 0.0f, 0.0f }, 0.0f, WHITE);
-}
-
-void game_window::draw_texture_to_specific_screen(const RenderTexture2D& texture, int width, int height) {
-    const Rectangle src = {
-        0.0f,
-        0.0f,
-        static_cast<float>(texture.texture.width),
-        -static_cast<float>(texture.texture.height)
-    };
-    const Rectangle dst = {
-        0.0f,
-        0.0f,
-        static_cast<float>(width),
-        static_cast<float>(height)
-    };
-    DrawTexturePro(texture.texture, src, dst, { 0.0f, 0.0f }, 0.0f, WHITE);
-}
-
-bool game_window::is_warp_enabled() const {
-    return warp_enabled_;
-}
-
-void game_window::set_velocity(const Vector3& velocity) {
-    velocity_ = velocity;
-}
-
-Vector3 game_window::get_velocity() const {
-    return velocity_;
-}
-
-void game_window::set_view_direction(const Vector3& viewDir) {
-    view_direction_ = viewDir;
-}
-
-Vector3 game_window::get_view_direction() const {
-    return view_direction_;
-}
-
-void game_window::update_warp_factor() {
-    float warp_step = 0.01f * (7.0f - warp_factor_);
-
-    if (IsKeyDown(KEY_PAGE_UP)) {
-        warp_factor_ = fminf(warp_factor_ + warp_step, 6.0f);
-    }
-    if (IsKeyDown(KEY_PAGE_DOWN)) {
-        warp_factor_ = fmaxf(warp_factor_ - warp_step, 0.0f);
-    }
-    if (warp_factor_ == 0.0f) {
-        warp_enabled_ = false;
-    } else {
-        warp_enabled_ = true;
-    }
-}
-
-float game_window::get_warp_factor() const {
-    return warp_factor_;
-}
-
-void game_window::set_bubble_radius(float radius) {
-    bubble_radius_ = radius;
-}
-
-float game_window::get_bubble_radius() const {
-    return bubble_radius_;
-}
-
-void game_window::set_wall_thickness(float thickness) {
-    wall_thickness_ = thickness;
-}
-
-float game_window::get_wall_thickness() const {
-    return wall_thickness_;
-}
-
-void game_window::set_exposure(float exposure) {
-    exposure_ = exposure;
-}
-
-float game_window::get_exposure() const {
-    return exposure_;
-}
-
 void game_window::set_bloom_enabled(bool enabled) {
     bloom_enabled_ = enabled;
 }
@@ -253,10 +125,10 @@ void game_window::end_scene_pass() {
 void game_window::apply_bloom() {
     if (!bloom_enabled_ || !bloom_shaders_loaded_) {
         // No bloom - just apply warp to scene texture and draw
-        if (warp_enabled_ && warp_shaders_loaded_) {
-            apply_warp_to_texture(scene_texture_);
+        if (warp_renderer_.enabled() && warp_renderer_.shader_loaded()) {
+            warp_renderer_.apply(scene_texture_, width_, height_);
         } else {
-            draw_texture_on_main_screen(scene_texture_);
+            draw_texture_to_specific_screen(scene_texture_, width_, height_);
         }
         return;
     }
@@ -327,37 +199,16 @@ void game_window::apply_bloom() {
     EndTextureMode();
 
     // Step 5: Apply warp lens effect if enabled, otherwise draw directly
-    if (warp_enabled_ && warp_shaders_loaded_) {
-        apply_warp_to_texture(bloom_composite_texture_);
+    if (warp_renderer_.enabled() && warp_renderer_.shader_loaded()) {
+        warp_renderer_.apply(bloom_composite_texture_, width_, height_);
     } else {
         // Draw the composited texture to screen
-        draw_texture_on_main_screen(bloom_composite_texture_);
+        draw_texture_to_specific_screen(bloom_composite_texture_, width_, height_);
     }
 }
 
-void game_window::apply_warp_to_texture(const RenderTexture2D& texture) {
-    if (!warp_enabled_ || !warp_shaders_loaded_) {
-        // Just draw the texture directly
-        draw_texture_on_main_screen(texture);
-        return;
-    }
-
-    // Set shader uniforms
-    float velocity_vec[3] = { velocity_.x, velocity_.y, velocity_.z };
-    float view_dir_vec[3] = { view_direction_.x, view_direction_.y, view_direction_.z };
-    float aspect = static_cast<float>(width_) / static_cast<float>(height_);
-    SetShaderValue(warp_shader_, loc_velocity_, velocity_vec, SHADER_UNIFORM_VEC3);
-    SetShaderValue(warp_shader_, loc_view_direction_, view_dir_vec, SHADER_UNIFORM_VEC3);
-    SetShaderValue(warp_shader_, loc_warp_factor_, &warp_factor_, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(warp_shader_, loc_bubble_radius_, &bubble_radius_, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(warp_shader_, loc_wall_thickness_, &wall_thickness_, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(warp_shader_, loc_aspect_ratio_, &aspect, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(warp_shader_, loc_exposure_, &exposure_, SHADER_UNIFORM_FLOAT);
-
-    // Apply warp lens effect
-    BeginShaderMode(warp_shader_);
-    draw_texture_on_main_screen(texture);
-    EndShaderMode();
+warp_renderer& game_window::get_warp_renderer() {
+    return warp_renderer_;
 }
 
 bool game_window::should_close() const {
