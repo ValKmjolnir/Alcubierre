@@ -68,7 +68,7 @@ private:
     bool pulse_enabled_;
     float pulse_speed_;
     float pulse_phase_;
-    
+
     // Shader members
     Shader shader_;
     bool shader_loaded_;

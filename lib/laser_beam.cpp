@@ -157,7 +157,7 @@ void laser_beam::load_shader(const char* vs_path, const char* fs_path) {
     if (shader_loaded_) {
         unload_shader();
     }
-    
+
     auto load_res = try_load_shader(vs_path, fs_path);
     shader_ = load_res.shader;
     shader_loaded_ = load_res.success;

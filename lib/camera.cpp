@@ -18,55 +18,8 @@ camera_3d::camera_3d(const Vector3& position, const Vector3& target, const Vecto
     camera_.projection = CAMERA_PERSPECTIVE;
 }
 
-const Camera3D& camera_3d::get_camera() const {
-    return camera_;
-}
-
-Camera3D& camera_3d::get_camera() {
-    return camera_;
-}
-
-Vector3 camera_3d::position() const {
-    return camera_.position;
-}
-
-void camera_3d::set_position(const Vector3& pos) {
-    camera_.position = pos;
-}
-
-Vector3 camera_3d::target() const {
-    return camera_.target;
-}
-
-void camera_3d::set_target(const Vector3& target) {
-    camera_.target = target;
-}
-
-Vector3 camera_3d::up() const {
-    return camera_.up;
-}
-
-void camera_3d::set_up(const Vector3& up) {
-    camera_.up = up;
-}
-
-float camera_3d::fovy() const {
-    return camera_.fovy;
-}
-
-void camera_3d::set_fovy(float fovy) {
-    camera_.fovy = fovy;
-}
-
-int camera_3d::projection() const {
-    return camera_.projection;
-}
-
-void camera_3d::set_projection(int projection) {
-    camera_.projection = projection;
-}
-
 void camera_3d::update(float dt) {
+    // lazy initialization
     if (!initialized_) {
         Vector3 offset = Vector3Subtract(camera_.position, camera_.target);
         distance_ = Vector3Length(offset);

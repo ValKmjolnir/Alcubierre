@@ -109,19 +109,19 @@ void skybox::draw(const Camera3D& camera) {
     }
 
     SetShaderValueMatrix(shader_, mvp_loc, mvp);
-    
+
     // Update seed uniform
     if (seed_location_ != -1) {
         SetShaderValue(shader_, seed_location_, &seed_, 1);
     }
-    
+
     TraceLog(LOG_DEBUG, "Skybox::draw: MVP uniform set, drawing skybox");
 
     // Disable depth write and depth test for skybox
     // Skybox should always be drawn in the background
     rlDisableDepthMask();
     rlDisableDepthTest();
-    
+
     // Disable backface culling so we can see the cube from inside
     rlDisableBackfaceCulling();
 
