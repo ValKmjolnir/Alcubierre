@@ -47,56 +47,39 @@ float stars3D(vec3 dir, float gridScale, float starSize, float seed) {
     return smoothstep(starSize, 0.0, dist);
 }
 
-// Check neighboring cells too (to avoid stars disappearing at cell boundaries)
+// Check neighboring cells
 float stars3DWithNeighbors(vec3 dir, float gridScale, float starSize, float seed) {
-    vec3 p = dir * gridScale;
+    vec3 warpedDir = normalize(dir + 0.1 * sin(dir * 3.0 + seed));
+
+    vec3 p = warpedDir * gridScale;
     vec3 cell = floor(p);
     vec3 localPos = fract(p);
-    
+
     float maxBright = 0.0;
-    
-    // Check current cell and all 26 neighbors
+
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
             for (int z = -1; z <= 1; z++) {
                 vec3 neighbor = vec3(float(x), float(y), float(z));
                 vec3 testCell = cell + neighbor;
-                
-                // Get star position in this cell
-                vec3 starOffset = hashOffset3(testCell, seed);
-                
-                // Distance from local position to this star
+
+                vec3 starOffset = hashOffset3(testCell, seed + dot(testCell, vec3(0.5)));
+
                 vec3 starWorldPos = testCell + starOffset;
                 float dist = length(p - starWorldPos);
-                
+
                 float bright = smoothstep(starSize, 0.0, dist);
                 maxBright = max(maxBright, bright);
             }
         }
     }
-    
+
     return maxBright;
 }
 
 void main() {
     vec3 dir = normalize(fragPosition);
-
-    // Gradient sky (no texture needed)
-    float y = dir.y;
-
-    // Bright gradient colors for better visibility
-    vec3 gradientTop = vec3(0.0, 0.05, 0.4);         // Bright blue at top
-    vec3 gradientMiddle = vec3(0.05, 0.0, 0.2);      // Purple-ish in middle
-    vec3 gradientBottom = vec3(0.2, 0.05, 0.1);      // Light purplish at bottom
-
-    // Smooth interpolation
-    float t = y * 0.5 + 0.5;  // Map y from [-1,1] to [0,1]
-    vec3 color;
-    if (t < 0.5) {
-        color = mix(gradientBottom, gradientMiddle, t * 2.0);
-    } else {
-        color = mix(gradientMiddle, gradientTop, (t - 0.5) * 2.0);
-    }
+    vec3 color = vec3(0.0, 0.0, 0.1);
 
     // Add starfield using 3D grid - no UV distortion anywhere
     // Each star is a small bright disk with smooth falloff
