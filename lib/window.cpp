@@ -3,8 +3,8 @@
 
 #include "window.hpp"
 #include "lighting_system.hpp"
-#include "shader_loader.hpp"
-#include "utils.hpp"
+#include "utils/shader_loader.hpp"
+#include "utils/draw_texture.hpp"
 
 game_window::game_window(int width, int height, const char* title):
     width_(width), height_(height) {

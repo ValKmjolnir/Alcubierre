@@ -2,7 +2,7 @@
 #include "raylib.h"
 #include "raymath.h"
 
-#include "shader_loader.hpp"
+#include "utils/shader_loader.hpp"
 #include <cmath>
 
 laser_beam::laser_beam()

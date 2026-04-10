@@ -97,6 +97,7 @@ int main() {
     proj2.set_trail_color(0, 100, 255, 160);
 
     bool draw_grid = true;
+    bool show_text = true;
 
     while (!window.should_close()) {
         window.begin_drawing();
@@ -109,6 +110,9 @@ int main() {
         // Toggle firing with space key
         if (IsKeyPressed(KEY_SPACE)) {
             draw_grid = !draw_grid;
+        }
+        if (IsKeyPressed(KEY_T)) {
+            show_text = !show_text;
         }
 
         // Toggle bloom with B key
@@ -213,30 +217,33 @@ int main() {
         window.end_scene_pass();
         window.apply_bloom();
 
-        // Draw UI (on top of bloom)
-        DrawFPS(10, 10);
-        DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);
-        DrawText("Press B to toggle Bloom", 10, 60, 16, window.is_bloom_enabled() ? GREEN : GRAY);
+        if (show_text) {
+            // Draw UI (on top of bloom)
+            DrawFPS(10, 10);
+            DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);
+            DrawText("Press T to toggle text", 10, 60, 16, WHITE);
+            DrawText("Press B to toggle Bloom", 10, 80, 16, window.is_bloom_enabled() ? GREEN : GRAY);
 
-        // Display current parameters
-        char info_text[256];
-        snprintf(info_text, 255, "Warp: %.2f  |  Beta (v/c): %.3f", window.get_warp_renderer().get_warp_factor(), beta);
-        DrawText(info_text, 10, 100, 16, WHITE);
+            // // Display current parameters
+            char info_text[256];
+            snprintf(info_text, 255, "Warp: %.2f | Beta (v/c): %.3f", window.get_warp_renderer().get_warp_factor(), beta);
+            DrawText(info_text, 10, 100, 16, WHITE);
 
-        char vel_text[256];
-        const auto warp_vel = window.get_warp_renderer().get_velocity();
-        snprintf(vel_text, 255, "Velocity: %.2f,%.2f,%.2f", warp_vel.x, warp_vel.y, warp_vel.z);
-        DrawText(vel_text, 10, 120, 16, WHITE);
-        char cam_text[256];
-        snprintf(cam_text, 255, "Camera: %.2f,%.2f,%.2f", camForward.x, camForward.y, camForward.z);
-        DrawText(cam_text, 10, 140, 16, WHITE);
+            char vel_text[256];
+            const auto warp_vel = window.get_warp_renderer().get_velocity();
+            snprintf(vel_text, 255, "Velocity: %.2f,%.2f,%.2f", warp_vel.x, warp_vel.y, warp_vel.z);
+            DrawText(vel_text, 10, 120, 16, WHITE);
 
-        char light_info[64];
-        snprintf(light_info, 64, "Active lights: %d", lighting_system::instance().active_light_count());
-        DrawText(light_info, 10, 180, 16, YELLOW);
+            char cam_text[256];
+            snprintf(cam_text, 255, "Camera: %.2f,%.2f,%.2f", camForward.x, camForward.y, camForward.z);
+            DrawText(cam_text, 10, 140, 16, WHITE);
 
-        DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 160, 16, GREEN);
+            char light_info[64];
+            snprintf(light_info, 64, "Active lights: %d", lighting_system::instance().active_light_count());
+            DrawText(light_info, 10, 160, 16, YELLOW);
 
+            DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 180, 16, GREEN);
+        }
         window.end_drawing();
     }
 

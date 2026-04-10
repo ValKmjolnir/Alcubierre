@@ -1,10 +1,11 @@
-#include "skybox.hpp"
-#include "shader_loader.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include "rlgl.h"
 
 #include <cmath>
+
+#include "skybox.hpp"
+#include "utils/shader_loader.hpp"
 
 skybox::skybox() : is_loaded_(false), seed_(42.0f), seed_location_(-1) {
     TraceLog(LOG_DEBUG, "Creating skybox...");

@@ -1,6 +1,6 @@
 #include "rendering/warp.hpp"
-#include "shader_loader.hpp"
-#include "utils.hpp"
+#include "utils/shader_loader.hpp"
+#include "utils/draw_texture.hpp"
 
 void warp_renderer::load() {
     auto warp_vs_res = try_load_shader("relativistic.vs", "relativistic.fs");

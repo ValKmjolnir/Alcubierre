@@ -1,9 +1,9 @@
-#include "star.hpp"
-#include "lighting_system.hpp"
 #include "raylib.h"
 #include "raymath.h"
 
-#include "shader_loader.hpp"
+#include "star.hpp"
+#include "lighting_system.hpp"
+#include "utils/shader_loader.hpp"
 #include <cmath>
 
 star::star()

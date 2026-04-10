@@ -1,4 +1,4 @@
-#include "shader_loader.hpp"
+#include "utils/shader_loader.hpp"
 
 load_result try_load_shader(const char* vs_path, const char* fs_path) {
     const char* possible_directories[] = {
@@ -15,6 +15,6 @@ load_result try_load_shader(const char* vs_path, const char* fs_path) {
             return { true, shader };
         }
     }
-    
+
     return { false };
 }
