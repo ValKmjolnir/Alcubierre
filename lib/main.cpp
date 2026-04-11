@@ -62,9 +62,9 @@ int main() {
 
     // Enable bloom post-processing
     window.set_bloom_enabled(true);
-    window.set_bloom_threshold(0.8f);   // Only lasers bloom
-    window.set_bloom_intensity(2.5f);   // Normal intensity
-    window.set_bloom_blur_radius(20.0f); // Blur spread
+    window.set_bloom_threshold(0.8f);
+    window.set_bloom_intensity(2.5f);
+    window.set_bloom_blur_radius(20.0f);
 
     // Enable warp lens post-processing
     window.get_warp_renderer().set_velocity({ 0.0f, 0.0f, 0.0f });
