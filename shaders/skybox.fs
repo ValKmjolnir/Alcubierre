@@ -85,13 +85,13 @@ void main() {
     // Each star is a small bright disk with smooth falloff
     
     // Layer 1: Bright stars (sparse, large grid cells)
-    float stars1 = stars3DWithNeighbors(dir, 80.0, 0.15, seed * 1.1);
+    float stars1 = stars3DWithNeighbors(dir, 30.0, 0.1, seed * 1.1);
     
     // Layer 2: Medium stars
-    float stars2 = stars3DWithNeighbors(dir, 50.0, 0.12, seed * 2.7);
+    float stars2 = stars3DWithNeighbors(dir, 10.0, 0.05, seed * 2.7);
     
     // Layer 3: Dim stars (more numerous)
-    float stars3 = stars3DWithNeighbors(dir, 30.0, 0.1, seed * 4.3);
+    float stars3 = stars3DWithNeighbors(dir, 2.5, 0.025, seed * 4.3);
     
     // Star color variation based on direction
     float colorRand = hash3(floor(dir * 100.0), seed * 7.0);
@@ -109,7 +109,7 @@ void main() {
     }
     
     // Combine layers with different weights
-    float totalStars = stars1 + stars2 * 0.7 + stars3 * 0.45;
+    float totalStars = stars1 * 0.7 + stars2 * 0.45 + stars3 * 0.25;
     
     // Add soft glow for bright stars
     float glow = stars1 * stars1;  // Squared for tighter bright core

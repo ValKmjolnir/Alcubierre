@@ -68,8 +68,8 @@ int main() {
 
     // Enable warp lens post-processing
     window.get_warp_renderer().set_velocity({ 0.0f, 0.0f, 0.0f });
-    window.get_warp_renderer().set_bubble_radius(0.5f);
-    window.get_warp_renderer().set_wall_thickness(0.1f);
+    window.get_warp_renderer().set_bubble_radius(0.45f);
+    window.get_warp_renderer().set_wall_thickness(0.075f);
     window.get_warp_renderer().set_exposure(1.0f);
 
     // Create projectile (orange)
