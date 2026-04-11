@@ -46,7 +46,7 @@ void camera_3d::update(float dt) {
     float wheel = GetMouseWheelMove();
     const float zoom_speed = 1.0f + distance_ / 10.0f;
     distance_ -= wheel * zoom_speed;
-    distance_ = Clamp(distance_, 10.0f, 300.0f);
+    distance_ = Clamp(distance_, 10.0f, 200.0f);
 
     camera_.position.x = camera_.target.x + distance_ * cosf(pitch_) * sinf(yaw_);
     camera_.position.y = camera_.target.y + distance_ * sinf(pitch_);
