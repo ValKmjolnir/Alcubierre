@@ -39,7 +39,7 @@ int main() {
     laser_beam beam(
         { 0.5f, 1.0f, 0.5f },   // start position (weapon)
         { 16.0f, 0.5f, 0.0f },  // end position (target)
-        255, 100, 100, 255        // color (red with alpha)
+        255, 150, 100, 255
     );
     beam.set_width(0.03f);
     beam.set_pulse_enabled(false);
@@ -51,7 +51,7 @@ int main() {
         auto tmp = laser_beam(
             { 16.0f, -15.0f, -5.0f + i },
             { 0.0f, 1.0f, 0.0f },
-            255, 100 + i * 10, i * 20, 255
+            255, 155 + i * 10, i * 20, 255
         );
         tmp.set_width(0.03f);
         tmp.set_pulse_enabled(true);
@@ -62,9 +62,9 @@ int main() {
 
     // Enable bloom post-processing
     window.set_bloom_enabled(true);
-    window.set_bloom_threshold(0.8f);
+    window.set_bloom_threshold(0.85f);
     window.set_bloom_intensity(2.5f);
-    window.set_bloom_blur_radius(20.0f);
+    window.set_bloom_blur_radius(15.0f);
 
     // Enable warp lens post-processing
     window.get_warp_renderer().set_velocity({ 0.0f, 0.0f, 0.0f });
@@ -187,11 +187,11 @@ int main() {
         sky.draw(camera.get_camera());
 
         // Draw star (before other objects, will become light source)
-        main_star.draw(camera);
+        main_star.draw(camera, window.height(), 500.0f);
 
         // Draw grid on the ground plane
         if (draw_grid) {
-            window.draw_grid(80, 4.0f);
+            window.draw_grid(40, 8.0f);
         }
 
         // Draw cuboid

@@ -31,5 +31,5 @@ public:
 
     void set_color(int r, int g, int b, int alpha = 255);
 
-    void draw(const camera_3d&) const;
+    void draw(const camera_3d& cam, int height, float scale) const;
 };

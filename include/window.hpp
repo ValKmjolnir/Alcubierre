@@ -86,4 +86,6 @@ public:
     void apply_bloom();
 
     warp_renderer& get_warp_renderer() { return warp_renderer_; }
+    int width() const { return width_; }
+    int height() const { return height_; }
 };
