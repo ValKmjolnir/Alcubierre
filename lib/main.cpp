@@ -1,9 +1,9 @@
 #include "window.hpp"
 #include "camera.hpp"
-#include "laser_beam.hpp"
-#include "projectile.hpp"
 #include "skybox.hpp"
-#include "star.hpp"
+#include "object/laser_beam.hpp"
+#include "object/projectile.hpp"
+#include "object/star.hpp"
 #include "lighting_system.hpp"
 
 #include "raylib.h"
@@ -12,7 +12,7 @@
 #include <vector>
 
 int main() {
-    game_window window(1600, 800, "Alcubierre");
+    game_window window(1600, 800, "Alcubierre Warp Drive");
 
     // TraceLogLevel(LOG_DEBUG);
 
@@ -29,7 +29,7 @@ int main() {
 
     // Create star (will become the primary light source)
     star main_star(
-        { 0.0f, 10.0f, 200.0f }, // position
+        { 0.0f, 10.0f, 300.0f }, // position
         255, 240, 200, 255       // color (warm white)
     );
     main_star.set_intensity(10.0f);
@@ -161,10 +161,6 @@ int main() {
         for (auto& b : beams) {
             b.update(dt);
         }
-
-        // Update star (lighting_system auto-updates all lights)
-        main_star.update(dt);
-        lighting_system::instance().update(dt);
 
         // Update projectiles
         proj1.update(dt);

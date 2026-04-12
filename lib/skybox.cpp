@@ -5,12 +5,17 @@
 #include <cmath>
 
 #include "skybox.hpp"
-#include "utils/shader_loader.hpp"
+#include "utils/shader_manager.hpp"
 
-skybox::skybox() : is_loaded_(false), seed_(42.0f), seed_location_(-1) {
+skybox::skybox() :
+    is_loaded_(false),
+    seed_(42.0f),
+    seed_location_(-1),
+    mvp_location_(-1) {
     TraceLog(LOG_DEBUG, "Creating skybox...");
     init_mesh();
     load_shader();
+    default_material_ = LoadMaterialDefault();
     TraceLog(LOG_DEBUG, "Skybox created, is_loaded_ = %d", is_loaded_);
 }
 
@@ -19,7 +24,8 @@ skybox::~skybox() {
     if (is_loaded_) {
         TraceLog(LOG_DEBUG, "Unloading skybox mesh and shader");
         UnloadMesh(mesh_);
-        UnloadShader(shader_);
+        UnloadMaterial(material_);
+        UnloadMaterial(default_material_);
     }
 }
 
@@ -32,14 +38,12 @@ void skybox::init_mesh() {
 }
 
 void skybox::load_shader() {
-    auto load_res = try_load_shader("skybox.vs", "skybox.fs");
+    auto load_res = shader_manager::instance().load("skybox.vs", "skybox.fs");
     shader_ = load_res.shader;
     if (!load_res.success) {
         TraceLog(LOG_FATAL, "skybox: Failed to load shader");
         return;
     }
-
-    TraceLog(LOG_INFO, "After LoadShader - shader.id = %d", shader_.id);
 
     // Check shader compilation status
     if (shader_.id == 0) {
@@ -52,23 +56,26 @@ void skybox::load_shader() {
     TraceLog(LOG_INFO, "Skybox shader loaded, shader.id = %d", shader_.id);
 
     // Check all uniform locations
-    int mvp_loc = GetShaderLocation(shader_, "mvp");
-    TraceLog(LOG_INFO, "Uniform 'mvp' location = %d", mvp_loc);
+    mvp_location_ = GetShaderLocation(shader_, "mvp");
+    TraceLog(LOG_INFO, "Uniform 'mvp' location = %d", mvp_location_);
 
     seed_location_ = GetShaderLocation(shader_, "seed");
     TraceLog(LOG_INFO, "Uniform 'seed' location = %d", seed_location_);
 
-    if (mvp_loc == -1) {
+    if (mvp_location_ == -1) {
         TraceLog(LOG_WARNING, "Skybox shader: 'mvp' uniform not found");
         TraceLog(LOG_WARNING, "Check console for shader compilation errors above");
     } else {
-        TraceLog(LOG_INFO, "Skybox shader loaded successfully, mvp_loc = %d", mvp_loc);
+        TraceLog(LOG_INFO, "Skybox shader loaded successfully, mvp_loc = %d", mvp_location_);
     }
 
     // Set default seed value
     if (seed_location_ != -1) {
         SetShaderValue(shader_, seed_location_, &seed_, 1);
     }
+
+    material_ = LoadMaterialDefault();
+    material_.shader = shader_;
 
     is_loaded_ = true;
 }
@@ -95,20 +102,19 @@ void skybox::draw(const Camera3D& camera) {
     if (!is_loaded_) {
         // Fallback: draw with default material (white cube)
         TraceLog(LOG_DEBUG, "Skybox::draw: using fallback default material");
-        DrawMesh(mesh_, LoadMaterialDefault(), MatrixIdentity());
+        DrawMesh(mesh_, default_material_, MatrixIdentity());
         return;
     }
 
     // Set shader uniforms
-    int mvp_loc = GetShaderLocation(shader_, "mvp");
-    if (mvp_loc == -1) {
+    if (mvp_location_ == -1) {
         TraceLog(LOG_WARNING, "Skybox::draw: 'mvp' uniform location not found");
         // Fallback: draw with default material
-        DrawMesh(mesh_, LoadMaterialDefault(), MatrixIdentity());
+        DrawMesh(mesh_, default_material_, MatrixIdentity());
         return;
     }
 
-    SetShaderValueMatrix(shader_, mvp_loc, mvp);
+    SetShaderValueMatrix(shader_, mvp_location_, mvp);
 
     // Update seed uniform
     if (seed_location_ != -1) {
@@ -125,11 +131,7 @@ void skybox::draw(const Camera3D& camera) {
     // Disable backface culling so we can see the cube from inside
     rlDisableBackfaceCulling();
 
-    // Create a material to use the skybox shader
-    Material material = LoadMaterialDefault();
-    material.shader = shader_;
-
-    DrawMesh(mesh_, material, MatrixIdentity());
+    DrawMesh(mesh_, material_, MatrixIdentity());
 
     // Re-enable backface culling, depth test and depth write
     rlEnableBackfaceCulling();

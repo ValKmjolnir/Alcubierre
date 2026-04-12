@@ -1,9 +1,9 @@
 #include "rendering/warp.hpp"
-#include "utils/shader_loader.hpp"
+#include "utils/shader_manager.hpp"
 #include "utils/draw_texture.hpp"
 
 void warp_renderer::load() {
-    auto warp_vs_res = try_load_shader("relativistic.vs", "relativistic.fs");
+    auto warp_vs_res = shader_manager::instance().load("relativistic.vs", "relativistic.fs");
 
     warp_shader_ = warp_vs_res.shader;
     warp_shaders_loaded_ = warp_vs_res.success;
@@ -25,7 +25,6 @@ void warp_renderer::load() {
 
 void warp_renderer::unload() {
     if (warp_shaders_loaded_) {
-        UnloadShader(warp_shader_);
         warp_shaders_loaded_ = false;
     }
 }

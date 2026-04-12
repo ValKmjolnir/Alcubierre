@@ -18,14 +18,14 @@ include_directories(${RAYLIB_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
 # Source files
 set(SOURCES
+    lib/object/laser_beam.cpp
+    lib/object/projectile.cpp
+    lib/object/star.cpp
     lib/rendering/warp.cpp
     lib/utils/draw_texture.cpp
-    lib/utils/shader_loader.cpp
+    lib/utils/shader_manager.cpp
     lib/window.cpp
     lib/camera.cpp
-    lib/laser_beam.cpp
-    lib/projectile.cpp
-    lib/star.cpp
     lib/light_base.cpp
     lib/lighting_system.cpp
     lib/skybox.cpp

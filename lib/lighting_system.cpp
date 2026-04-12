@@ -25,14 +25,6 @@ void lighting_system::clear_lights() {
     lights_.clear();
 }
 
-void lighting_system::update(float dt) {
-    for (auto& l : lights_) {
-        if (l->is_active()) {
-            l->update(dt);
-        }
-    }
-}
-
 int lighting_system::apply_to_shader(Shader shader) const {
     int active_count = 0;
 

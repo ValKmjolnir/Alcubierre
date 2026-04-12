@@ -3,7 +3,7 @@
 #include "raylib.h"
 #include "raymath.h"
 
-#include "object.hpp"
+#include "object/object.hpp"
 
 class laser_beam: public object {
 public:

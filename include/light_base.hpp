@@ -21,7 +21,6 @@ public:
     virtual Vector3 color() const = 0;
     virtual float intensity() const = 0;
     virtual bool is_active() const { return true; }
-    virtual void update(float dt) { (void)dt; }
 };
 
 // Point light - emits in all directions

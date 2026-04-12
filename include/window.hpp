@@ -70,6 +70,7 @@ private:
 
     // Lit object shader (for cubes, grid, etc.)
     Shader lit_shader_;
+    Material lit_material_;
     bool lit_shader_loaded_ = false;
     int loc_object_color_;
     int loc_ambient_strength_;

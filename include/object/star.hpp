@@ -4,7 +4,7 @@
 #include "raymath.h"
 
 #include "light_base.hpp"
-#include "object.hpp"
+#include "object/object.hpp"
 #include "camera.hpp"
 
 class star : public point_light, public object {
@@ -14,8 +14,10 @@ private:
     int color_b_;
     int color_alpha_;
 
-    Image billboard_;
     Texture2D texture_;
+
+private:
+    void load_texture();
 
 public:
     star();

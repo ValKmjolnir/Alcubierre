@@ -1,8 +1,8 @@
-#include "projectile.hpp"
+#include "object/projectile.hpp"
 #include "raylib.h"
 #include "raymath.h"
 
-#include "utils/shader_loader.hpp"
+#include "utils/shader_manager.hpp"
 #include <cmath>
 
 projectile::projectile()
@@ -180,7 +180,7 @@ void projectile::load_shader(const char* vs_path, const char* fs_path) {
         unload_shader();
     }
 
-    auto load_res = try_load_shader(vs_path, fs_path);
+    auto load_res = shader_manager::instance().load(vs_path, fs_path);
     shader_ = load_res.shader;
     shader_loaded_ = load_res.success;
     if (!shader_loaded_) {
@@ -201,7 +201,6 @@ void projectile::load_shader(const char* vs_path, const char* fs_path) {
 
 void projectile::unload_shader() {
     if (shader_loaded_) {
-        UnloadShader(shader_);
         shader_ = { 0 };
         shader_loaded_ = false;
     }

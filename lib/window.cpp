@@ -3,7 +3,7 @@
 
 #include "window.hpp"
 #include "lighting_system.hpp"
-#include "utils/shader_loader.hpp"
+#include "utils/shader_manager.hpp"
 #include "utils/draw_texture.hpp"
 
 game_window::game_window(int width, int height, const char* title):
@@ -16,6 +16,8 @@ game_window::game_window(int width, int height, const char* title):
     init_bloom();
     warp_renderer_.load();
     init_lit_shader();
+
+    SetConfigFlags(FLAG_MSAA_4X_HINT);  // enable 4x MSAA
 }
 
 game_window::~game_window() {
@@ -45,10 +47,10 @@ void game_window::init_bloom() {
     SetTextureFilter(bloom_composite_texture_.texture, TEXTURE_FILTER_BILINEAR);
 
     // Load bloom shaders
-    auto bloom_extract_res = try_load_shader("bloom.vs", "bloom_extract.fs");
-    auto bloom_blur_h_res = try_load_shader("bloom.vs", "bloom_blur_h.fs");
-    auto bloom_blur_v_res = try_load_shader("bloom.vs", "bloom_blur_v.fs");
-    auto bloom_composite_res = try_load_shader("bloom.vs", "bloom.fs");
+    auto bloom_extract_res = shader_manager::instance().load("bloom.vs", "bloom_extract.fs");
+    auto bloom_blur_h_res = shader_manager::instance().load("bloom.vs", "bloom_blur_h.fs");
+    auto bloom_blur_v_res = shader_manager::instance().load("bloom.vs", "bloom_blur_v.fs");
+    auto bloom_composite_res = shader_manager::instance().load("bloom.vs", "bloom.fs");
 
     bloom_extract_shader_ = bloom_extract_res.shader;
     bloom_blur_h_shader_ = bloom_blur_h_res.shader;
@@ -74,11 +76,6 @@ void game_window::init_bloom() {
 
 void game_window::unload_bloom() {
     if (bloom_shaders_loaded_) {
-        UnloadShader(bloom_extract_shader_);
-        UnloadShader(bloom_blur_h_shader_);
-        UnloadShader(bloom_blur_v_shader_);
-        UnloadShader(bloom_composite_shader_);
-
         UnloadRenderTexture(scene_texture_);
         UnloadRenderTexture(bright_texture_);
         UnloadRenderTexture(bloom_mask_texture_);
@@ -115,7 +112,6 @@ void game_window::begin_scene_pass() {
     // This allows toggling bloom without changing the render path
     BeginTextureMode(scene_texture_);
     ClearBackground(BLACK);
-    SetConfigFlags(FLAG_MSAA_4X_HINT);  // enable 4x MSAA
 }
 
 void game_window::end_scene_pass() {
@@ -246,11 +242,7 @@ void game_window::draw_cube(const Vector3& position, float width, float height, 
         // Draw cube with transform
         Matrix transform = MatrixScale(width, height, length);
         transform = MatrixMultiply(transform, MatrixTranslate(position.x, position.y, position.z));
-
-        // Create a material with our lit shader
-        Material mat = LoadMaterialDefault();
-        mat.shader = lit_shader_;
-        DrawMesh(cube_mesh_, mat, transform);
+        DrawMesh(cube_mesh_, lit_material_, transform);
     } else {
         // Fallback to raylib default
         const Color color = {
@@ -269,7 +261,7 @@ void game_window::draw_grid(float spacing, int slices) {
 }
 
 void game_window::init_lit_shader() {
-    auto lit_vs_res = try_load_shader("lit_object.vs", "lit_object.fs");
+    auto lit_vs_res = shader_manager::instance().load("lit_object.vs", "lit_object.fs");
     lit_shader_ = lit_vs_res.shader;
     lit_shader_loaded_ = lit_vs_res.success;
 
@@ -277,6 +269,10 @@ void game_window::init_lit_shader() {
         TraceLog(LOG_WARNING, "Lit object shader failed to load, falling back to raylib default");
         return;
     }
+
+    // Initialize material
+    lit_material_ = LoadMaterialDefault();
+    lit_material_.shader = lit_shader_;
 
     loc_object_color_ = GetShaderLocation(lit_shader_, "objectColor");
     loc_ambient_strength_ = GetShaderLocation(lit_shader_, "ambientStrength");
@@ -288,7 +284,7 @@ void game_window::init_lit_shader() {
 
 void game_window::unload_lit_shader() {
     if (lit_shader_loaded_) {
-        UnloadShader(lit_shader_);
+        UnloadMaterial(lit_material_);
         lit_shader_loaded_ = false;
     }
     if (cube_mesh_ready_) {

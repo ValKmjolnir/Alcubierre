@@ -1,9 +1,8 @@
 #include "raylib.h"
 #include "raymath.h"
 
-#include "star.hpp"
+#include "object/star.hpp"
 #include "lighting_system.hpp"
-#include "utils/shader_loader.hpp"
 #include <cmath>
 
 star::star()
@@ -15,16 +14,7 @@ star::star()
     , color_alpha_(255)
 {
     lighting_system::instance().add_light(std::shared_ptr<star>(this, [](star*){}));
-    billboard_ = GenImageGradientRadial(512, 512, 0.0f,
-        Color {
-            static_cast<unsigned char>(color_r_),
-            static_cast<unsigned char>(color_g_),
-            static_cast<unsigned char>(color_b_),
-            static_cast<unsigned char>(color_alpha_)
-        },
-        BLANK
-    );
-    texture_ = LoadTextureFromImage(billboard_);
+    load_texture();
 }
 
 star::star(const Vector3& position, int r, int g, int b, int alpha)
@@ -36,7 +26,16 @@ star::star(const Vector3& position, int r, int g, int b, int alpha)
     , color_alpha_(alpha)
 {
     lighting_system::instance().add_light(std::shared_ptr<star>(this, [](star*){}));
-    billboard_ = GenImageGradientRadial(512, 512, 0.0f,
+    load_texture();
+}
+
+star::~star() {
+    UnloadTexture(texture_);
+    lighting_system::instance().remove_light(std::shared_ptr<star>(this, [](star*){}));
+}
+
+void star::load_texture() {
+    Image img = GenImageGradientRadial(512, 512, 0.0f,
         Color {
             static_cast<unsigned char>(color_r_),
             static_cast<unsigned char>(color_g_),
@@ -45,13 +44,8 @@ star::star(const Vector3& position, int r, int g, int b, int alpha)
         },
         BLANK
     );
-    texture_ = LoadTextureFromImage(billboard_);
-}
-
-star::~star() {
-    UnloadImage(billboard_);
-    UnloadTexture(texture_);
-    lighting_system::instance().remove_light(std::shared_ptr<star>(this, [](star*){}));
+    texture_ = LoadTextureFromImage(img);
+    UnloadImage(img);
 }
 
 void star::set_color(int r, int g, int b, int alpha) {
@@ -60,6 +54,9 @@ void star::set_color(int r, int g, int b, int alpha) {
     color_b_ = b;
     color_alpha_ = alpha;
     color_ = { r / 255.0f, g / 255.0f, b / 255.0f };
+
+    UnloadTexture(texture_);
+    load_texture();
 }
 
 void star::draw(const camera_3d& cam) const {

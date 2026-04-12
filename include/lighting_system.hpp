@@ -15,9 +15,6 @@ public:
     void remove_light(std::shared_ptr<light> light);
     void clear_lights();
 
-    // Update all lights
-    void update(float dt);
-
     // Pass light data to a shader
     // Returns the number of active lights passed
     int apply_to_shader(Shader shader) const;

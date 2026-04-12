@@ -23,7 +23,10 @@ private:
 
     Mesh mesh_;
     Shader shader_;
+    Material material_;
+    Material default_material_;
     bool is_loaded_;
     float seed_;
     int seed_location_;
+    int mvp_location_;
 };
