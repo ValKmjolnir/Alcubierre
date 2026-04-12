@@ -61,66 +61,6 @@ laser_beam::~laser_beam() {
     unload_shader();
 }
 
-Vector3 laser_beam::start() const {
-    return start_;
-}
-
-void laser_beam::set_start(const Vector3& start) {
-    start_ = start;
-}
-
-Vector3 laser_beam::end() const {
-    return end_;
-}
-
-void laser_beam::set_end(const Vector3& end) {
-    end_ = end;
-}
-
-void laser_beam::set_positions(const Vector3& start, const Vector3& end) {
-    start_ = start;
-    end_ = end;
-}
-
-int laser_beam::color_r() const {
-    return color_r_;
-}
-
-int laser_beam::color_g() const {
-    return color_g_;
-}
-
-int laser_beam::color_b() const {
-    return color_b_;
-}
-
-int laser_beam::color_alpha() const {
-    return color_alpha_;
-}
-
-void laser_beam::set_color(int r, int g, int b, int alpha) {
-    color_r_ = r;
-    color_g_ = g;
-    color_b_ = b;
-    color_alpha_ = alpha;
-}
-
-float laser_beam::width() const {
-    return width_;
-}
-
-void laser_beam::set_width(float width) {
-    width_ = width;
-}
-
-float laser_beam::intensity() const {
-    return intensity_;
-}
-
-void laser_beam::set_intensity(float intensity) {
-    intensity_ = intensity;
-}
-
 bool laser_beam::is_active() const {
     return active_;
 }

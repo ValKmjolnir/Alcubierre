@@ -21,8 +21,10 @@ load_result shader_manager::try_load_shader(const char* vs_path, const char* fs_
 
 shader_manager::~shader_manager() {
     for (auto& [name, shader] : shaders) {
+        printf("Unloading shader %s [%d]\n", name.c_str(), shader.id);
         UnloadShader(shader);
     }
+    shaders.clear();
 }
 
 shader_manager& shader_manager::instance() {

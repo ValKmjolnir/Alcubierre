@@ -23,6 +23,7 @@ set(SOURCES
     lib/object/star.cpp
     lib/rendering/warp.cpp
     lib/utils/draw_texture.cpp
+    lib/utils/material_manager.cpp
     lib/utils/shader_manager.cpp
     lib/window.cpp
     lib/camera.cpp

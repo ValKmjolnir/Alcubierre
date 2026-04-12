@@ -13,7 +13,7 @@ star::star()
     , color_b_(100)
     , color_alpha_(255)
 {
-    lighting_system::instance().add_light(std::shared_ptr<star>(this, [](star*){}));
+    lighting_system::instance().add(std::shared_ptr<star>(this, [](star*){}));
     load_texture();
 }
 
@@ -25,13 +25,13 @@ star::star(const Vector3& position, int r, int g, int b, int alpha)
     , color_b_(b)
     , color_alpha_(alpha)
 {
-    lighting_system::instance().add_light(std::shared_ptr<star>(this, [](star*){}));
+    lighting_system::instance().add(std::shared_ptr<star>(this, [](star*){}));
     load_texture();
 }
 
 star::~star() {
     UnloadTexture(texture_);
-    lighting_system::instance().remove_light(std::shared_ptr<star>(this, [](star*){}));
+    lighting_system::instance().remove(std::shared_ptr<star>(this, [](star*){}));
 }
 
 void star::load_texture() {

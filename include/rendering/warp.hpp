@@ -26,33 +26,15 @@ private:
     float exposure_ = 1.0f;
 
 public:
-    void set_velocity(Vector3 velocity) {
-        velocity_ = velocity;
-    }
-    const auto& get_velocity() const {
-        return velocity_;
-    }
-    void set_bubble_radius(float bubble_radius) {
-        bubble_radius_ = bubble_radius;
-    }
-    void set_wall_thickness(float wall_thickness) {
-        wall_thickness_ = wall_thickness;
-    }
-    void set_exposure(float exposure) {
-        exposure_ = exposure;
-    }
-    void set_view_direction(Vector3 direction) {
-        view_direction_ = direction;
-    }
-    const auto get_warp_factor() const {
-        return warp_factor_;
-    }
-    bool enabled() const {
-        return warp_enabled_;
-    }
-    bool shader_loaded() const {
-        return warp_shaders_loaded_;
-    }
+    void set_velocity(Vector3 velocity) { velocity_ = velocity; }
+    const auto& get_velocity() const { return velocity_; }
+    void set_bubble_radius(float bubble_radius) { bubble_radius_ = bubble_radius; }
+    void set_wall_thickness(float wall_thickness) { wall_thickness_ = wall_thickness; }
+    void set_exposure(float exposure) { exposure_ = exposure; }
+    void set_view_direction(Vector3 direction) { view_direction_ = direction; }
+    const auto get_warp_factor() const { return warp_factor_; }
+    bool enabled() const { return warp_enabled_; }
+    bool shader_loaded() const { return warp_shaders_loaded_; }
 
 public:
     void load();

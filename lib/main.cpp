@@ -5,6 +5,7 @@
 #include "object/projectile.hpp"
 #include "object/star.hpp"
 #include "lighting_system.hpp"
+#include "utils/shader_manager.hpp"
 
 #include "raylib.h"
 #include "raymath.h"
@@ -190,7 +191,7 @@ int main() {
 
         // Draw grid on the ground plane
         if (draw_grid) {
-            window.draw_grid(2.0f, 40);
+            window.draw_grid(80, 4.0f);
         }
 
         // Draw cuboid

@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "skybox.hpp"
+#include "utils/material_manager.hpp"
 #include "utils/shader_manager.hpp"
 
 skybox::skybox() :
@@ -24,8 +25,8 @@ skybox::~skybox() {
     if (is_loaded_) {
         TraceLog(LOG_DEBUG, "Unloading skybox mesh and shader");
         UnloadMesh(mesh_);
-        UnloadMaterial(material_);
-        UnloadMaterial(default_material_);
+        safe_unload_material(material_);
+        safe_unload_material(default_material_);
     }
 }
 
@@ -53,20 +54,13 @@ void skybox::load_shader() {
         return;
     }
 
-    TraceLog(LOG_INFO, "Skybox shader loaded, shader.id = %d", shader_.id);
-
     // Check all uniform locations
     mvp_location_ = GetShaderLocation(shader_, "mvp");
-    TraceLog(LOG_INFO, "Uniform 'mvp' location = %d", mvp_location_);
-
     seed_location_ = GetShaderLocation(shader_, "seed");
-    TraceLog(LOG_INFO, "Uniform 'seed' location = %d", seed_location_);
 
     if (mvp_location_ == -1) {
         TraceLog(LOG_WARNING, "Skybox shader: 'mvp' uniform not found");
         TraceLog(LOG_WARNING, "Check console for shader compilation errors above");
-    } else {
-        TraceLog(LOG_INFO, "Skybox shader loaded successfully, mvp_loc = %d", mvp_location_);
     }
 
     // Set default seed value

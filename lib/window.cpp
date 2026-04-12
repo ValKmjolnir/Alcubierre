@@ -3,6 +3,7 @@
 
 #include "window.hpp"
 #include "lighting_system.hpp"
+#include "utils/material_manager.hpp"
 #include "utils/shader_manager.hpp"
 #include "utils/draw_texture.hpp"
 
@@ -85,26 +86,6 @@ void game_window::unload_bloom() {
 
         bloom_shaders_loaded_ = false;
     }
-}
-
-void game_window::set_bloom_enabled(bool enabled) {
-    bloom_enabled_ = enabled;
-}
-
-bool game_window::is_bloom_enabled() const {
-    return bloom_enabled_;
-}
-
-void game_window::set_bloom_threshold(float threshold) {
-    bloom_threshold_ = threshold;
-}
-
-void game_window::set_bloom_intensity(float intensity) {
-    bloom_intensity_ = intensity;
-}
-
-void game_window::set_bloom_blur_radius(float radius) {
-    bloom_blur_radius_ = radius;
 }
 
 void game_window::begin_scene_pass() {
@@ -203,30 +184,6 @@ void game_window::apply_bloom() {
     }
 }
 
-warp_renderer& game_window::get_warp_renderer() {
-    return warp_renderer_;
-}
-
-bool game_window::should_close() const {
-    return WindowShouldClose();
-}
-
-void game_window::begin_drawing() {
-    BeginDrawing();
-}
-
-void game_window::end_drawing() {
-    EndDrawing();
-}
-
-void game_window::begin_mode_3d(const Camera3D& camera) {
-    BeginMode3D(camera);
-}
-
-void game_window::end_mode_3d() {
-    EndMode3D();
-}
-
 void game_window::draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b) {
     if (lit_shader_loaded_ && cube_mesh_ready_) {
         // Pass lighting data from lighting_system
@@ -256,10 +213,6 @@ void game_window::draw_cube(const Vector3& position, float width, float height, 
     DrawCubeWires(position, width, height, length, MAROON);
 }
 
-void game_window::draw_grid(float spacing, int slices) {
-    DrawGrid(slices, spacing);
-}
-
 void game_window::init_lit_shader() {
     auto lit_vs_res = shader_manager::instance().load("lit_object.vs", "lit_object.fs");
     lit_shader_ = lit_vs_res.shader;
@@ -284,7 +237,7 @@ void game_window::init_lit_shader() {
 
 void game_window::unload_lit_shader() {
     if (lit_shader_loaded_) {
-        UnloadMaterial(lit_material_);
+        safe_unload_material(lit_material_);
         lit_shader_loaded_ = false;
     }
     if (cube_mesh_ready_) {

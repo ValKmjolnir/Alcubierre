@@ -8,36 +8,6 @@
 #include <memory>
 
 class game_window {
-public:
-    game_window(int width = 800, int height = 600, const char* title = "Game Window");
-    ~game_window();
-
-    bool should_close() const;
-    void begin_drawing();
-    void end_drawing();
-
-    // 3D camera methods
-    void begin_mode_3d(const Camera3D& camera);
-    void end_mode_3d();
-
-    // Draw methods using lit shader
-    void draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b);
-    void draw_grid(float spacing, int slices);
-
-    // Bloom post-processing
-    void set_bloom_enabled(bool enabled);
-    bool is_bloom_enabled() const;
-    void set_bloom_threshold(float threshold);
-    void set_bloom_intensity(float intensity);
-    void set_bloom_blur_radius(float radius);
-    void begin_scene_pass();
-    void end_scene_pass();
-
-    // Bloom
-    void apply_bloom();
-
-    warp_renderer& get_warp_renderer();
-
 private:
     int width_;
     int height_;
@@ -86,4 +56,34 @@ private:
     void unload_bloom();
     void init_lit_shader();
     void unload_lit_shader();
+
+public:
+    game_window(int width = 800, int height = 600, const char* title = "Game Window");
+    ~game_window();
+
+    bool should_close() const { return WindowShouldClose(); }
+    void begin_drawing() { BeginDrawing(); }
+    void end_drawing() { EndDrawing(); }
+
+    // 3D camera methods
+    void begin_mode_3d(const Camera3D& camera) { BeginMode3D(camera); }
+    void end_mode_3d() { EndMode3D(); }
+
+    // Draw methods using lit shader
+    void draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b);
+    void draw_grid(int slices, float spacing) { DrawGrid(slices, spacing); }
+
+    // Bloom post-processing
+    void set_bloom_enabled(bool enabled) { bloom_enabled_ = enabled; }
+    bool is_bloom_enabled() const { return bloom_enabled_; }
+    void set_bloom_threshold(float threshold) { bloom_threshold_ = threshold; }
+    void set_bloom_intensity(float intensity) { bloom_intensity_ = intensity; }
+    void set_bloom_blur_radius(float radius) { bloom_blur_radius_ = radius; }
+    void begin_scene_pass();
+    void end_scene_pass();
+
+    // Bloom
+    void apply_bloom();
+
+    warp_renderer& get_warp_renderer() { return warp_renderer_; }
 };

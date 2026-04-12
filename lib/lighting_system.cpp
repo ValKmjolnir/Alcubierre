@@ -8,20 +8,25 @@ lighting_system& lighting_system::instance() {
     return inst;
 }
 
-void lighting_system::add_light(std::shared_ptr<light> light) {
-    if (light && std::find(lights_.begin(), lights_.end(), light) == lights_.end()) {
-        lights_.push_back(light);
+void lighting_system::add(std::shared_ptr<light> light) {
+    if (!light) {
+        return;
     }
+    if (std::find(lights_.begin(), lights_.end(), light) != lights_.end()) {
+        return;
+    }
+
+    lights_.push_back(light);
 }
 
-void lighting_system::remove_light(std::shared_ptr<light> light) {
+void lighting_system::remove(std::shared_ptr<light> light) {
     lights_.erase(
         std::remove(lights_.begin(), lights_.end(), light),
         lights_.end()
     );
 }
 
-void lighting_system::clear_lights() {
+void lighting_system::clear() {
     lights_.clear();
 }
 
@@ -91,8 +96,4 @@ int lighting_system::active_light_count() const {
         if (l && l->is_active()) count++;
     }
     return count;
-}
-
-const std::vector<std::shared_ptr<light>>& lighting_system::get_all_lights() const {
-    return lights_;
 }
