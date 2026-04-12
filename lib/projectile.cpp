@@ -6,7 +6,7 @@
 #include <cmath>
 
 projectile::projectile()
-    : object(false)
+    : object()
     , position_{ 0.0f, 0.0f, 0.0f }
     , velocity_{ 0.0f, 0.0f, 10.0f }
     , color_r_(255)
@@ -38,7 +38,7 @@ projectile::projectile()
 }
 
 projectile::projectile(const Vector3& position, const Vector3& velocity, int r, int g, int b, int alpha)
-    : object(false)
+    : object()
     , position_(position)
     , velocity_(velocity)
     , color_r_(r)

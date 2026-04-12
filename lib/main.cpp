@@ -18,10 +18,10 @@ int main() {
 
     // Create 3D camera
     camera_3d camera(
-        { -10.0f, 10.0f, -10.0f },  // position
-        { 0.0f, 0.0f, 0.0f },  // target
-        { 0.0f, 1.0f, 0.0f },  // up
-        45.0f                  // fovy
+        { -10.0f, 10.0f, -10.0f }, // position
+        { 0.0f, 0.0f, 0.0f },      // target
+        { 0.0f, 1.0f, 0.0f },      // up
+        45.0f                      // fovy
     );
 
     // Create skybox (procedural gradient sky)
@@ -29,9 +29,8 @@ int main() {
 
     // Create star (will become the primary light source)
     star main_star(
-        { 0.0f, 10.0f, 200.0f },  // position (high up and back)
-        2.0f,                       // radius
-        255, 240, 200, 255          // color (warm white)
+        { 0.0f, 10.0f, 200.0f }, // position
+        255, 240, 200, 255       // color (warm white)
     );
     main_star.set_intensity(10.0f);
 
@@ -191,7 +190,7 @@ int main() {
         sky.draw(camera.get_camera());
 
         // Draw star (before other objects, will become light source)
-        main_star.draw();
+        main_star.draw(camera);
 
         // Draw grid on the ground plane
         if (draw_grid) {
