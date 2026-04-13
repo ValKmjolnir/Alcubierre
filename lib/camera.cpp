@@ -32,8 +32,8 @@ void camera_3d::update(float dt) {
     // only rotate when left mouse button is down
     if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
         Vector2 delta = GetMouseDelta();
-        float rotate_speed = 0.003f;
-        const float dead_zone = 2.0f;
+        const float rotate_speed = 0.003f * dt * 120.0f;
+        const float dead_zone = 1.0f;
 
         yaw_ -= delta.x * rotate_speed;
         if (fabsf(delta.y) > dead_zone) {
@@ -44,7 +44,7 @@ void camera_3d::update(float dt) {
     }
 
     float wheel = GetMouseWheelMove();
-    const float zoom_speed = 1.0f + distance_ / 10.0f;
+    const float zoom_speed = (1.0f + distance_ / 10.0f) * dt * 120.0f;
     distance_ -= wheel * zoom_speed;
     distance_ = Clamp(distance_, 10.0f, 200.0f);
 

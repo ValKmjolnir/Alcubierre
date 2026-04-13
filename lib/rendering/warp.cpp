@@ -29,8 +29,8 @@ void warp_renderer::unload() {
     }
 }
 
-void warp_renderer::update_warp_factor() {
-    float warp_step = 0.01f * (7.0f - warp_factor_);
+void warp_renderer::update_warp_factor(float dt) {
+    float warp_step = 0.01f * (7.0f - warp_factor_) * dt * 120.0f;
 
     if (IsKeyDown(KEY_PAGE_UP)) {
         warp_factor_ = fminf(warp_factor_ + warp_step, 6.0f);

@@ -121,7 +121,7 @@ int main() {
         }
 
         // Adjust warp factor (bubble geometry)
-        window.get_warp_renderer().update_warp_factor();
+        window.get_warp_renderer().update_warp_factor(dt);
 
         // Adjust velocity (beta = v/c) with UP/DOWN, direction with LEFT/RIGHT
         Vector3 vel = window.get_warp_renderer().get_velocity();
@@ -131,7 +131,7 @@ int main() {
             dirX = vel.x / beta;
             dirZ = vel.z / beta;
         }
-        float beta_step = 0.0025f;
+        float beta_step = 0.0025f * dt * 120.0f;
         if (IsKeyDown(KEY_UP)) {
             beta = fminf(beta + beta_step, 10.0f);
         }
@@ -139,12 +139,12 @@ int main() {
             beta = fmaxf(beta - beta_step, 0.0f);
         }
         if (IsKeyDown(KEY_RIGHT) && beta > 0.001f) {
-            float angle = atan2f(dirX, dirZ) + 0.001f;
+            float angle = atan2f(dirX, dirZ) + 0.0025f * dt * 120.0f;
             dirX = sinf(angle);
             dirZ = cosf(angle);
         }
         if (IsKeyDown(KEY_LEFT) && beta > 0.001f) {
-            float angle = atan2f(dirX, dirZ) - 0.001f;
+            float angle = atan2f(dirX, dirZ) - 0.0025f * dt * 120.0f;
             dirX = sinf(angle);
             dirZ = cosf(angle);
         }

@@ -39,6 +39,6 @@ public:
 public:
     void load();
     void unload();
-    void update_warp_factor();
+    void update_warp_factor(float dt);
     void apply(const RenderTexture2D& texture, int width, int height);
 };

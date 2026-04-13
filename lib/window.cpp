@@ -17,8 +17,6 @@ game_window::game_window(int width, int height, const char* title):
     init_bloom();
     warp_renderer_.load();
     init_lit_shader();
-
-    SetConfigFlags(FLAG_MSAA_4X_HINT);  // enable 4x MSAA
 }
 
 game_window::~game_window() {
@@ -29,8 +27,8 @@ game_window::~game_window() {
 }
 
 void game_window::init_bloom() {
-    // Full resolution scene texture - preserves MSAA quality
-    scene_texture_ = LoadRenderTexture(width_ * 2, height_ * 2);
+    // SSAA texture
+    scene_texture_ = LoadRenderTexture(width_ * 1.5, height_ * 1.5);
 
     // Half resolution bloom textures - performance optimization
     bright_texture_ = LoadRenderTexture(width_, height_);
