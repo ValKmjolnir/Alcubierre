@@ -22,6 +22,8 @@ set(SOURCES
     lib/object/projectile.cpp
     lib/object/star.cpp
     lib/rendering/warp.cpp
+    lib/rendering/fxaa.cpp
+    lib/rendering/smaa.cpp
     lib/utils/draw_texture.cpp
     lib/utils/material_manager.cpp
     lib/utils/shader_manager.cpp

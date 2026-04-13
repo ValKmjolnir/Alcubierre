@@ -16,12 +16,16 @@ game_window::game_window(int width, int height, const char* title):
     // Initialize bloom and warp lens effects
     init_bloom();
     warp_renderer_.load();
+    fxaa_renderer_.load();
+    smaa_renderer_.load();
     init_lit_shader();
 }
 
 game_window::~game_window() {
     unload_bloom();
     warp_renderer_.unload();
+    fxaa_renderer_.unload();
+    smaa_renderer_.unload();
     unload_lit_shader();
     CloseWindow();
 }
@@ -99,7 +103,22 @@ void game_window::end_scene_pass() {
 
 void game_window::apply_bloom() {
     if (!bloom_enabled_ || !bloom_shaders_loaded_) {
-        // No bloom - just apply warp to scene texture and draw
+        // No bloom - apply AA then warp to scene texture
+        const RenderTexture2D* aa_input = &scene_texture_;
+
+        if (fxaa_renderer_.enabled() && fxaa_renderer_.shader_loaded()) {
+            fxaa_renderer_.apply(scene_texture_, width_, height_);
+            // FXAA renders directly to screen, so we're done
+            return;
+        }
+
+        if (smaa_renderer_.enabled() && smaa_renderer_.shader_loaded()) {
+            smaa_renderer_.apply(scene_texture_, width_, height_);
+            // SMAA renders directly to screen, so we're done
+            return;
+        }
+
+        // No AA - apply warp or draw directly
         if (warp_renderer_.enabled() && warp_renderer_.shader_loaded()) {
             warp_renderer_.apply(scene_texture_, width_, height_);
         } else {
@@ -173,7 +192,19 @@ void game_window::apply_bloom() {
     EndShaderMode();
     EndTextureMode();
 
-    // Step 5: Apply warp lens effect if enabled, otherwise draw directly
+    // Step 5: Apply AA and warp lens effect
+    // FXAA and SMAA render directly to screen, so they bypass warp
+    if (fxaa_renderer_.enabled() && fxaa_renderer_.shader_loaded()) {
+        fxaa_renderer_.apply(bloom_composite_texture_, width_, height_);
+        return;
+    }
+
+    if (smaa_renderer_.enabled() && smaa_renderer_.shader_loaded()) {
+        smaa_renderer_.apply(bloom_composite_texture_, width_, height_);
+        return;
+    }
+
+    // No AA - apply warp or draw directly
     if (warp_renderer_.enabled() && warp_renderer_.shader_loaded()) {
         warp_renderer_.apply(bloom_composite_texture_, width_, height_);
     } else {

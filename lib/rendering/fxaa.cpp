@@ -1,0 +1,36 @@
+#include "rendering/fxaa.hpp"
+#include "utils/shader_manager.hpp"
+#include "utils/draw_texture.hpp"
+
+void fxaa_renderer::load() {
+    auto res = shader_manager::instance().load("fxaa.vs", "fxaa.fs");
+    fxaa_shader_ = res.shader;
+    fxaa_shader_loaded_ = res.success;
+
+    if (!fxaa_shader_loaded_) {
+        TraceLog(LOG_WARNING, "FXAA shaders failed to load");
+        return;
+    }
+
+    loc_resolution_ = GetShaderLocation(fxaa_shader_, "resolution");
+}
+
+void fxaa_renderer::unload() {
+    if (fxaa_shader_loaded_) {
+        fxaa_shader_loaded_ = false;
+    }
+}
+
+void fxaa_renderer::apply(const RenderTexture2D& texture, int width, int height) {
+    if (!fxaa_enabled_ || !fxaa_shader_loaded_) {
+        draw_texture_to_specific_screen(texture, width, height);
+        return;
+    }
+
+    float resolution[2] = { static_cast<float>(width), static_cast<float>(height) };
+    SetShaderValue(fxaa_shader_, loc_resolution_, resolution, SHADER_UNIFORM_VEC2);
+
+    BeginShaderMode(fxaa_shader_);
+    draw_texture_to_specific_screen(texture, width, height);
+    EndShaderMode();
+}

@@ -98,6 +98,8 @@ int main() {
 
     bool draw_grid = true;
     bool show_text = true;
+    bool enable_fxaa = false;
+    bool enable_smaa = false;
 
     while (!window.should_close()) {
         window.begin_drawing();
@@ -118,6 +120,15 @@ int main() {
         // Toggle bloom with B key
         if (IsKeyPressed(KEY_B)) {
             window.set_bloom_enabled(!window.is_bloom_enabled());
+        }
+
+        if (IsKeyPressed(KEY_F)) {
+            enable_fxaa = !enable_fxaa;
+            window.get_fxaa_renderer().set_enabled(enable_fxaa);
+        }
+        if (IsKeyPressed(KEY_G)) {
+            enable_smaa = !enable_smaa;
+            window.get_smaa_renderer().set_enabled(enable_smaa);
         }
 
         // Adjust warp factor (bubble geometry)
@@ -219,26 +230,28 @@ int main() {
             DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);
             DrawText("Press T to toggle text", 10, 60, 16, WHITE);
             DrawText("Press B to toggle Bloom", 10, 80, 16, window.is_bloom_enabled() ? GREEN : GRAY);
+            DrawText("Press F to toggle FXAA", 10, 100, 16, enable_fxaa ? GREEN : GRAY);
+            DrawText("Press G to toggle SMAA", 10, 120, 16, enable_smaa ? GREEN : GRAY);
 
             // // Display current parameters
             char info_text[256];
             snprintf(info_text, 255, "Warp: %.2f | Beta (v/c): %.3f", window.get_warp_renderer().get_warp_factor(), beta);
-            DrawText(info_text, 10, 100, 16, WHITE);
+            DrawText(info_text, 10, 140, 16, WHITE);
 
             char vel_text[256];
             const auto warp_vel = window.get_warp_renderer().get_velocity();
             snprintf(vel_text, 255, "Velocity: %.2f,%.2f,%.2f", warp_vel.x, warp_vel.y, warp_vel.z);
-            DrawText(vel_text, 10, 120, 16, WHITE);
+            DrawText(vel_text, 10, 160, 16, WHITE);
 
             char cam_text[256];
             snprintf(cam_text, 255, "Camera: %.2f,%.2f,%.2f", camForward.x, camForward.y, camForward.z);
-            DrawText(cam_text, 10, 140, 16, WHITE);
+            DrawText(cam_text, 10, 180, 16, WHITE);
 
             char light_info[64];
             snprintf(light_info, 64, "Active lights: %d", lighting_system::instance().active_light_count());
-            DrawText(light_info, 10, 160, 16, YELLOW);
+            DrawText(light_info, 10, 200, 16, YELLOW);
 
-            DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 180, 16, GREEN);
+            DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 220, 16, GREEN);
         }
         window.end_drawing();
     }

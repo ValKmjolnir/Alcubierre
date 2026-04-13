@@ -4,6 +4,8 @@
 #include "raymath.h"
 
 #include "rendering/warp.hpp"
+#include "rendering/fxaa.hpp"
+#include "rendering/smaa.hpp"
 
 #include <memory>
 
@@ -51,6 +53,8 @@ private:
     bool cube_mesh_ready_ = false;
 
     warp_renderer warp_renderer_;
+    fxaa_renderer fxaa_renderer_;
+    smaa_renderer smaa_renderer_;
 
     void init_bloom();
     void unload_bloom();
@@ -86,6 +90,10 @@ public:
     void apply_bloom();
 
     warp_renderer& get_warp_renderer() { return warp_renderer_; }
+
+    fxaa_renderer& get_fxaa_renderer() { return fxaa_renderer_; }
+    smaa_renderer& get_smaa_renderer() { return smaa_renderer_; }
+
     int width() const { return width_; }
     int height() const { return height_; }
 };
