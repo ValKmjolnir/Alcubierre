@@ -49,7 +49,6 @@ private:
 
     // Cached meshes for lit rendering
     Mesh cube_mesh_;
-    Mesh grid_mesh_;
     bool cube_mesh_ready_ = false;
 
     warp_renderer warp_renderer_;

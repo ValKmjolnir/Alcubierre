@@ -15,6 +15,14 @@ def extract_raylib():
             "-DestinationPath", "."
         ])
         os.chdir("..")
+    elif sys.platform == "linux":
+        if os.path.exists("build/raylib-5.5_linux_amd64"):
+            return
+        os.chdir("build")
+        subprocess.run([
+            "tar", "-xvzf", "../bin/raylib-5.5_linux_amd64.tar.gz"
+        ])
+        os.chdir("..")
     elif sys.platform == "darwin":
         if os.path.exists("build/raylib-5.5_macos"):
             return

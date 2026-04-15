@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Raylib paths
 if (WIN32)
     set(RAYLIB_DIR "${CMAKE_SOURCE_DIR}/build/raylib-5.5_win64_mingw-w64")
+elseif (LINUX)
+    set(RAYLIB_DIR "${CMAKE_SOURCE_DIR}/build/raylib-5.5_linux_amd64")
 elseif (APPLE)
     set(RAYLIB_DIR "${CMAKE_SOURCE_DIR}/build/raylib-5.5_macos")
 endif()
@@ -44,6 +46,10 @@ if (WIN32)
     target_link_libraries(${PROJECT_NAME}
         raylib
         winmm
+    )
+elseif (LINUX)
+    target_link_libraries(${PROJECT_NAME}
+        raylib
     )
 elseif (APPLE)
     target_link_libraries(${PROJECT_NAME}

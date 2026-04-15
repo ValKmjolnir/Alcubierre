@@ -174,20 +174,12 @@ void game_window::apply_bloom() {
     BeginTextureMode(bloom_composite_texture_);
     ClearBackground(BLACK);
     // First, draw scene to screen
-    draw_texture_to_specific_screen(
-        scene_texture_,
-        width_,
-        height_
-    );
+    draw_texture_to_specific_screen(scene_texture_, width_, height_);
     // Then, draw bloom on top with additive blending
     SetShaderValue(bloom_composite_shader_, loc_bloom_intensity_, &bloom_intensity_, SHADER_UNIFORM_FLOAT);
     BeginShaderMode(bloom_composite_shader_);
     BeginBlendMode(BLEND_ADDITIVE);
-    draw_texture_to_specific_screen(
-        bloom_v_texture_,
-        width_,
-        height_
-    );
+    draw_texture_to_specific_screen(bloom_v_texture_, width_, height_);
     EndBlendMode();
     EndShaderMode();
     EndTextureMode();
