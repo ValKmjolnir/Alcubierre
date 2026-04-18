@@ -23,10 +23,14 @@ set(SOURCES
     lib/object/laser_beam.cpp
     lib/object/projectile.cpp
     lib/object/star.cpp
+    lib/rendering/bloom.cpp
     lib/rendering/frame_graph.cpp
     lib/rendering/warp.cpp
     lib/rendering/fxaa.cpp
+    lib/rendering/render_pass.cpp
+    lib/rendering/render_target.cpp
     lib/rendering/smaa.cpp
+    lib/rendering/texture_handle.cpp
     lib/utils/draw_texture.cpp
     lib/utils/material_manager.cpp
     lib/utils/shader_manager.cpp

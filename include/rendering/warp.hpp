@@ -2,8 +2,10 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#include "rendering/texture_handle.hpp"
+#include "rendering/render_pass.hpp"
 
-class warp_renderer {
+class warp_renderer: public render_pass {
 private:
     // shader
     Shader warp_shader_;
@@ -33,12 +35,13 @@ public:
     void set_exposure(float exposure) { exposure_ = exposure; }
     void set_view_direction(Vector3 direction) { view_direction_ = direction; }
     const auto get_warp_factor() const { return warp_factor_; }
-    bool enabled() const { return warp_enabled_; }
-    bool shader_loaded() const { return warp_shaders_loaded_; }
+    void update_warp_factor(float dt);
 
 public:
-    void load();
-    void unload();
-    void update_warp_factor(float dt);
-    void apply(const RenderTexture2D& texture, int width, int height);
+    warp_renderer(const char* n, int w, int h): render_pass(n, w, h) {}
+    ~warp_renderer() = default;
+    void load() override;
+    void unload() override;
+    bool ready() const override { return warp_enabled_ && warp_shaders_loaded_; }
+    texture_handle& apply(const RenderTexture2D& texture, int width, int height) override;
 };

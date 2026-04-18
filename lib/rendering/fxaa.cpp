@@ -3,6 +3,8 @@
 #include "utils/draw_texture.hpp"
 
 void fxaa_renderer::load() {
+    output.load(width, height);
+
     auto res = shader_manager::instance().load("fxaa.vs", "fxaa.fs");
     fxaa_shader_ = res.shader;
     fxaa_shader_loaded_ = res.success;
@@ -16,21 +18,28 @@ void fxaa_renderer::load() {
 }
 
 void fxaa_renderer::unload() {
+    output.unload();
     if (fxaa_shader_loaded_) {
         fxaa_shader_loaded_ = false;
     }
 }
 
-void fxaa_renderer::apply(const RenderTexture2D& texture, int width, int height) {
+texture_handle& fxaa_renderer::apply(const RenderTexture2D& texture, int width, int height) {
     if (!fxaa_enabled_ || !fxaa_shader_loaded_) {
+        BeginTextureMode(output.get());
         draw_texture_to_specific_screen(texture, width, height);
-        return;
+        EndTextureMode();
+        return output;
     }
 
     float resolution[2] = { static_cast<float>(width), static_cast<float>(height) };
     SetShaderValue(fxaa_shader_, loc_resolution_, resolution, SHADER_UNIFORM_VEC2);
 
+    BeginTextureMode(output.get());
     BeginShaderMode(fxaa_shader_);
     draw_texture_to_specific_screen(texture, width, height);
     EndShaderMode();
+    EndTextureMode();
+
+    return output;
 }

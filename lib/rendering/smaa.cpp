@@ -3,6 +3,8 @@
 #include "utils/draw_texture.hpp"
 
 void smaa_renderer::load() {
+    output.load(width, height);
+
     auto edge_res = shader_manager::instance().load("smaa.vs", "smaa_edge.fs");
     auto blend_res = shader_manager::instance().load("smaa.vs", "smaa_blend.fs");
     auto resolve_res = shader_manager::instance().load("smaa.vs", "smaa_resolve.fs");
@@ -25,6 +27,7 @@ void smaa_renderer::load() {
 }
 
 void smaa_renderer::unload() {
+    output.unload();
     if (smaa_shaders_loaded_) {
         if (edge_texture_.id != 0) {
             UnloadRenderTexture(edge_texture_);
@@ -38,10 +41,12 @@ void smaa_renderer::unload() {
     }
 }
 
-void smaa_renderer::apply(const RenderTexture2D& texture, int width, int height) {
-    if (!smaa_enabled_ || !smaa_shaders_loaded_) {
+texture_handle& smaa_renderer::apply(const RenderTexture2D& texture, int width, int height) {
+    if (!ready()) {
+        BeginTextureMode(output.get());
         draw_texture_to_specific_screen(texture, width, height);
-        return;
+        EndTextureMode();
+        return output;
     }
 
     // Lazily create intermediate textures on first apply
@@ -75,6 +80,7 @@ void smaa_renderer::apply(const RenderTexture2D& texture, int width, int height)
     // Pass 3: Final Resolve
     SetShaderValue(smaa_resolve_shader_, loc_resolve_resolution_, resolution, SHADER_UNIFORM_VEC2);
 
+    BeginTextureMode(output.get());
     BeginShaderMode(smaa_resolve_shader_);
     // Must be called AFTER BeginShaderMode since glUniform requires active program
     SetShaderValueTexture(smaa_resolve_shader_,
@@ -82,4 +88,7 @@ void smaa_renderer::apply(const RenderTexture2D& texture, int width, int height)
         blend_texture_.texture);
     draw_texture_to_specific_screen(texture, width, height);
     EndShaderMode();
+    EndTextureMode();
+
+    return output;
 }

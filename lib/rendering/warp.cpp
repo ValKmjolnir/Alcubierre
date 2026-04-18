@@ -3,6 +3,8 @@
 #include "utils/draw_texture.hpp"
 
 void warp_renderer::load() {
+    output.load(width, height);
+
     auto warp_vs_res = shader_manager::instance().load("relativistic.vs", "relativistic.fs");
 
     warp_shader_ = warp_vs_res.shader;
@@ -24,6 +26,7 @@ void warp_renderer::load() {
 }
 
 void warp_renderer::unload() {
+    output.unload();
     if (warp_shaders_loaded_) {
         warp_shaders_loaded_ = false;
     }
@@ -45,11 +48,12 @@ void warp_renderer::update_warp_factor(float dt) {
     }
 }
 
-void warp_renderer::apply(const RenderTexture2D& texture, int width, int height) {
-    if (!warp_enabled_ || !warp_shaders_loaded_) {
-        // Just draw the texture directly
+texture_handle& warp_renderer::apply(const RenderTexture2D& texture, int width, int height) {
+    if (!ready()) {
+        BeginTextureMode(output.get());
         draw_texture_to_specific_screen(texture, width, height);
-        return;
+        EndTextureMode();
+        return output;
     }
 
     // Set shader uniforms
@@ -65,7 +69,10 @@ void warp_renderer::apply(const RenderTexture2D& texture, int width, int height)
     SetShaderValue(warp_shader_, loc_exposure_, &exposure_, SHADER_UNIFORM_FLOAT);
 
     // Apply warp lens effect
+    BeginTextureMode(output.get());
     BeginShaderMode(warp_shader_);
     draw_texture_to_specific_screen(texture, width, height);
     EndShaderMode();
+    EndTextureMode();
+    return output;
 }

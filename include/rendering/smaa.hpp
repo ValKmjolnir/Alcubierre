@@ -1,8 +1,9 @@
 #pragma once
 
 #include "raylib.h"
+#include "rendering/render_pass.hpp"
 
-class smaa_renderer {
+class smaa_renderer: public render_pass {
 private:
     // Shaders for 3 passes
     Shader smaa_edge_shader_;
@@ -24,11 +25,13 @@ private:
 
 public:
     void set_enabled(bool enabled) { smaa_enabled_ = enabled; }
-    bool enabled() const { return smaa_enabled_; }
-    bool shader_loaded() const { return smaa_shaders_loaded_; }
 
 public:
-    void load();
-    void unload();
-    void apply(const RenderTexture2D& texture, int width, int height);
+    smaa_renderer(const char* n, int w, int h): render_pass(n, w, h) {}
+    void load() override;
+    void unload() override;
+    bool ready() const override {
+        return smaa_enabled_ && smaa_shaders_loaded_;
+    }
+    texture_handle& apply(const RenderTexture2D& texture, int width, int height) override;
 };

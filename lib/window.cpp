@@ -8,7 +8,10 @@
 #include "utils/draw_texture.hpp"
 
 game_window::game_window(int width, int height, const char* title):
-    width_(width), height_(height) {
+    width_(width), height_(height),
+    warp_renderer_("warp", width, height),
+    fxaa_renderer_("fxaa", width, height),
+    smaa_renderer_("smaa", width, height) {
     InitWindow(width_, height_, title);
     SetTargetFPS(120);
     DisableCursor();  // hide cursor and lock to window
@@ -103,24 +106,21 @@ void game_window::end_scene_pass() {
 
 void game_window::apply_bloom() {
     if (!bloom_enabled_ || !bloom_shaders_loaded_) {
-        // No bloom - apply AA then warp to scene texture
-        const RenderTexture2D* aa_input = &scene_texture_;
-
-        if (fxaa_renderer_.enabled() && fxaa_renderer_.shader_loaded()) {
+        if (fxaa_renderer_.ready()) {
             fxaa_renderer_.apply(scene_texture_, width_, height_);
             // FXAA renders directly to screen, so we're done
             return;
         }
 
-        if (smaa_renderer_.enabled() && smaa_renderer_.shader_loaded()) {
+        if (smaa_renderer_.ready()) {
             smaa_renderer_.apply(scene_texture_, width_, height_);
             // SMAA renders directly to screen, so we're done
             return;
         }
 
-        // No AA - apply warp or draw directly
-        if (warp_renderer_.enabled() && warp_renderer_.shader_loaded()) {
-            warp_renderer_.apply(scene_texture_, width_, height_);
+        if (warp_renderer_.ready()) {
+            auto& out = warp_renderer_.apply(scene_texture_, width_, height_);
+            draw_texture_to_specific_screen(out.get(), width_, height_);
         } else {
             draw_texture_to_specific_screen(scene_texture_, width_, height_);
         }
@@ -186,19 +186,20 @@ void game_window::apply_bloom() {
 
     // Step 5: Apply AA and warp lens effect
     // FXAA and SMAA render directly to screen, so they bypass warp
-    if (fxaa_renderer_.enabled() && fxaa_renderer_.shader_loaded()) {
+    if (fxaa_renderer_.ready()) {
         fxaa_renderer_.apply(bloom_composite_texture_, width_, height_);
         return;
     }
 
-    if (smaa_renderer_.enabled() && smaa_renderer_.shader_loaded()) {
+    if (smaa_renderer_.ready()) {
         smaa_renderer_.apply(bloom_composite_texture_, width_, height_);
         return;
     }
 
     // No AA - apply warp or draw directly
-    if (warp_renderer_.enabled() && warp_renderer_.shader_loaded()) {
-        warp_renderer_.apply(bloom_composite_texture_, width_, height_);
+    if (warp_renderer_.ready()) {
+        auto& out = warp_renderer_.apply(bloom_composite_texture_, width_, height_);
+        draw_texture_to_specific_screen(out.get(), width_, height_);
     } else {
         // Draw the composited texture to screen
         draw_texture_to_specific_screen(bloom_composite_texture_, width_, height_);
@@ -231,7 +232,6 @@ void game_window::draw_cube(const Vector3& position, float width, float height, 
         };
         DrawCube(position, width, height, length, color);
     }
-    DrawCubeWires(position, width, height, length, MAROON);
 }
 
 void game_window::init_lit_shader() {
