@@ -5,7 +5,7 @@
 void warp_renderer::load() {
     output.load(width, height);
 
-    auto warp_vs_res = shader_manager::instance().load("relativistic.vs", "relativistic.fs");
+    auto warp_vs_res = shader_manager::instance().load("warp.vs", "warp.fs");
 
     warp_shader_ = warp_vs_res.shader;
     warp_shaders_loaded_ = warp_vs_res.success;
@@ -42,9 +42,9 @@ void warp_renderer::update_warp_factor(float dt) {
         warp_factor_ = fmaxf(warp_factor_ - warp_step, 0.0f);
     }
     if (warp_factor_ == 0.0f) {
-        warp_enabled_ = false;
+        enabled = false;
     } else {
-        warp_enabled_ = true;
+        enabled = true;
     }
 }
 

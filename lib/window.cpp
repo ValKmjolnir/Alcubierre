@@ -9,88 +9,52 @@
 
 game_window::game_window(int width, int height, const char* title):
     width_(width), height_(height),
-    warp_renderer_("warp", width, height),
-    fxaa_renderer_("fxaa", width, height),
-    smaa_renderer_("smaa", width, height) {
+    frame_graph_(width, height) {
+
     InitWindow(width_, height_, title);
     SetTargetFPS(120);
     DisableCursor();  // hide cursor and lock to window
 
-    // Initialize bloom and warp lens effects
-    init_bloom();
-    warp_renderer_.load();
-    fxaa_renderer_.load();
-    smaa_renderer_.load();
-    init_lit_shader();
+    load();
 }
 
 game_window::~game_window() {
-    unload_bloom();
-    warp_renderer_.unload();
-    fxaa_renderer_.unload();
-    smaa_renderer_.unload();
-    unload_lit_shader();
+    unload();
     CloseWindow();
 }
 
-void game_window::init_bloom() {
-    // SSAA texture
-    scene_texture_ = LoadRenderTexture(width_ * 1.5, height_ * 1.5);
+void game_window::init_frame_graph() {
+    frame_graph_.add_pass<fxaa_renderer>("fxaa");
+    frame_graph_.add_pass<smaa_renderer>("smaa");
+    frame_graph_.add_pass<warp_renderer>("warp");
+    frame_graph_.add_pass<bloom>("bloom");
 
-    // Half resolution bloom textures - performance optimization
-    bright_texture_ = LoadRenderTexture(width_, height_);
-    bloom_mask_texture_ = LoadRenderTexture(width_, height_);
-    bloom_h_texture_ = LoadRenderTexture(width_, height_);
-    bloom_v_texture_ = LoadRenderTexture(width_, height_);
-    bloom_composite_texture_ = LoadRenderTexture(width_, height_);
+    frame_graph_.load();
+}
+
+void game_window::unload_frame_graph() {
+    frame_graph_.unload();
+}
+
+void game_window::load() {
+    // SSAA texture
+    scene_texture_ = LoadRenderTexture(
+        width_ * ssaa_factor_,
+        height_ * ssaa_factor_
+    );
 
     // Set texture filtering
     SetTextureFilter(scene_texture_.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(bright_texture_.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(bloom_mask_texture_.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(bloom_h_texture_.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(bloom_v_texture_.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(bloom_composite_texture_.texture, TEXTURE_FILTER_BILINEAR);
 
-    // Load bloom shaders
-    auto bloom_extract_res = shader_manager::instance().load("bloom.vs", "bloom_extract.fs");
-    auto bloom_blur_h_res = shader_manager::instance().load("bloom.vs", "bloom_blur_h.fs");
-    auto bloom_blur_v_res = shader_manager::instance().load("bloom.vs", "bloom_blur_v.fs");
-    auto bloom_composite_res = shader_manager::instance().load("bloom.vs", "bloom.fs");
-
-    bloom_extract_shader_ = bloom_extract_res.shader;
-    bloom_blur_h_shader_ = bloom_blur_h_res.shader;
-    bloom_blur_v_shader_ = bloom_blur_v_res.shader;
-    bloom_composite_shader_ = bloom_composite_res.shader;
-
-    // Check if all shaders are valid
-    bloom_shaders_loaded_ = bloom_extract_res.success &&
-                            bloom_blur_h_res.success &&
-                            bloom_blur_v_res.success &&
-                            bloom_composite_res.success;
-    if (!bloom_shaders_loaded_) {
-        TraceLog(LOG_WARNING, "Bloom shaders failed to load, bloom disabled");
-        return;
-    }
-
-    // Get uniform locations
-    loc_bloom_intensity_ = GetShaderLocation(bloom_composite_shader_, "bloomIntensity");
-    loc_brightness_threshold_ = GetShaderLocation(bloom_extract_shader_, "brightnessThreshold");
-    loc_texel_size_ = GetShaderLocation(bloom_blur_h_shader_, "texelSize");
-    loc_blur_radius_ = GetShaderLocation(bloom_blur_h_shader_, "blurRadius");
+    init_frame_graph();
+    init_lit_shader();
 }
 
-void game_window::unload_bloom() {
-    if (bloom_shaders_loaded_) {
-        UnloadRenderTexture(scene_texture_);
-        UnloadRenderTexture(bright_texture_);
-        UnloadRenderTexture(bloom_mask_texture_);
-        UnloadRenderTexture(bloom_h_texture_);
-        UnloadRenderTexture(bloom_v_texture_);
-        UnloadRenderTexture(bloom_composite_texture_);
+void game_window::unload() {
+    UnloadRenderTexture(scene_texture_);
 
-        bloom_shaders_loaded_ = false;
-    }
+    unload_frame_graph();
+    unload_lit_shader();
 }
 
 void game_window::begin_scene_pass() {
@@ -104,106 +68,9 @@ void game_window::end_scene_pass() {
     EndTextureMode();
 }
 
-void game_window::apply_bloom() {
-    if (!bloom_enabled_ || !bloom_shaders_loaded_) {
-        if (fxaa_renderer_.ready()) {
-            fxaa_renderer_.apply(scene_texture_, width_, height_);
-            // FXAA renders directly to screen, so we're done
-            return;
-        }
-
-        if (smaa_renderer_.ready()) {
-            smaa_renderer_.apply(scene_texture_, width_, height_);
-            // SMAA renders directly to screen, so we're done
-            return;
-        }
-
-        if (warp_renderer_.ready()) {
-            auto& out = warp_renderer_.apply(scene_texture_, width_, height_);
-            draw_texture_to_specific_screen(out.get(), width_, height_);
-        } else {
-            draw_texture_to_specific_screen(scene_texture_, width_, height_);
-        }
-        return;
-    }
-
-    // Step 1: Extract bright areas (downsample to half resolution)
-    BeginTextureMode(bright_texture_);
-    ClearBackground(BLACK);
-    SetShaderValue(bloom_extract_shader_, loc_brightness_threshold_, &bloom_threshold_, SHADER_UNIFORM_FLOAT);
-    BeginShaderMode(bloom_extract_shader_);
-    draw_texture_to_specific_screen(
-        scene_texture_,
-        bright_texture_.texture.width,
-        bright_texture_.texture.height
-    );
-    EndShaderMode();
-    EndTextureMode();
-
-    // Step 2: Horizontal blur
-    BeginTextureMode(bloom_h_texture_);
-    ClearBackground(BLACK);
-    float texel_size_h[2] = { 1.0f / (float)bright_texture_.texture.width, 0.0f };
-    SetShaderValue(bloom_blur_h_shader_, loc_texel_size_, texel_size_h, SHADER_UNIFORM_VEC2);
-    SetShaderValue(bloom_blur_h_shader_, loc_blur_radius_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
-    BeginShaderMode(bloom_blur_h_shader_);
-    draw_texture_to_specific_screen(
-        bright_texture_,
-        bloom_h_texture_.texture.width,
-        bloom_h_texture_.texture.height
-    );
-    EndShaderMode();
-    EndTextureMode();
-
-    // Step 3: Vertical blur
-    BeginTextureMode(bloom_v_texture_);
-    ClearBackground(BLACK);
-    float texel_size_v[2] = { 0.0f, 1.0f / (float)bright_texture_.texture.height };
-    SetShaderValue(bloom_blur_v_shader_, loc_texel_size_, texel_size_v, SHADER_UNIFORM_VEC2);
-    SetShaderValue(bloom_blur_v_shader_, loc_blur_radius_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
-    BeginShaderMode(bloom_blur_v_shader_);
-    draw_texture_to_specific_screen(
-        bloom_h_texture_,
-        bloom_v_texture_.texture.width,
-        bloom_v_texture_.texture.height
-    );
-    EndShaderMode();
-    EndTextureMode();
-
-    // Step 4: Composite - combine scene with bloom
-    BeginTextureMode(bloom_composite_texture_);
-    ClearBackground(BLACK);
-    // First, draw scene to screen
-    draw_texture_to_specific_screen(scene_texture_, width_, height_);
-    // Then, draw bloom on top with additive blending
-    SetShaderValue(bloom_composite_shader_, loc_bloom_intensity_, &bloom_intensity_, SHADER_UNIFORM_FLOAT);
-    BeginShaderMode(bloom_composite_shader_);
-    BeginBlendMode(BLEND_ADDITIVE);
-    draw_texture_to_specific_screen(bloom_v_texture_, width_, height_);
-    EndBlendMode();
-    EndShaderMode();
-    EndTextureMode();
-
-    // Step 5: Apply AA and warp lens effect
-    // FXAA and SMAA render directly to screen, so they bypass warp
-    if (fxaa_renderer_.ready()) {
-        fxaa_renderer_.apply(bloom_composite_texture_, width_, height_);
-        return;
-    }
-
-    if (smaa_renderer_.ready()) {
-        smaa_renderer_.apply(bloom_composite_texture_, width_, height_);
-        return;
-    }
-
-    // No AA - apply warp or draw directly
-    if (warp_renderer_.ready()) {
-        auto& out = warp_renderer_.apply(bloom_composite_texture_, width_, height_);
-        draw_texture_to_specific_screen(out.get(), width_, height_);
-    } else {
-        // Draw the composited texture to screen
-        draw_texture_to_specific_screen(bloom_composite_texture_, width_, height_);
-    }
+void game_window::apply() {
+    auto& out = frame_graph_.execute(scene_texture_, width_, height_);
+    draw_texture_to_specific_screen(out.get(), width_, height_);
 }
 
 void game_window::draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b) {
@@ -240,7 +107,7 @@ void game_window::init_lit_shader() {
     lit_shader_loaded_ = lit_vs_res.success;
 
     if (!lit_shader_loaded_) {
-        TraceLog(LOG_WARNING, "Lit object shader failed to load, falling back to raylib default");
+        TraceLog(LOG_WARNING, "Lit object shader failed to load");
         return;
     }
 
@@ -265,4 +132,12 @@ void game_window::unload_lit_shader() {
         UnloadMesh(cube_mesh_);
         cube_mesh_ready_ = false;
     }
+}
+
+warp_renderer& game_window::get_warp_renderer() {
+    return frame_graph_.get_pass<warp_renderer>("warp");
+}
+
+bloom& game_window::get_bloom_renderer() {
+    return frame_graph_.get_pass<bloom>("bloom");
 }

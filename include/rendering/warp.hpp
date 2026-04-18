@@ -19,7 +19,6 @@ private:
     int loc_exposure_ = -1;
 
     // settings
-    bool warp_enabled_ = false;
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
     Vector3 view_direction_ = { 0.0f, 0.0f, -1.0f };
     float warp_factor_ = 0.0f;
@@ -42,6 +41,8 @@ public:
     ~warp_renderer() = default;
     void load() override;
     void unload() override;
-    bool ready() const override { return warp_enabled_ && warp_shaders_loaded_; }
+    bool ready() const override {
+        return enabled && warp_shaders_loaded_ && output.ready();
+    }
     texture_handle& apply(const RenderTexture2D& texture, int width, int height) override;
 };

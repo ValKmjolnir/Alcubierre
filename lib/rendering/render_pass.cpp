@@ -10,7 +10,7 @@ void render_pass::unload() {
 }
 
 bool render_pass::ready() const {
-    return output.ready();
+    return enabled && output.ready();
 }
 
 texture_handle& render_pass::apply(const RenderTexture2D& texture, int width, int height) {

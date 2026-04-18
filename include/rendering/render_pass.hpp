@@ -12,8 +12,13 @@ protected:
     std::string name;
     int width;
     int height;
+    bool enabled = false;
 
     texture_handle output;
+
+public:
+    void set_enabled(bool flag) { enabled = flag; }
+    bool is_enabled() const { return enabled; }
 
 public:
     render_pass(const char* n, int w, int h):

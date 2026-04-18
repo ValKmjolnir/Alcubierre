@@ -6,6 +6,8 @@
 #include "rendering/warp.hpp"
 #include "rendering/fxaa.hpp"
 #include "rendering/smaa.hpp"
+#include "rendering/bloom.hpp"
+#include "rendering/frame_graph.hpp"
 
 #include <memory>
 
@@ -14,31 +16,9 @@ private:
     int width_;
     int height_;
 
-    // Bloom members
-    bool bloom_enabled_ = false;
-    float bloom_threshold_ = 0.7f;
-    float bloom_intensity_ = 5.0f;
-    float bloom_blur_radius_ = 4.0f;
-
-    // Render textures for bloom
+    // Main scene texture
     RenderTexture2D scene_texture_;
-    RenderTexture2D bright_texture_;
-    RenderTexture2D bloom_mask_texture_;
-    RenderTexture2D bloom_h_texture_;
-    RenderTexture2D bloom_v_texture_;
-    RenderTexture2D bloom_composite_texture_;
-
-    // Bloom shaders
-    Shader bloom_extract_shader_;
-    Shader bloom_blur_h_shader_;
-    Shader bloom_blur_v_shader_;
-    Shader bloom_composite_shader_;
-
-    bool bloom_shaders_loaded_ = false;
-    int loc_bloom_intensity_;
-    int loc_brightness_threshold_;
-    int loc_texel_size_;
-    int loc_blur_radius_;
+    float ssaa_factor_ = 1.5f;
 
     // Lit object shader (for cubes, grid, etc.)
     Shader lit_shader_;
@@ -51,12 +31,13 @@ private:
     Mesh cube_mesh_;
     bool cube_mesh_ready_ = false;
 
-    warp_renderer warp_renderer_;
-    fxaa_renderer fxaa_renderer_;
-    smaa_renderer smaa_renderer_;
+    frame_graph frame_graph_;
 
-    void init_bloom();
-    void unload_bloom();
+    void init_frame_graph();
+    void unload_frame_graph();
+
+    void load();
+    void unload();
     void init_lit_shader();
     void unload_lit_shader();
 
@@ -77,21 +58,14 @@ public:
     void draw_grid(int slices, float spacing) { DrawGrid(slices, spacing); }
 
     // Bloom post-processing
-    void set_bloom_enabled(bool enabled) { bloom_enabled_ = enabled; }
-    bool is_bloom_enabled() const { return bloom_enabled_; }
-    void set_bloom_threshold(float threshold) { bloom_threshold_ = threshold; }
-    void set_bloom_intensity(float intensity) { bloom_intensity_ = intensity; }
-    void set_bloom_blur_radius(float radius) { bloom_blur_radius_ = radius; }
     void begin_scene_pass();
     void end_scene_pass();
 
-    // Bloom
-    void apply_bloom();
+    void apply();
 
-    warp_renderer& get_warp_renderer() { return warp_renderer_; }
-
-    fxaa_renderer& get_fxaa_renderer() { return fxaa_renderer_; }
-    smaa_renderer& get_smaa_renderer() { return smaa_renderer_; }
+    frame_graph& get_frame_graph() { return frame_graph_; }
+    warp_renderer& get_warp_renderer();
+    bloom& get_bloom_renderer();
 
     int width() const { return width_; }
     int height() const { return height_; }

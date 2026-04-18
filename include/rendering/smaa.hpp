@@ -21,17 +21,12 @@ private:
     RenderTexture2D edge_texture_;
     RenderTexture2D blend_texture_;
 
-    bool smaa_enabled_ = false;
-
-public:
-    void set_enabled(bool enabled) { smaa_enabled_ = enabled; }
-
 public:
     smaa_renderer(const char* n, int w, int h): render_pass(n, w, h) {}
     void load() override;
     void unload() override;
     bool ready() const override {
-        return smaa_enabled_ && smaa_shaders_loaded_;
+        return enabled && smaa_shaders_loaded_ && output.ready();
     }
     texture_handle& apply(const RenderTexture2D& texture, int width, int height) override;
 };

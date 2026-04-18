@@ -61,10 +61,10 @@ int main() {
     }
 
     // Enable bloom post-processing
-    window.set_bloom_enabled(true);
-    window.set_bloom_threshold(0.85f);
-    window.set_bloom_intensity(2.5f);
-    window.set_bloom_blur_radius(15.0f);
+    window.get_frame_graph().set_enable("bloom", true);
+    window.get_bloom_renderer().set_bloom_threshold(0.85f);
+    window.get_bloom_renderer().set_bloom_intensity(2.5f);
+    window.get_bloom_renderer().set_bloom_blur_radius(15.0f);
 
     // Enable warp lens post-processing
     window.get_warp_renderer().set_velocity({ 0.0f, 0.0f, 0.0f });
@@ -119,16 +119,19 @@ int main() {
 
         // Toggle bloom with B key
         if (IsKeyPressed(KEY_B)) {
-            window.set_bloom_enabled(!window.is_bloom_enabled());
+            window.get_frame_graph().set_enable(
+                "bloom",
+                !window.get_frame_graph().enabled("bloom")
+            );
         }
 
         if (IsKeyPressed(KEY_F)) {
             enable_fxaa = !enable_fxaa;
-            window.get_fxaa_renderer().set_enabled(enable_fxaa);
+            window.get_frame_graph().set_enable("fxaa", enable_fxaa);
         }
         if (IsKeyPressed(KEY_G)) {
             enable_smaa = !enable_smaa;
-            window.get_smaa_renderer().set_enabled(enable_smaa);
+            window.get_frame_graph().set_enable("smaa", enable_smaa);
         }
 
         // Adjust warp factor (bubble geometry)
@@ -222,14 +225,14 @@ int main() {
 
         window.end_mode_3d();
         window.end_scene_pass();
-        window.apply_bloom();
+        window.apply();
 
         if (show_text) {
             // Draw UI (on top of bloom)
             DrawFPS(10, 10);
             DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);
             DrawText("Press T to toggle text", 10, 60, 16, WHITE);
-            DrawText("Press B to toggle Bloom", 10, 80, 16, window.is_bloom_enabled() ? GREEN : GRAY);
+            DrawText("Press B to toggle Bloom", 10, 80, 16, window.get_frame_graph().enabled("bloom") ? GREEN : GRAY);
             DrawText("Press F to toggle FXAA", 10, 100, 16, enable_fxaa ? GREEN : GRAY);
             DrawText("Press G to toggle SMAA", 10, 120, 16, enable_smaa ? GREEN : GRAY);
 

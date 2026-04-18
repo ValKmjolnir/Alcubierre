@@ -7,7 +7,6 @@
 class bloom: public render_pass {
 private:
     // Bloom members
-    bool bloom_enabled_ = false;
     float bloom_threshold_ = 0.7f;
     float bloom_intensity_ = 5.0f;
     float bloom_blur_radius_ = 4.0f;
@@ -32,9 +31,16 @@ private:
     int loc_blur_radius_ = -1;
 
 public:
+    void set_bloom_threshold(float threshold) { bloom_threshold_ = threshold; }
+    void set_bloom_intensity(float intensity) { bloom_intensity_ = intensity; }
+    void set_bloom_blur_radius(float radius) { bloom_blur_radius_ = radius; }
+
+public:
     bloom(const char* name, int w, int h): render_pass(name, w, h) {}
     void load();
     void unload();
-    bool ready() const { return bloom_enabled_ && bloom_shaders_loaded_ && output.ready(); }
+    bool ready() const {
+        return enabled && bloom_shaders_loaded_ && output.ready();
+    }
     texture_handle& apply(const RenderTexture2D& texture, int width, int height);
 };
