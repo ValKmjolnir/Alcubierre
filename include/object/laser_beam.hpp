@@ -32,7 +32,6 @@ private:
     int loc_line_end;
 
     int calculate_pulse_alpha() const;
-    void draw_with_shader_internal() const;
 
 public:
     laser_beam();

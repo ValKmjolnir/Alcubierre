@@ -78,7 +78,7 @@ int main() {
         { 50.0f, 0.0f, 0.0f },   // velocity (moving right)
         255, 150, 0, 255         // color (orange)
     );
-    proj1.set_radius(0.04f);
+    proj1.set_radius(0.25f);
     proj1.set_lifetime(1.5f);
     proj1.set_trail_enabled(true);
     proj1.set_trail_length(5.0f);
@@ -90,7 +90,7 @@ int main() {
         { 30.0f, 2.5f, 0.0f },   // velocity with slight upward angle
         50, 150, 255, 255        // color (blue)
     );
-    proj2.set_radius(0.04f);
+    proj2.set_radius(0.25f);
     proj2.set_lifetime(2.0f);
     proj2.set_trail_enabled(true);
     proj2.set_trail_length(5.5f);

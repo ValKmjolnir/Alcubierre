@@ -150,15 +150,10 @@ void laser_beam::draw() const {
         laser_beam* mutable_this = const_cast<laser_beam*>(this);
         mutable_this->load_shader("laser_beam.vs", "laser_beam.fs");
     }
-
-    if (shader_loaded_) {
-        draw_with_shader_internal();
-    } else {
+    if (!shader_loaded_) {
         TraceLog(LOG_FATAL, "laser_beam: Failed to load shader");
     }
-}
 
-void laser_beam::draw_with_shader_internal() const {
     const int base_alpha = pulse_enabled_ ? calculate_pulse_alpha() : color_alpha_;
     if (base_alpha <= 0) {
         return;

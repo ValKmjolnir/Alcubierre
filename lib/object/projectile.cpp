@@ -24,16 +24,6 @@ projectile::projectile()
     , trail_color_g_(50)
     , trail_color_b_(0)
     , trail_color_alpha_(200)
-    , shader_{ 0 }
-    , shader_loaded_(false)
-    , loc_mvp(-1)
-    , loc_color(-1)
-    , loc_intensity(-1)
-    , loc_glow_radius(-1)
-    , loc_position(-1)
-    , loc_velocity(-1)
-    , loc_age(-1)
-    , loc_lifetime(-1)
 {
 }
 
@@ -56,16 +46,6 @@ projectile::projectile(const Vector3& position, const Vector3& velocity, int r, 
     , trail_color_g_(50)
     , trail_color_b_(0)
     , trail_color_alpha_(200)
-    , shader_{ 0 }
-    , shader_loaded_(false)
-    , loc_mvp(-1)
-    , loc_color(-1)
-    , loc_intensity(-1)
-    , loc_glow_radius(-1)
-    , loc_position(-1)
-    , loc_velocity(-1)
-    , loc_age(-1)
-    , loc_lifetime(-1)
 {
 }
 
@@ -201,7 +181,6 @@ void projectile::load_shader(const char* vs_path, const char* fs_path) {
 
 void projectile::unload_shader() {
     if (shader_loaded_) {
-        shader_ = { 0 };
         shader_loaded_ = false;
     }
 }
@@ -248,19 +227,10 @@ void projectile::draw() const {
         projectile* mutable_this = const_cast<projectile*>(this);
         mutable_this->load_shader("projectile.vs", "projectile.fs");
     }
-
-    if (shader_loaded_) {
-        draw_with_shader_internal();
-    } else {
+    if (!shader_loaded_) {
         TraceLog(LOG_FATAL, "projectile: Failed to load shader");
     }
-}
 
-void projectile::draw_with_shader() const {
-    draw_with_shader_internal();
-}
-
-void projectile::draw_with_shader_internal() const {
     const int base_alpha = calculate_age_alpha();
     if (base_alpha <= 0) return;
 

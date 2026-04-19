@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "raymath.h"
+#include "rlgl.h"
 
 #include "window.hpp"
 #include "lighting_system.hpp"
@@ -12,6 +13,7 @@ game_window::game_window(int width, int height, const char* title):
     frame_graph_(width, height) {
 
     InitWindow(width_, height_, title);
+    rlEnableBackfaceCulling();
     SetTargetFPS(120);
     DisableCursor();  // hide cursor and lock to window
 
@@ -20,6 +22,8 @@ game_window::game_window(int width, int height, const char* title):
 
 game_window::~game_window() {
     unload();
+
+    rlDisableBackfaceCulling();
     CloseWindow();
 }
 

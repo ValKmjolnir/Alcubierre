@@ -55,7 +55,6 @@ public:
     // Update and draw
     void update(float dt);
     void draw() const;
-    void draw_with_shader() const;
 
 private:
     Vector3 position_;
@@ -78,17 +77,16 @@ private:
 
     // Shader members
     Shader shader_;
-    bool shader_loaded_;
-    int loc_mvp;
-    int loc_color;
-    int loc_intensity;
-    int loc_glow_radius;
-    int loc_position;
-    int loc_velocity;
-    int loc_age;
-    int loc_lifetime;
+    bool shader_loaded_ = false;
+    int loc_mvp = -1;
+    int loc_color = -1;
+    int loc_intensity = -1;
+    int loc_glow_radius = -1;
+    int loc_position = -1;
+    int loc_velocity = -1;
+    int loc_age = -1;
+    int loc_lifetime = -1;
 
     int calculate_age_alpha() const;
-    void draw_with_shader_internal() const;
     void draw_trail() const;
 };

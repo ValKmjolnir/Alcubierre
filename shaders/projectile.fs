@@ -17,23 +17,6 @@ uniform float projLifetime; // Projectile lifetime
 // Output fragment color
 out vec4 fragColor;
 
-// Calculate distance from point to line segment (for trail effect)
-float distanceToTrail(vec3 point, vec3 start, vec3 end)
-{
-    vec3 lineVec = end - start;
-    vec3 pointVec = point - start;
-    float lineLen = length(lineVec);
-
-    if (lineLen < 0.0001) {
-        return length(pointVec);
-    }
-
-    float t = clamp(dot(pointVec, lineVec) / (lineLen * lineLen), 0.0, 1.0);
-    vec3 closestPoint = start + t * lineVec;
-
-    return length(point - closestPoint);
-}
-
 void main()
 {
     // Calculate velocity direction for heating effect
