@@ -1,19 +1,22 @@
+#include "raylib.h"
+#include "raymath.h"
+#include "rlgl.h"
+
 #include "window.hpp"
 #include "camera.hpp"
 #include "skybox.hpp"
 #include "object/laser_beam.hpp"
 #include "object/projectile.hpp"
 #include "object/star.hpp"
+#include "ui/menu.hpp"
 #include "lighting_system.hpp"
 #include "utils/shader_manager.hpp"
-
-#include "raylib.h"
-#include "raymath.h"
 
 #include <vector>
 
 int main() {
     game_window window(1600, 800, "Alcubierre Warp Drive");
+    menu menu(window);
 
     // TraceLogLevel(LOG_DEBUG);
 
@@ -100,6 +103,7 @@ int main() {
     bool show_text = true;
     bool enable_fxaa = false;
     bool enable_smaa = false;
+    bool menu_open = false;
 
     while (!window.should_close()) {
         window.begin_drawing();
@@ -255,6 +259,16 @@ int main() {
             DrawText(light_info, 10, 200, 16, YELLOW);
 
             DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 220, 16, GREEN);
+        }
+
+        if (IsKeyPressed(KEY_M)) {
+            menu_open = !menu_open;
+        }
+        if (menu_open) {
+            menu.draw();
+            menu.show_mouse();
+        } else {
+            menu.hide_mouse();
         }
         window.end_drawing();
     }

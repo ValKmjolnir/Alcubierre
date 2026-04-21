@@ -23,6 +23,7 @@ set(SOURCES
     lib/object/laser_beam.cpp
     lib/object/projectile.cpp
     lib/object/star.cpp
+    lib/ui/menu.cpp
     lib/rendering/bloom.cpp
     lib/rendering/frame_graph.cpp
     lib/rendering/warp.cpp
