@@ -1,5 +1,7 @@
 # Alcubierre
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ValKmjolnir/Alcubierre)
+
 Experimental engine with specific shapes for Alcubierre metric (not strictly).
 
 ![demo](./docs/pic/demo.png)
