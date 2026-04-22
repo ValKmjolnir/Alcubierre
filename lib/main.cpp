@@ -16,6 +16,9 @@
 
 int main() {
     game_window window(1600, 800, "Alcubierre Warp Drive");
+    Image icon = LoadImage("assets/logo/icon.png");
+    SetWindowIcon(icon);
+
     menu menu(window);
 
     // TraceLogLevel(LOG_DEBUG);

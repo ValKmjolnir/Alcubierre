@@ -1,10 +1,16 @@
-# Alcubierre
+<p align="center">
+    <img src="assets/logo/icon.svg" height="128px" align="center"/>
+</p>
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ValKmjolnir/Alcubierre)
+<h1 align="center"> Alcubierre </h1>
 
 Experimental engine with specific shapes for Alcubierre metric (not strictly).
 
 ![demo](./docs/pic/demo.png)
+
+## How it works
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ValKmjolnir/Alcubierre)
 
 ## Build
 

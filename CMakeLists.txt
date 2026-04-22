@@ -44,7 +44,11 @@ set(SOURCES
 )
 
 # Create executable
-add_executable(${PROJECT_NAME} ${SOURCES})
+if (WIN32)
+    add_executable(${PROJECT_NAME} ${SOURCES} ${CMAKE_SOURCE_DIR}/assets/logo/icon.rc)
+else()
+    add_executable(${PROJECT_NAME} ${SOURCES})
+endif()
 
 # Link raylib and required system libraries
 target_link_directories(${PROJECT_NAME} PRIVATE ${RAYLIB_LIB_DIR})
@@ -65,3 +69,4 @@ endif()
 
 # Copy shaders to build directory
 file(COPY ${CMAKE_SOURCE_DIR}/shaders DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
