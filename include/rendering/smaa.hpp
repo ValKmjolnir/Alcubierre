@@ -1,6 +1,6 @@
 #pragma once
 
-#include "raylib.h"
+#include <raylib.h>
 #include "rendering/render_pass.hpp"
 
 class smaa_renderer: public render_pass {

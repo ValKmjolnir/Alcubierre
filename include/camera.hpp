@@ -1,6 +1,6 @@
 #pragma once
 
-#include "raylib.h"
+#include <raylib.h>
 
 class camera_3d {
 private:

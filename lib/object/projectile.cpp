@@ -1,9 +1,9 @@
-#include "object/projectile.hpp"
-#include "raylib.h"
-#include "raymath.h"
-
-#include "utils/shader_manager.hpp"
+#include <raylib.h>
+#include <raymath.h>
 #include <cmath>
+
+#include "object/projectile.hpp"
+#include "utils/shader_manager.hpp"
 
 projectile::projectile()
     : object()

@@ -28,7 +28,7 @@ def png_to_ico(png_bytes: bytes, ico_path: str):
         append_images=icon_images[1:]
     )
 
-png_data = svg_to_png_resvg("docs/logo/icon.svg")
+png_data = svg_to_png_resvg("assets/logo/icon.svg")
 image = Image.open(io.BytesIO(png_data))
-image.save("docs/logo/icon.png")
-png_to_ico(png_data, "docs/logo/icon.ico")
+image.save("assets/logo/icon.png")
+png_to_ico(png_data, "assets/logo/icon.ico")

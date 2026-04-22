@@ -1,7 +1,7 @@
 #pragma once
 
-#include "raylib.h"
-#include "raymath.h"
+#include <raylib.h>
+#include <raymath.h>
 
 #include "light_base.hpp"
 #include "object/object.hpp"

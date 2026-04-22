@@ -1,6 +1,8 @@
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
+#include <raylib.h>
+#include <raymath.h>
+#include <rlgl.h>
+
+#include <vector>
 
 #include "window.hpp"
 #include "camera.hpp"
@@ -12,10 +14,10 @@
 #include "lighting_system.hpp"
 #include "utils/shader_manager.hpp"
 
-#include <vector>
-
 int main() {
     game_window window(1600, 800, "Alcubierre Warp Drive");
+
+    // Set window icon
     Image icon = LoadImage("assets/logo/icon.png");
     SetWindowIcon(icon);
 
@@ -106,7 +108,6 @@ int main() {
     bool show_text = true;
     bool enable_fxaa = false;
     bool enable_smaa = false;
-    bool menu_open = false;
 
     while (!window.should_close()) {
         window.begin_drawing();
@@ -122,6 +123,16 @@ int main() {
         }
         if (IsKeyPressed(KEY_T)) {
             show_text = !show_text;
+        }
+
+        // Toggle menu with M key
+        if (IsKeyPressed(KEY_M)) {
+            menu.set_show_menu(!menu.get_show_menu());
+            if (menu.get_show_menu()) {
+                menu.show_mouse();
+            } else {
+                menu.hide_mouse();
+            }
         }
 
         // Toggle bloom with B key
@@ -264,15 +275,9 @@ int main() {
             DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 220, 16, GREEN);
         }
 
-        if (IsKeyPressed(KEY_M)) {
-            menu_open = !menu_open;
-        }
-        if (menu_open) {
-            menu.draw();
-            menu.show_mouse();
-        } else {
-            menu.hide_mouse();
-        }
+        // Draw menu
+        menu.draw();
+
         window.end_drawing();
     }
 

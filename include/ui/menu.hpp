@@ -6,21 +6,16 @@
 class menu {
 private:
     game_window& window;
-    bool show_mouse_ = true;
+    bool show_menu_ = false;
+    bool show_mouse_ = false;
 
 public:
-    menu(game_window& window) : window(window) {}
+    menu(game_window& window) : window(window) {
+        DisableCursor();
+    }
     void draw();
-    void hide_mouse() {
-        if (show_mouse_) {
-            show_mouse_ = false;
-            DisableCursor();
-        }
-    }
-    void show_mouse() {
-        if (!show_mouse_) {
-            show_mouse_ = true;
-            EnableCursor();
-        }
-    }
+    void hide_mouse();
+    void show_mouse();
+    void set_show_menu(bool flag) { show_menu_ = flag; }
+    bool get_show_menu() const { return show_menu_; }
 };

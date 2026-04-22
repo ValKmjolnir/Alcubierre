@@ -1,6 +1,6 @@
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
+#include <raylib.h>
+#include <raymath.h>
+#include <rlgl.h>
 
 #include "window.hpp"
 #include "lighting_system.hpp"

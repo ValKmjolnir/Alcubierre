@@ -1,10 +1,10 @@
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
+#include <raylib.h>
+#include <raymath.h>
+#include <rlgl.h>
+#include <cmath>
 
 #include "object/star.hpp"
 #include "lighting_system.hpp"
-#include <cmath>
 
 float smooth_maxf(float a, float b, float smooth) {
     // 1.0    ~ 5.0    ~ 10.0

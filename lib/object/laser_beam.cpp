@@ -1,9 +1,9 @@
-#include "object/laser_beam.hpp"
-#include "raylib.h"
-#include "raymath.h"
-
-#include "utils/shader_manager.hpp"
+#include <raylib.h>
+#include <raymath.h>
 #include <cmath>
+
+#include "object/laser_beam.hpp"
+#include "utils/shader_manager.hpp"
 
 laser_beam::laser_beam()
     : object()

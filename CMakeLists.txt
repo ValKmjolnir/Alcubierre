@@ -46,6 +46,10 @@ set(SOURCES
 # Create executable
 if (WIN32)
     add_executable(${PROJECT_NAME} ${SOURCES} ${CMAKE_SOURCE_DIR}/assets/logo/icon.rc)
+    # enable if want GUI app
+    # set_target_properties(${PROJECT_NAME} PROPERTIES
+    #    WIN32_EXECUTABLE TRUE
+    # )
 else()
     add_executable(${PROJECT_NAME} ${SOURCES})
 endif()

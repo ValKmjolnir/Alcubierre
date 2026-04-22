@@ -1,7 +1,7 @@
 #pragma once
 
-#include "raylib.h"
-#include "raymath.h"
+#include <raylib.h>
+#include <raymath.h>
 
 #include "rendering/warp.hpp"
 #include "rendering/fxaa.hpp"

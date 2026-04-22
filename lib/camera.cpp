@@ -1,6 +1,7 @@
+#include <raylib.h>
+#include <raymath.h>
+
 #include "camera.hpp"
-#include "raylib.h"
-#include "raymath.h"
 
 camera_3d::camera_3d() {
     camera_.position = { 5.0f, 5.0f, 5.0f };

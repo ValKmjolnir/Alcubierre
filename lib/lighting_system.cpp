@@ -1,7 +1,9 @@
-#include "lighting_system.hpp"
-#include "raymath.h"
+#include <raylib.h>
+#include <raymath.h>
 #include <algorithm>
 #include <cstdio>
+
+#include "lighting_system.hpp"
 
 lighting_system& lighting_system::instance() {
     static lighting_system inst;

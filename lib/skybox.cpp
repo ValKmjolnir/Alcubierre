@@ -1,7 +1,6 @@
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
-
+#include <raylib.h>
+#include <raymath.h>
+#include <rlgl.h>
 #include <cmath>
 
 #include "skybox.hpp"

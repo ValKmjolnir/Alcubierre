@@ -1,10 +1,10 @@
 #pragma once
 
-#include "light_base.hpp"
-#include "raylib.h"
-
+#include <raylib.h>
 #include <memory>
 #include <vector>
+
+#include "light_base.hpp"
 
 class lighting_system {
 private:
