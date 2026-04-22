@@ -13,6 +13,7 @@
 #include "ui/menu.hpp"
 #include "lighting_system.hpp"
 #include "utils/shader_manager.hpp"
+#include "utils/input_manager.hpp"
 
 int main() {
     game_window window(1600, 800, "Alcubierre Warp Drive");
@@ -22,6 +23,7 @@ int main() {
     SetWindowIcon(icon);
 
     menu menu(window);
+    input_manager im;
 
     // TraceLogLevel(LOG_DEBUG);
 
@@ -129,9 +131,9 @@ int main() {
         if (IsKeyPressed(KEY_M)) {
             menu.set_show_menu(!menu.get_show_menu());
             if (menu.get_show_menu()) {
-                menu.show_mouse();
+                im.show_mouse();
             } else {
-                menu.hide_mouse();
+                im.hide_mouse();
             }
         }
 
