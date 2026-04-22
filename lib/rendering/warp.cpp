@@ -27,9 +27,7 @@ void warp_renderer::load() {
 
 void warp_renderer::unload() {
     output.unload();
-    if (warp_shaders_loaded_) {
-        warp_shaders_loaded_ = false;
-    }
+    warp_shaders_loaded_ = false;
 }
 
 void warp_renderer::update_warp_factor(float dt) {

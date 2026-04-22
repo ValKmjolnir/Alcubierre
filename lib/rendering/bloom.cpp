@@ -49,15 +49,12 @@ void bloom::load() {
 
 void bloom::unload() {
     output.unload();
-    if (bloom_shaders_loaded_) {
-        UnloadRenderTexture(bright_texture_);
-        UnloadRenderTexture(bloom_mask_texture_);
-        UnloadRenderTexture(bloom_h_texture_);
-        UnloadRenderTexture(bloom_v_texture_);
-        UnloadRenderTexture(bloom_composite_texture_);
-
-        bloom_shaders_loaded_ = false;
-    }
+    UnloadRenderTexture(bright_texture_);
+    UnloadRenderTexture(bloom_mask_texture_);
+    UnloadRenderTexture(bloom_h_texture_);
+    UnloadRenderTexture(bloom_v_texture_);
+    UnloadRenderTexture(bloom_composite_texture_);
+    bloom_shaders_loaded_ = false;
 }
 
 texture_handle& bloom::apply(const RenderTexture2D& texture, int width, int height) {

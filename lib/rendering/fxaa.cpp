@@ -19,9 +19,7 @@ void fxaa_renderer::load() {
 
 void fxaa_renderer::unload() {
     output.unload();
-    if (fxaa_shader_loaded_) {
-        fxaa_shader_loaded_ = false;
-    }
+    fxaa_shader_loaded_ = false;
 }
 
 texture_handle& fxaa_renderer::apply(const RenderTexture2D& texture, int width, int height) {

@@ -5,6 +5,11 @@
 void smaa_renderer::load() {
     output.load(width, height);
 
+    edge_texture_ = LoadRenderTexture(width, height);
+    blend_texture_ = LoadRenderTexture(width, height);
+    SetTextureFilter(edge_texture_.texture, TEXTURE_FILTER_POINT);
+    SetTextureFilter(blend_texture_.texture, TEXTURE_FILTER_POINT);
+
     auto edge_res = shader_manager::instance().load("smaa.vs", "smaa_edge.fs");
     auto blend_res = shader_manager::instance().load("smaa.vs", "smaa_blend.fs");
     auto resolve_res = shader_manager::instance().load("smaa.vs", "smaa_resolve.fs");
@@ -28,17 +33,9 @@ void smaa_renderer::load() {
 
 void smaa_renderer::unload() {
     output.unload();
-    if (smaa_shaders_loaded_) {
-        if (edge_texture_.id != 0) {
-            UnloadRenderTexture(edge_texture_);
-            edge_texture_ = { 0 };
-        }
-        if (blend_texture_.id != 0) {
-            UnloadRenderTexture(blend_texture_);
-            blend_texture_ = { 0 };
-        }
-        smaa_shaders_loaded_ = false;
-    }
+    UnloadRenderTexture(edge_texture_);
+    UnloadRenderTexture(blend_texture_);
+    smaa_shaders_loaded_ = false;
 }
 
 texture_handle& smaa_renderer::apply(const RenderTexture2D& texture, int width, int height) {
@@ -47,14 +44,6 @@ texture_handle& smaa_renderer::apply(const RenderTexture2D& texture, int width, 
         draw_texture_to_specific_screen(texture, width, height);
         EndTextureMode();
         return output;
-    }
-
-    // Lazily create intermediate textures on first apply
-    if (edge_texture_.id == 0) {
-        edge_texture_ = LoadRenderTexture(width, height);
-        blend_texture_ = LoadRenderTexture(width, height);
-        SetTextureFilter(edge_texture_.texture, TEXTURE_FILTER_POINT);
-        SetTextureFilter(blend_texture_.texture, TEXTURE_FILTER_POINT);
     }
 
     float resolution[2] = { static_cast<float>(width), static_cast<float>(height) };

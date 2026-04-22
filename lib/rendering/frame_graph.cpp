@@ -36,6 +36,9 @@ texture_handle& frame_graph::execute(const RenderTexture2D& input,
                                      int height) {
     texture_handle* tmp = nullptr;
     for (auto& pass: passes) {
+        if (!pass->is_enabled()) {
+            continue;
+        }
         if (tmp) {
             tmp = &(pass->apply(tmp->get(), width, height));
         } else {
