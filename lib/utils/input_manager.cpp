@@ -1,7 +1,10 @@
+#include <raylib.h>
+
 #include "utils/input_manager.hpp"
 
 input_manager::input_manager(): show_mouse_(false) {
     DisableCursor();
+    SetExitKey(KEY_NULL);
 }
 
 void input_manager::hide_mouse() {

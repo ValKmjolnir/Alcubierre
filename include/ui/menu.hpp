@@ -1,15 +1,19 @@
 #pragma once
 
-#include <raylib.h>
+#include <vector>
+
+#include "ui/button.hpp"
 #include "window.hpp"
 
 class menu {
 private:
     game_window& window;
+    std::vector<button> buttons;
     bool show_menu_ = false;
 
 public:
     menu(game_window& window) : window(window) {}
+    void add_new_button(int x, int y, int width, int height, const char* text, button::callback_t cb);
     void draw();
     void set_show_menu(bool flag) { show_menu_ = flag; }
     bool get_show_menu() const { return show_menu_; }

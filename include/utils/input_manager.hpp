@@ -1,7 +1,5 @@
 #pragma once
 
-#include <raylib.h>
-
 class input_manager {
 private:
     bool show_mouse_ = false;

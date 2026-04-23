@@ -45,7 +45,6 @@ public:
     game_window(int width = 800, int height = 600, const char* title = "Game Window");
     ~game_window();
 
-    bool should_close() const { return WindowShouldClose(); }
     void begin_drawing() { BeginDrawing(); }
     void end_drawing() { EndDrawing(); }
 

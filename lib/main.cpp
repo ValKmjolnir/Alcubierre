@@ -11,9 +11,15 @@
 #include "object/projectile.hpp"
 #include "object/star.hpp"
 #include "ui/menu.hpp"
+#include "ui/debug_hud.hpp"
 #include "lighting_system.hpp"
 #include "utils/shader_manager.hpp"
 #include "utils/input_manager.hpp"
+
+bool should_close = false;
+void set_should_close() {
+    should_close = true;
+}
 
 int main() {
     game_window window(1600, 800, "Alcubierre Warp Drive");
@@ -22,7 +28,10 @@ int main() {
     Image icon = LoadImage("assets/logo/icon.png");
     SetWindowIcon(icon);
 
-    menu menu(window);
+    menu in_game_menu(window);
+    in_game_menu.add_new_button(10, 40, 100, 30, "exit", set_should_close);
+
+    debug_hud dh;
     input_manager im;
 
     // TraceLogLevel(LOG_DEBUG);
@@ -40,7 +49,7 @@ int main() {
 
     // Create star (will become the primary light source)
     star main_star(
-        { 0.0f, 10.0f, 300.0f }, // position
+        { 0.0f, 50.0f, 300.0f }, // position
         255, 240, 200, 255       // color (warm white)
     );
     main_star.set_intensity(10.0f);
@@ -107,11 +116,8 @@ int main() {
     proj2.set_trail_color(0, 100, 255, 160);
 
     bool draw_grid = true;
-    bool show_text = true;
-    bool enable_fxaa = false;
-    bool enable_smaa = false;
 
-    while (!window.should_close()) {
+    while (!should_close && !WindowShouldClose()) {
         window.begin_drawing();
 
         const float dt = GetFrameTime();
@@ -123,14 +129,12 @@ int main() {
         if (IsKeyPressed(KEY_SPACE)) {
             draw_grid = !draw_grid;
         }
-        if (IsKeyPressed(KEY_T)) {
-            show_text = !show_text;
-        }
+        dh.check_f3_toggle();
 
-        // Toggle menu with M key
-        if (IsKeyPressed(KEY_M)) {
-            menu.set_show_menu(!menu.get_show_menu());
-            if (menu.get_show_menu()) {
+        // Toggle menu with esc key
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            in_game_menu.set_show_menu(!in_game_menu.get_show_menu());
+            if (in_game_menu.get_show_menu()) {
                 im.show_mouse();
             } else {
                 im.hide_mouse();
@@ -146,12 +150,16 @@ int main() {
         }
 
         if (IsKeyPressed(KEY_F)) {
-            enable_fxaa = !enable_fxaa;
-            window.get_frame_graph().set_enable("fxaa", enable_fxaa);
+            window.get_frame_graph().set_enable(
+                "fxaa",
+                !window.get_frame_graph().enabled("fxaa")
+            );
         }
         if (IsKeyPressed(KEY_G)) {
-            enable_smaa = !enable_smaa;
-            window.get_frame_graph().set_enable("smaa", enable_smaa);
+            window.get_frame_graph().set_enable(
+                "smaa",
+                !window.get_frame_graph().enabled("smaa")
+            );
         }
 
         // Adjust warp factor (bubble geometry)
@@ -247,38 +255,12 @@ int main() {
         window.end_scene_pass();
         window.apply();
 
-        if (show_text) {
-            // Draw UI (on top of bloom)
-            DrawFPS(10, 10);
-            DrawText("Press SPACE to toggle grid", 10, 40, 16, WHITE);
-            DrawText("Press T to toggle text", 10, 60, 16, WHITE);
-            DrawText("Press B to toggle Bloom", 10, 80, 16, window.get_frame_graph().enabled("bloom") ? GREEN : GRAY);
-            DrawText("Press F to toggle FXAA", 10, 100, 16, enable_fxaa ? GREEN : GRAY);
-            DrawText("Press G to toggle SMAA", 10, 120, 16, enable_smaa ? GREEN : GRAY);
-
-            // // Display current parameters
-            char info_text[256];
-            snprintf(info_text, 255, "Warp: %.2f | Beta (v/c): %.3f", window.get_warp_renderer().get_warp_factor(), beta);
-            DrawText(info_text, 10, 140, 16, WHITE);
-
-            char vel_text[256];
-            const auto warp_vel = window.get_warp_renderer().get_velocity();
-            snprintf(vel_text, 255, "Velocity: %.2f,%.2f,%.2f", warp_vel.x, warp_vel.y, warp_vel.z);
-            DrawText(vel_text, 10, 160, 16, WHITE);
-
-            char cam_text[256];
-            snprintf(cam_text, 255, "Camera: %.2f,%.2f,%.2f", camForward.x, camForward.y, camForward.z);
-            DrawText(cam_text, 10, 180, 16, WHITE);
-
-            char light_info[64];
-            snprintf(light_info, 64, "Active lights: %d", lighting_system::instance().active_light_count());
-            DrawText(light_info, 10, 200, 16, YELLOW);
-
-            DrawText("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 10, 220, 16, GREEN);
+        if (dh.show_text()) {
+            dh.draw(beta, camForward, window);
         }
 
         // Draw menu
-        menu.draw();
+        in_game_menu.draw();
 
         window.end_drawing();
     }

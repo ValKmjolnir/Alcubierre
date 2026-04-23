@@ -23,6 +23,8 @@ set(SOURCES
     lib/object/laser_beam.cpp
     lib/object/projectile.cpp
     lib/object/star.cpp
+    lib/ui/button.cpp
+    lib/ui/debug_hud.cpp
     lib/ui/menu.cpp
     lib/rendering/bloom.cpp
     lib/rendering/frame_graph.cpp
