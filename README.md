@@ -4,9 +4,7 @@
 
 <h1 align="center"> Alcubierre </h1>
 
-Experimental engine with specific shapes for Alcubierre metric (not strictly).
-
-![demo](./docs/pic/demo.png)
+Experimental engine with specific shapes for Alcubierre metric.
 
 ## How it works
 
