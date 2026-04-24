@@ -2,8 +2,7 @@
 
 #include <raylib.h>
 
-#include <cstring>
-#include <sstream>
+#include <string>
 
 class button {
 public:
@@ -17,6 +16,7 @@ private:
     Color color;
     std::string text;
 
+    bool hovered = false;
     callback_t callback = nullptr;
 
 private:

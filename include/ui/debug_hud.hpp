@@ -11,5 +11,5 @@ private:
 public:
     bool show_text() const { return show_text_; }
     void check_f3_toggle();
-    void draw(float beta, Vector3& cam_forward, game_window& window);
+    void draw(float beta, const Vector3& cam_forward, game_window& window);
 };

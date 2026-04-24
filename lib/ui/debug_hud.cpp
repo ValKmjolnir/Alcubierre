@@ -8,10 +8,10 @@ void debug_hud::check_f3_toggle() {
     }
 }
 
-void debug_hud::draw(float beta, Vector3& cam_forward, game_window& window) {
-    float fps = GetFPS();
+void debug_hud::draw(float beta, const Vector3& cam_forward, game_window& window) {
+    int fps = GetFPS();
     char fps_text[128];
-    snprintf(fps_text, 255, "%d FPS", int(fps));
+    snprintf(fps_text, 127, "%d FPS", fps);
     DrawText(fps_text, 10, 10, 14, fps > 0.1 ? GREEN : RED);
 
     DrawText("Press SPACE to toggle grid", 10, 30, 10, WHITE);
@@ -20,7 +20,7 @@ void debug_hud::draw(float beta, Vector3& cam_forward, game_window& window) {
     DrawText("Press F to toggle FXAA", 10, 75, 10, window.get_frame_graph().enabled("fxaa") ? GREEN : GRAY);
     DrawText("Press G to toggle SMAA", 10, 90, 10, window.get_frame_graph().enabled("smaa") ? GREEN : GRAY);
 
-    // // Display current parameters
+    // Display current parameters
     char info_text[256];
     snprintf(info_text, 255, "Warp: %.2f | Beta (v/c): %.3f", window.get_warp_renderer().get_warp_factor(), beta);
     DrawText(info_text, 10, 105, 10, WHITE);
