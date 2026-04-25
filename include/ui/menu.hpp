@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "utils/game_config.hpp"
 #include "ui/button.hpp"
 #include "window.hpp"
 
@@ -13,7 +14,13 @@ private:
 
 public:
     menu(game_window& window) : window(window) {}
-    void add_new_button(int x, int y, int width, int height, const char* text, button::callback_t cb);
+    void add_new_button(int x,
+                        int y,
+                        int width,
+                        int height,
+                        button_operation op,
+                        const char* text,
+                        config_set_funcptr cb);
     void draw();
     void set_show_menu(bool flag) { show_menu_ = flag; }
     bool get_show_menu() const { return show_menu_; }

@@ -13,12 +13,29 @@
 #include "ui/menu.hpp"
 #include "ui/debug_hud.hpp"
 #include "lighting_system.hpp"
+#include "utils/game_config.hpp"
 #include "utils/shader_manager.hpp"
 #include "utils/input_manager.hpp"
 
-bool should_close = false;
-void set_should_close() {
-    should_close = true;
+void load_button_on_menu(menu& in_game_menu) {
+    in_game_menu.add_new_button(
+        40, 40, 240, 30,
+        button_operation::TOGGLE,
+        "toggle debug hud",
+        game_config::set_enable_debug_hud
+    );
+    in_game_menu.add_new_button(
+        40, 80, 240, 30,
+        button_operation::TOGGLE,
+        "enable/disable grid",
+        game_config::set_enable_grid_draw
+    );
+    in_game_menu.add_new_button(
+        40, 120, 240, 30,
+        button_operation::SET_TRUE,
+        "exit game",
+        game_config::set_should_exit
+    );
 }
 
 int main() {
@@ -29,9 +46,9 @@ int main() {
     SetWindowIcon(icon);
 
     menu in_game_menu(window);
-    in_game_menu.add_new_button(10, 40, 100, 30, "exit", set_should_close);
+    load_button_on_menu(in_game_menu);
 
-    debug_hud dh;
+    debug_hud dh(window);
     input_manager im;
 
     // TraceLogLevel(LOG_DEBUG);
@@ -115,21 +132,13 @@ int main() {
     proj2.set_trail_length(5.5f);
     proj2.set_trail_color(0, 100, 255, 160);
 
-    bool draw_grid = true;
-
-    while (!should_close && !WindowShouldClose()) {
+    while (!game_config::singleton().get_should_exit() && !WindowShouldClose()) {
         window.begin_drawing();
 
         const float dt = GetFrameTime();
 
         // Update camera input
         camera.update(dt);
-
-        // Toggle firing with space key
-        if (IsKeyPressed(KEY_SPACE)) {
-            draw_grid = !draw_grid;
-        }
-        dh.check_f3_toggle();
 
         // Toggle menu with esc key
         if (IsKeyPressed(KEY_ESCAPE)) {
@@ -232,7 +241,7 @@ int main() {
         main_star.draw(camera, window.height(), 500.0f);
 
         // Draw grid on the ground plane
-        if (draw_grid) {
+        if (game_config::singleton().get_enable_grid_draw()) {
             window.draw_grid(40, 8.0f);
         }
 
@@ -255,8 +264,8 @@ int main() {
         window.end_scene_pass();
         window.apply();
 
-        if (dh.show_text()) {
-            dh.draw(beta, camForward, window);
+        if (game_config::singleton().get_enable_debug_hud()) {
+            dh.draw(beta, camForward);
         }
 
         // Draw menu

@@ -1,3 +1,4 @@
+#include "utils/game_config.hpp"
 #include "ui/button.hpp"
 
 void button::draw() {
@@ -18,7 +19,14 @@ void button::draw() {
     DrawRectangleRounded(rec, 0.5f, 15, color);
     DrawText(text.c_str(), x + width / 2 - MeasureText(text.c_str(), 20) / 2, y + height / 2 - 10, 20, BLACK);
     if (hovered && callback) {
-        callback();
+        if (operation == button_operation::TOGGLE) {
+            flag = !flag;
+            (game_config::singleton().*callback)(flag);
+        } else if (operation == button_operation::SET_TRUE) {
+            (game_config::singleton().*callback)(true);
+        } else if (operation == button_operation::SET_FALSE) {
+            (game_config::singleton().*callback)(false);
+        }
     }
     hovered = false;
 }

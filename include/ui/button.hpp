@@ -1,23 +1,30 @@
 #pragma once
 
 #include <raylib.h>
-
 #include <string>
 
-class button {
-public:
-    typedef void (*callback_t)();
+#include "utils/game_config.hpp"
 
+enum class button_operation {
+    NONE,
+    SET_TRUE,
+    SET_FALSE,
+    TOGGLE
+};
+
+class button {
 private:
     int x;
     int y;
     int width;
     int height;
     Color color;
+    button_operation operation = button_operation::NONE;
     std::string text;
 
     bool hovered = false;
-    callback_t callback = nullptr;
+    bool flag = false;
+    config_set_funcptr callback = nullptr;
 
 private:
     bool is_hovered(int mouse_x, int mouse_y) const {
@@ -28,12 +35,17 @@ private:
     }
 
 public:
-    button(int x, int y,
-           int width, int height,
-           Color color, const char* text,
-           callback_t callback = nullptr) :
+    button(int x,
+           int y,
+           int width,
+           int height,
+           Color color,
+           button_operation op,
+           const char* text,
+           config_set_funcptr callback = nullptr) :
         x(x), y(y),
         width(width), height(height),
-        color(color), text(text), callback(callback) {}
+        color(color), operation(op),
+        text(text), callback(callback) {}
     void draw();
 };

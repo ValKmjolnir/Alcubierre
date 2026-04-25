@@ -6,10 +6,15 @@
 
 class debug_hud {
 private:
-    bool show_text_ = false;
+    game_window& window;
+
+private:
+    void draw_right_padding(const char* text,
+                            int y,
+                            int size,
+                            Color color);
 
 public:
-    bool show_text() const { return show_text_; }
-    void check_f3_toggle();
-    void draw(float beta, const Vector3& cam_forward, game_window& window);
+    debug_hud(game_window& window) : window(window) {}
+    void draw(float beta, const Vector3& cam_forward);
 };

@@ -35,6 +35,7 @@ set(SOURCES
     lib/rendering/smaa.cpp
     lib/rendering/texture_handle.cpp
     lib/utils/draw_texture.cpp
+    lib/utils/game_config.cpp
     lib/utils/input_manager.cpp
     lib/utils/material_manager.cpp
     lib/utils/shader_manager.cpp
