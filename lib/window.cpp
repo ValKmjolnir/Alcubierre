@@ -14,7 +14,6 @@ game_window::game_window(int width, int height, const char* title):
 
     InitWindow(width_, height_, title);
     rlEnableBackfaceCulling();
-    SetTargetFPS(80);
 
     load();
 }

@@ -18,20 +18,24 @@
 #include "utils/input_manager.hpp"
 
 void load_button_on_menu(menu& in_game_menu) {
-    in_game_menu.add_new_button(
-        40, 40, 240, 30,
-        button_operation::TOGGLE,
-        "toggle debug hud",
-        game_config::set_enable_debug_hud
-    );
-    in_game_menu.add_new_button(
-        40, 80, 240, 30,
-        button_operation::TOGGLE,
-        "enable/disable grid",
+    in_game_menu.add_new_textbox(40, 10, 100, 20, 20, WHITE, "Press ESC to toggle menu");
+    in_game_menu.add_new_textbox(40, 40, 100, 20, 20, GRAY, "Draw grid");
+    in_game_menu.add_new_checkbox(180, 40, 20,
+        game_config::get_enable_grid_draw,
         game_config::set_enable_grid_draw
     );
+
+    in_game_menu.add_new_textbox(40, 70, 100, 20, 20, GRAY, "Debug hud");
+    in_game_menu.add_new_checkbox(180, 70, 20,
+        game_config::get_enable_debug_hud,
+        game_config::set_enable_debug_hud
+    );
+
+    in_game_menu.add_new_textbox(40, 100, 100, 20, 20, GRAY, "Max FPS ");
+    in_game_menu.add_new_slider(180, 100, 200, 20);
+
     in_game_menu.add_new_button(
-        40, 120, 240, 30,
+        40, 130, 240, 30,
         button_operation::SET_TRUE,
         "exit game",
         game_config::set_should_exit
@@ -40,6 +44,7 @@ void load_button_on_menu(menu& in_game_menu) {
 
 int main() {
     game_window window(1600, 800, "Alcubierre Warp Drive");
+    game_config::singleton().apply_maximum_fps();
 
     // Set window icon
     Image icon = LoadImage("assets/logo/icon.png");
@@ -238,7 +243,7 @@ int main() {
         sky.draw(camera.get_camera());
 
         // Draw star (before other objects, will become light source)
-        main_star.draw(camera, window.height(), 500.0f);
+        main_star.draw(camera, window.height(), 600.0f);
 
         // Draw grid on the ground plane
         if (game_config::singleton().get_enable_grid_draw()) {

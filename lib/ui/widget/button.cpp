@@ -1,5 +1,5 @@
 #include "utils/game_config.hpp"
-#include "ui/button.hpp"
+#include "ui/widget/button.hpp"
 
 void button::draw() {
     Rectangle rec = { (float)x, (float)y, (float)width, (float)height };
