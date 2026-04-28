@@ -18,33 +18,39 @@
 #include "utils/input_manager.hpp"
 
 void load_button_on_menu(menu& in_game_menu) {
-    in_game_menu.add_new_textbox(40, 10, 100, 20, 20, WHITE, "Press ESC to toggle menu");
-    in_game_menu.add_new_textbox(40, 40, 100, 20, 20, GRAY, "Draw grid");
-    in_game_menu.add_new_checkbox(180, 40, 20,
-        game_config::get_enable_grid_draw,
-        game_config::set_enable_grid_draw
+    in_game_menu.add_new_textbox(40, 10, 100, 20, 18, WHITE, "Press ESC to toggle menu");
+    in_game_menu.add_new_textbox(40, 35, 100, 20, 18, GRAY, "Draw grid");
+    in_game_menu.add_new_checkbox(180, 35, 20,
+        &game_config::get_enable_grid_draw,
+        &game_config::set_enable_grid_draw
     );
 
-    in_game_menu.add_new_textbox(40, 70, 100, 20, 20, GRAY, "Debug hud");
-    in_game_menu.add_new_checkbox(180, 70, 20,
-        game_config::get_enable_debug_hud,
-        game_config::set_enable_debug_hud
+    in_game_menu.add_new_textbox(40, 60, 100, 20, 18, GRAY, "Debug hud");
+    in_game_menu.add_new_checkbox(180, 60, 20,
+        &game_config::get_enable_debug_hud,
+        &game_config::set_enable_debug_hud
     );
 
-    in_game_menu.add_new_textbox(40, 100, 100, 20, 20, GRAY, "Max FPS ");
-    in_game_menu.add_new_slider(180, 100, 200, 20);
+    in_game_menu.add_new_textbox(40, 85, 100, 20, 18, GRAY, "Max FPS");
+    in_game_menu.add_new_slider(180, 85, 200, 20, 10, 240,
+        &game_config::get_max_fps,
+        &game_config::set_max_fps
+    );
+
+    in_game_menu.add_new_textbox(40, 110, 100, 20, 18, GRAY, "Resolution");
+    in_game_menu.add_new_selector(180, 110, 200, 20);
 
     in_game_menu.add_new_button(
-        40, 130, 240, 30,
+        40, 135, 240, 30,
         button_operation::SET_TRUE,
         "exit game",
-        game_config::set_should_exit
+        &game_config::set_should_exit
     );
 }
 
 int main() {
     game_window window(1600, 800, "Alcubierre Warp Drive");
-    game_config::singleton().apply_maximum_fps();
+    game_config::singleton().set_max_fps(80);
 
     // Set window icon
     Image icon = LoadImage("assets/logo/icon.png");

@@ -25,6 +25,7 @@ set(SOURCES
     lib/object/star.cpp
     lib/ui/widget/button.cpp
     lib/ui/widget/checkbox.cpp
+    lib/ui/widget/selector.cpp
     lib/ui/widget/slider.cpp
     lib/ui/widget/textbox.cpp
     lib/ui/debug_hud.cpp

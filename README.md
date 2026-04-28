@@ -28,7 +28,7 @@ This engine aims to create a 3D engine with specific shapes for Alcubierre metri
 
 Support Windows (mingw-w64), MacOS, Linux (not tested).
 Build script will automatically unzip raylib binaries and
-put them in `build/{name}`. Than build the project using cmake.
+put them in `build/{name}`. Then build the project using cmake.
 
 ```bash
 python3 tool/build.py

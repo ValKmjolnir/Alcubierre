@@ -4,7 +4,9 @@
 
 #include <string>
 
-class textbox {
+#include "ui/widget/widget.hpp"
+
+class textbox: public widget {
 private:
     int x;
     int y;

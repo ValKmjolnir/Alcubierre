@@ -27,8 +27,20 @@ void menu::add_new_checkbox(int x,
     checkboxes.emplace_back(x, y, size, Color { 0x00, 0xdd, 0xff, 200 }, gf, cf);
 }
 
-void menu::add_new_slider(int x, int y, int width, int height) {
-    sliders.emplace_back(x, y, width, height, Color { 0x00, 0xdd, 0xff, 200 });
+void menu::add_new_slider(int x,
+                          int y,
+                          int width,
+                          int height,
+                          int min_value,
+                          int max_value,
+                          config_get_int_funcptr gf,
+                          config_set_int_funcptr cf) {
+    sliders.emplace_back(
+        x, y, width, height,
+        Color { 0x00, 0xdd, 0xff, 200 },
+        min_value, max_value,
+        gf, cf
+    );
 }
 
 void menu::add_new_textbox(int x,
@@ -41,17 +53,78 @@ void menu::add_new_textbox(int x,
     textboxes.emplace_back(x, y, width, height, fontsize, color, text);
 }
 
+void menu::add_new_selector(int x,
+                            int y,
+                            int width,
+                            int height) {
+    selectors.emplace_back(x, y, width, height, Color { 0x00, 0xdd, 0xff, 200 });
+}
+
+void menu::check_mouse_press() {
+    if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        if (hovered_widget) {
+            hovered_widget->handle_mouse_release();
+            hovered_widget = nullptr;
+        }
+        return;
+    }
+    if (hovered_widget && hovered_widget->get_mouse_pressed()) {
+        return;
+    }
+
+    auto pos = GetMousePosition();
+    hovered_widget = nullptr;
+    for (auto& button : buttons) {
+        if (button.is_hovered(pos.x, pos.y)) {
+            hovered_widget = &button;
+        }
+    }
+    for (auto& checkbox : checkboxes) {
+        if (checkbox.is_hovered(pos.x, pos.y)) {
+            hovered_widget = &checkbox;
+        }
+    }
+    for (auto& selector : selectors) {
+        if (selector.is_hovered(pos.x, pos.y)) {
+            hovered_widget = &selector;
+        }
+    }
+    for (auto& slider : sliders) {
+        if (slider.is_hovered(pos.x, pos.y)) {
+            hovered_widget = &slider;
+        }
+    }
+    for (auto& textbox : textboxes) {
+        if (textbox.is_hovered(pos.x, pos.y)) {
+            hovered_widget = &textbox;
+        }
+    }
+
+    if (!hovered_widget) {
+        return;
+    }
+
+    if (!hovered_widget->get_mouse_pressed()) {
+        hovered_widget->handle_mouse_press();
+    }
+}
+
 void menu::draw() {
     if (!show_menu_) {
         return;
     }
     DrawRectangle(0, 0, int(window.width() * 0.31), window.height(), { 0, 0, 0, 150 });
 
+    check_mouse_press();
+
     for (auto& button : buttons) {
         button.draw();
     }
     for (auto& checkbox : checkboxes) {
         checkbox.draw();
+    }
+    for (auto& selector : selectors) {
+        selector.draw();
     }
     for (auto& slider : sliders) {
         slider.draw();
