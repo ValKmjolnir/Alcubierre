@@ -6,6 +6,7 @@
 
 #include "window.hpp"
 #include "camera.hpp"
+#include "scene.hpp"
 #include "skybox.hpp"
 #include "object/laser_beam.hpp"
 #include "object/projectile.hpp"
@@ -75,10 +76,13 @@ int main() {
     // Create skybox (procedural gradient sky)
     skybox sky;
 
+    // Create scene — owns all game objects and handles light registration
+    scene main_scene(lighting_system::instance());
+
     // Create star (will become the primary light source)
-    star main_star(
-        { 0.0f, 50.0f, 300.0f }, // position
-        255, 240, 200, 255       // color (warm white)
+    auto& main_star = main_scene.add<star>(
+        Vector3{ 0.0f, 50.0f, 300.0f }, // position
+        255, 240, 200, 255               // color (warm white)
     );
     main_star.set_intensity(10.0f);
 

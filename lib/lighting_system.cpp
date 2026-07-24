@@ -10,7 +10,7 @@ lighting_system& lighting_system::instance() {
     return inst;
 }
 
-void lighting_system::add(std::shared_ptr<light> light) {
+void lighting_system::add(light* light) {
     if (!light) {
         return;
     }
@@ -21,7 +21,7 @@ void lighting_system::add(std::shared_ptr<light> light) {
     lights_.push_back(light);
 }
 
-void lighting_system::remove(std::shared_ptr<light> light) {
+void lighting_system::remove(light* light) {
     lights_.erase(
         std::remove(lights_.begin(), lights_.end(), light),
         lights_.end()
@@ -36,7 +36,9 @@ int lighting_system::apply_to_shader(Shader shader) const {
     int active_count = 0;
 
     for (const auto& l : lights_) {
-        if (!l || !l->is_active()) continue;
+        if (!l || !l->is_active()) {
+            continue;
+        }
 
         // Build uniform name prefix for this light index
         char pos_name[64];

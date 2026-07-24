@@ -1,7 +1,6 @@
 #pragma once
 
 #include <raylib.h>
-#include <memory>
 #include <vector>
 
 #include "light_base.hpp"
@@ -13,14 +12,14 @@ private:
     lighting_system(const lighting_system&) = delete;
     lighting_system& operator=(const lighting_system&) = delete;
 
-    std::vector<std::shared_ptr<light>> lights_;
+    std::vector<light*> lights_;
 
 public:
     static lighting_system& instance();
 
-    // Light management
-    void add(std::shared_ptr<light> light);
-    void remove(std::shared_ptr<light> light);
+    // Light management — caller is responsible for lifetime
+    void add(light* light);
+    void remove(light* light);
     void clear();
 
     // Pass light data to a shader
@@ -29,5 +28,5 @@ public:
 
     // Query
     int active_light_count() const;
-    const std::vector<std::shared_ptr<light>>& get_all_lights() const { return lights_; }
+    const std::vector<light*>& get_all_lights() const { return lights_; }
 };

@@ -43,6 +43,7 @@ set(SOURCES
     lib/utils/input_manager.cpp
     lib/utils/material_manager.cpp
     lib/utils/shader_manager.cpp
+    lib/scene.cpp
     lib/window.cpp
     lib/camera.cpp
     lib/light_base.cpp
