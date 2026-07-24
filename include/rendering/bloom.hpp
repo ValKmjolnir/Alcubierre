@@ -13,7 +13,6 @@ private:
 
     // Render textures for bloom
     RenderTexture2D bright_texture_;
-    RenderTexture2D bloom_mask_texture_;
     RenderTexture2D bloom_h_texture_;
     RenderTexture2D bloom_v_texture_;
     RenderTexture2D bloom_composite_texture_;

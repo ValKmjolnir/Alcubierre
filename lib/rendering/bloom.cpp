@@ -5,16 +5,14 @@
 void bloom::load() {
     output.load(width, height);
 
-    // Half resolution bloom textures - performance optimization
-    bright_texture_ = LoadRenderTexture(width, height);
-    bloom_mask_texture_ = LoadRenderTexture(width, height);
-    bloom_h_texture_ = LoadRenderTexture(width, height);
-    bloom_v_texture_ = LoadRenderTexture(width, height);
+    // Half resolution bloom textures (blur is expensive, half-res saves ~4x fill rate)
+    bright_texture_ = LoadRenderTexture(width / 2, height / 2);
+    bloom_h_texture_ = LoadRenderTexture(width / 2, height / 2);
+    bloom_v_texture_ = LoadRenderTexture(width / 2, height / 2);
     bloom_composite_texture_ = LoadRenderTexture(width, height);
 
     // Set texture filtering
     SetTextureFilter(bright_texture_.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(bloom_mask_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_h_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_v_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_composite_texture_.texture, TEXTURE_FILTER_BILINEAR);
@@ -50,7 +48,6 @@ void bloom::load() {
 void bloom::unload() {
     output.unload();
     UnloadRenderTexture(bright_texture_);
-    UnloadRenderTexture(bloom_mask_texture_);
     UnloadRenderTexture(bloom_h_texture_);
     UnloadRenderTexture(bloom_v_texture_);
     UnloadRenderTexture(bloom_composite_texture_);
