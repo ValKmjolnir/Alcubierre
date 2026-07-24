@@ -33,9 +33,10 @@ def extract_raylib():
         os.chdir("..")
 
 def build_cmake():
-    if not os.path.exists("build_cmake"):
-        os.mkdir("build_cmake")
-    os.chdir("build_cmake")
+    build_dir = "build_cmake" if sys.platform == "win32" else "build_cmake_unix"
+    if not os.path.exists(build_dir):
+        os.mkdir(build_dir)
+    os.chdir(build_dir)
     if sys.platform == "win32":
         subprocess.run([
             "cmake", "-G", "MinGW Makefiles", "..",

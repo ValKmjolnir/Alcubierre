@@ -20,6 +20,7 @@ include_directories(${RAYLIB_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
 # Source files
 set(SOURCES
+    lib/game.cpp
     lib/object/laser_beam.cpp
     lib/object/projectile.cpp
     lib/object/star.cpp

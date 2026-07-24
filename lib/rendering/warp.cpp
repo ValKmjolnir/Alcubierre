@@ -30,6 +30,11 @@ void warp_renderer::unload() {
     warp_shaders_loaded_ = false;
 }
 
+void warp_renderer::set_warp_factor(float factor) {
+    warp_factor_ = factor;
+    enabled = (warp_factor_ > 0.0f);
+}
+
 void warp_renderer::update_warp_factor(float dt) {
     float warp_step = 0.01f * (7.0f - warp_factor_) * dt * 120.0f;
 

@@ -33,6 +33,7 @@ public:
     void set_wall_thickness(float wall_thickness) { wall_thickness_ = wall_thickness; }
     void set_exposure(float exposure) { exposure_ = exposure; }
     void set_view_direction(Vector3 direction) { view_direction_ = direction; }
+    void set_warp_factor(float warp_factor);
     const auto get_warp_factor() const { return warp_factor_; }
     void update_warp_factor(float dt);
 
