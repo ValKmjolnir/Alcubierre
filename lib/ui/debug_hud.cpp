@@ -36,3 +36,30 @@ void debug_hud::draw(float beta, const Vector3& cam_forward) {
 
     draw_right_padding("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp", 120, 10, WHITE);
 }
+
+void debug_hud::draw_timings(const std::unordered_map<std::string, double>& timings) {
+    // Top-left overlay with dark background for readability
+    int y = 10;
+    int x = 10;
+
+    if (timings.empty()) {
+        DrawText("Pass timings: (none)", x, y, 13, GRAY);
+        return;
+    }
+
+    DrawText("Pass timings (ms):", x, y, 13, YELLOW);
+    y += 18;
+
+    double total = 0.0;
+    for (const auto& [name, ms] : timings) {
+        char buf[64];
+        snprintf(buf, sizeof(buf), "  %s: %.2f", name.c_str(), ms);
+        DrawText(buf, x, y, 12, WHITE);
+        y += 15;
+        total += ms;
+    }
+
+    char total_buf[64];
+    snprintf(total_buf, sizeof(total_buf), "  Total: %.2f ms", total);
+    DrawText(total_buf, x, y + 2, 13, GREEN);
+}

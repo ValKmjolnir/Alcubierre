@@ -39,7 +39,7 @@ void game_window::unload_frame_graph() {
 }
 
 void game_window::load() {
-    // SSAA texture
+    // SSAA texture if ssaa_factor_ > 1.0
     scene_texture_ = LoadRenderTexture(
         width_ * ssaa_factor_,
         height_ * ssaa_factor_

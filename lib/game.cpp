@@ -225,6 +225,15 @@ void game::update(float dt) {
 }
 
 void game::render() {
+    using clock = std::chrono::high_resolution_clock;
+
+    bool show_hud = game_config::singleton().get_enable_debug_hud();
+    window_.get_frame_graph().set_timing_enabled(show_hud);
+
+    // Time 3D scene rendering
+    clock::time_point scene_t0;
+    if (show_hud) scene_t0 = clock::now();
+
     window_.begin_scene_pass();
     window_.begin_mode_3d(camera_.get_camera());
 
@@ -249,14 +258,25 @@ void game::render() {
 
     window_.end_mode_3d();
     window_.end_scene_pass();
+
+    double scene_ms = 0.0;
+    if (show_hud) {
+        scene_ms = std::chrono::duration<double, std::milli>(
+            clock::now() - scene_t0).count();
+    }
+
     window_.apply();
 
-    if (game_config::singleton().get_enable_debug_hud()) {
+    if (show_hud) {
         Vector3 vel = window_.get_warp_renderer().get_velocity();
         float beta = Vector3Length(vel);
         Vector3 camForward = Vector3Normalize(
             Vector3Subtract(camera_.target(), camera_.position()));
         debug_hud_.draw(beta, camForward);
+
+        auto timings = window_.get_frame_graph().get_pass_timings();
+        timings["scene"] = scene_ms;
+        debug_hud_.draw_timings(timings);
     }
 
     menu_.draw();

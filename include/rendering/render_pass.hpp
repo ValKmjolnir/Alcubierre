@@ -19,6 +19,7 @@ protected:
 public:
     void set_enabled(bool flag) { enabled = flag; }
     bool is_enabled() const { return enabled; }
+    const char* get_name() const { return name.c_str(); }
 
 public:
     render_pass(const char* n, int w, int h):

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <raylib.h>
+#include <unordered_map>
+#include <string>
 
 #include "window.hpp"
 
@@ -17,4 +19,5 @@ private:
 public:
     debug_hud(game_window& window) : window(window) {}
     void draw(float beta, const Vector3& cam_forward);
+    void draw_timings(const std::unordered_map<std::string, double>& timings);
 };

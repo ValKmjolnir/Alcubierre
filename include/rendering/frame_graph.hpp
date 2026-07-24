@@ -1,11 +1,13 @@
 #pragma once
 
-#include "rendering/render_target.hpp"
-#include "rendering/render_pass.hpp"
-
+#include <chrono>
+#include <string>
 #include <vector>
 #include <memory>
 #include <unordered_map>
+
+#include "rendering/render_target.hpp"
+#include "rendering/render_pass.hpp"
 
 class frame_graph {
 private:
@@ -13,6 +15,9 @@ private:
     std::unordered_map<std::string, int64_t> pass_index;
     std::vector<std::unique_ptr<render_pass>> passes;
     texture_handle result;
+
+    bool timing_enabled_ = false;
+    std::unordered_map<std::string, double> pass_timings_ms_;
 
 public:
     template<typename T>
@@ -38,6 +43,9 @@ public:
 public:
     void set_enable(const char* name, bool enabled);
     bool enabled(const char* name) const;
+
+    void set_timing_enabled(bool enabled) { timing_enabled_ = enabled; }
+    const auto& get_pass_timings() const { return pass_timings_ms_; }
 
 public:
     frame_graph(int w, int h): target(w, h) {}
