@@ -205,21 +205,29 @@ int projectile::calculate_age_alpha() const {
 }
 
 void projectile::update(float dt) {
-    if (!active_) return;
+    if (!active_) {
+        if (auto_respawn_) {
+            position_ = respawn_point_;
+            active_ = true;
+            age_ = 0.0f;
+        }
+        return;
+    }
 
-    // Update position based on velocity
     position_ = Vector3Add(position_, Vector3Scale(velocity_, dt));
-
-    // Update age
     age_ += dt;
 
-    // Deactivate if lifetime exceeded
     if (age_ >= lifetime_) {
         active_ = false;
     }
 }
 
-void projectile::draw() const {
+void projectile::set_auto_respawn(const Vector3& point) {
+    respawn_point_ = point;
+    auto_respawn_ = true;
+}
+
+void projectile::draw(const camera_3d& /*cam*/, int /*window_height*/) const {
     if (!active_) return;
 
     // Lazy load shader on first draw

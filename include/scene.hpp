@@ -5,6 +5,7 @@
 
 #include "lighting_system.hpp"
 #include "object/object.hpp"
+#include "camera.hpp"
 
 class scene {
 private:
@@ -24,12 +25,23 @@ public:
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
         T& ref = *ptr;
 
-        // auto-register objects that are also lights
         if (auto* l = dynamic_cast<light*>(ptr.get())) {
             lights_->add(l);
         }
 
         objects_.push_back(std::move(ptr));
         return ref;
+    }
+
+    void update_all(float dt) {
+        for (auto& obj : objects_) {
+            obj->update(dt);
+        }
+    }
+
+    void draw_all(const camera_3d& cam, int window_height) const {
+        for (auto& obj : objects_) {
+            obj->draw(cam, window_height);
+        }
     }
 };

@@ -47,14 +47,17 @@ public:
     float trail_length() const;
     void set_trail_color(int r, int g, int b, int alpha = 255);
 
+    // Auto-respawn
+    void set_auto_respawn(const Vector3& point);
+
     // Shader
     void load_shader(const char* vs_path, const char* fs_path);
     void unload_shader();
     bool is_shader_loaded() const;
 
     // Update and draw
-    void update(float dt);
-    void draw() const;
+    void update(float dt) override;
+    void draw(const camera_3d& cam, int window_height) const override;
 
 private:
     Vector3 position_;
@@ -74,6 +77,10 @@ private:
     int trail_color_g_;
     int trail_color_b_;
     int trail_color_alpha_;
+
+    // Auto-respawn
+    bool auto_respawn_ = false;
+    Vector3 respawn_point_;
 
     // Shader members
     Shader shader_;

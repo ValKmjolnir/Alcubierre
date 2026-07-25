@@ -142,7 +142,7 @@ void laser_beam::update(float dt) {
     pulse_phase_ += pulse_speed_ * dt;
 }
 
-void laser_beam::draw() const {
+void laser_beam::draw(const camera_3d& /*cam*/, int /*window_height*/) const {
     if (!active_ || !firing_) return;
 
     // Lazy load shader on first draw
@@ -183,7 +183,7 @@ void laser_beam::draw() const {
     SetShaderValue(shader_, loc_line_end, end_vec3, SHADER_UNIFORM_VEC3);
 
     // Draw the laser beam as a cylinder
-    const float radius = width_ * 0.5f;
+    const float radius = width_ * 0.75f;
     const Color color = {
         static_cast<unsigned char>(color_r_),
         static_cast<unsigned char>(color_g_),

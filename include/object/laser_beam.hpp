@@ -84,6 +84,6 @@ public:
     bool is_shader_loaded() const;
 
     // Update and draw
-    void update(float dt);
-    void draw() const;
+    void update(float dt) override;
+    void draw(const camera_3d& cam, int window_height) const override;
 };

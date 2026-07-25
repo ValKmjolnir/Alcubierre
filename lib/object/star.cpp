@@ -122,12 +122,12 @@ void star::set_color(int r, int g, int b, int alpha) {
     load_texture();
 }
 
-void star::draw(const camera_3d& cam, int height, float scale) const {
+void star::draw(const camera_3d& cam, int window_height) const {
     float dist = Vector3Distance(cam.position(), position_);
     if (dist < 0.001f) {
         dist = 0.001f;
     }
     float fov_factor = 2.0f * tanf(cam.fovy() * DEG2RAD / 2.0f);
-    float final_scale = scale * (dist * fov_factor) / height;
+    float final_scale = scale_ * (dist * fov_factor) / window_height;
     DrawBillboard(cam.get_camera(), texture_, position_, final_scale, WHITE);
 }
