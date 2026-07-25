@@ -27,7 +27,6 @@ game_window::~game_window() {
 
 void game_window::init_frame_graph() {
     frame_graph_.add_pass<fxaa_renderer>("fxaa");
-    frame_graph_.add_pass<smaa_renderer>("smaa");
     frame_graph_.add_pass<warp_renderer>("warp");
     frame_graph_.add_pass<bloom>("bloom");
 

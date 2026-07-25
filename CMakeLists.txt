@@ -37,7 +37,6 @@ set(SOURCES
     lib/rendering/fxaa.cpp
     lib/rendering/render_pass.cpp
     lib/rendering/render_target.cpp
-    lib/rendering/smaa.cpp
     lib/rendering/texture_handle.cpp
     lib/utils/draw_texture.cpp
     lib/utils/game_config.cpp

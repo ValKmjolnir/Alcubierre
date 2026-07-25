@@ -5,7 +5,6 @@
 
 #include "rendering/warp.hpp"
 #include "rendering/fxaa.hpp"
-#include "rendering/smaa.hpp"
 #include "rendering/bloom.hpp"
 #include "rendering/frame_graph.hpp"
 

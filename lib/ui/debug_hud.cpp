@@ -18,8 +18,6 @@ void debug_hud::draw(float beta, const Vector3& cam_forward) {
 
     draw_right_padding("Press B to toggle Bloom", 30, 10, window.get_frame_graph().enabled("bloom") ? GREEN : GRAY);
     draw_right_padding("Press F to toggle FXAA", 45, 10, window.get_frame_graph().enabled("fxaa") ? GREEN : GRAY);
-    draw_right_padding("Press G to toggle SMAA", 60, 10, window.get_frame_graph().enabled("smaa") ? GREEN : GRAY);
-
     // Display current parameters
     char info_text[256];
     snprintf(info_text, 255, "Warp: %.2f | Beta (v/c): %.3f", window.get_warp_renderer().get_warp_factor(), beta);

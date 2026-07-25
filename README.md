@@ -40,7 +40,5 @@ python3 tool/build.py
 - main menu
 - menu settings
   - antialiasing:
-    - FXAA (not fully implemented)
-    - SMAA (not fully implemented)
     - SSAA (1.25x, 1.5x, 1.75x, 2x)
   - max fps

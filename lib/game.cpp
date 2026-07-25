@@ -149,11 +149,6 @@ void game::handle_input(float dt) {
         auto& fg = window_.get_frame_graph();
         fg.set_enable("fxaa", !fg.enabled("fxaa"));
     }
-    if (IsKeyPressed(KEY_G)) {
-        auto& fg = window_.get_frame_graph();
-        fg.set_enable("smaa", !fg.enabled("smaa"));
-    }
-
     // Warp factor (PgUp / PgDn)
     auto& warp = window_.get_warp_renderer();
     float warp_factor = warp.get_warp_factor();
