@@ -20,13 +20,15 @@ public:
 private:
     void init_mesh();
     void load_shader();
+    void build_cubemap();
+    void unload_cubemap();
 
     Mesh mesh_;
     Shader shader_;
     Material material_;
     Material default_material_;
+    TextureCubemap cubemap_ {};
     bool is_loaded_;
     float seed_;
-    int seed_location_;
     int mvp_location_;
 };

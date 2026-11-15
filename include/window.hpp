@@ -17,7 +17,7 @@ private:
 
     // Main scene texture
     RenderTexture2D scene_texture_;
-    float ssaa_factor_ = 1.0f;
+    float ssaa_factor_ = 1.5f;
 
     // Lit object shader (for cubes, grid, etc.)
     Shader lit_shader_;
