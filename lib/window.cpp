@@ -46,6 +46,7 @@ void game_window::load() {
 
     // Set texture filtering
     SetTextureFilter(scene_texture_.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(scene_texture_.texture, TEXTURE_WRAP_CLAMP);
 
     init_frame_graph();
     init_lit_shader();

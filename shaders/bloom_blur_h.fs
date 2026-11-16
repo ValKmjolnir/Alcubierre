@@ -17,10 +17,8 @@ void main()
     // Gaussian blur kernel
     int samples = int(blurRadius);
 
-    for (int i = -8; i <= 8; i++)
+    for (int i = -samples; i <= samples; i++)
     {
-        if (i > samples) break;
-
         float weight = exp(-0.5 * float(i * i) / (float(samples) * float(samples)) * 9.0);
         vec2 offset = vec2(float(i) * texelSize.x, 0.0);
         color += texture(texture0, fragTexCoord + offset).rgb * weight;

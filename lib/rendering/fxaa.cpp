@@ -4,6 +4,8 @@
 
 void fxaa_renderer::load() {
     output.load(width, height);
+    SetTextureFilter(output.get().texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(output.get().texture, TEXTURE_WRAP_CLAMP);
 
     auto res = shader_manager::instance().load("fxaa.vs", "fxaa.fs");
     fxaa_shader_ = res.shader;

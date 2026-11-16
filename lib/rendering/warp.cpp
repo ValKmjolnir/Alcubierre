@@ -4,6 +4,8 @@
 
 void warp_renderer::load() {
     output.load(width, height);
+    SetTextureFilter(output.get().texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(output.get().texture, TEXTURE_WRAP_CLAMP);
 
     auto warp_vs_res = shader_manager::instance().load("warp.vs", "warp.fs");
 

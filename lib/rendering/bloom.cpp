@@ -16,6 +16,9 @@ void bloom::load() {
     SetTextureFilter(bloom_h_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_v_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_composite_texture_.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(bright_texture_.texture, TEXTURE_WRAP_CLAMP);
+    SetTextureWrap(bloom_h_texture_.texture, TEXTURE_WRAP_CLAMP);
+    SetTextureWrap(bloom_v_texture_.texture, TEXTURE_WRAP_CLAMP);
 
     // Load bloom shaders
     auto bloom_extract_res = shader_manager::instance().load("bloom.vs", "bloom_extract.fs");

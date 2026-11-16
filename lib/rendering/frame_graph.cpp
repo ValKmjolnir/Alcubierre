@@ -21,6 +21,7 @@ bool frame_graph::enabled(const char* name) const {
 
 void frame_graph::load() {
     result.load(target.get_width(), target.get_height());
+    SetTextureFilter(result.get().texture, TEXTURE_FILTER_BILINEAR);
     for (auto& pass: passes) {
         pass->load();
     }
