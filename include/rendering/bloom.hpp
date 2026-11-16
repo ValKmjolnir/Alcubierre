@@ -26,8 +26,10 @@ private:
     bool bloom_shaders_loaded_ = false;
     int loc_bloom_intensity_ = -1;
     int loc_brightness_threshold_ = -1;
-    int loc_texel_size_ = -1;
-    int loc_blur_radius_ = -1;
+    int loc_texel_size_h_ = -1;
+    int loc_blur_radius_h_ = -1;
+    int loc_texel_size_v_ = -1;
+    int loc_blur_radius_v_ = -1;
 
 public:
     void set_bloom_threshold(float threshold) { bloom_threshold_ = threshold; }

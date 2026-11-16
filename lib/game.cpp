@@ -139,7 +139,7 @@ void game::setup_ui() {
 void game::setup_post_processing() {
     window_.get_frame_graph().set_enable("bloom", true);
     window_.get_bloom_renderer().set_bloom_threshold(0.85f);
-    window_.get_bloom_renderer().set_bloom_intensity(2.5f);
+    window_.get_bloom_renderer().set_bloom_intensity(1.6f);
     window_.get_bloom_renderer().set_bloom_blur_radius(15.0f);
 
     window_.get_frame_graph().set_enable("fxaa", true);

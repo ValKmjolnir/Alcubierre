@@ -15,7 +15,7 @@ void main()
     float totalWeight = 0.0;
 
     // Gaussian blur kernel
-    int samples = int(blurRadius);
+    int samples = max(int(blurRadius), 1);
 
     for (int i = -samples; i <= samples; i++)
     {

@@ -14,6 +14,16 @@ private:
 
     std::vector<light*> lights_;
 
+    struct shader_locs {
+        unsigned int shader_id = 0;
+        int count = -1;
+        std::vector<int> position;
+        std::vector<int> color;
+        std::vector<int> intensity;
+        std::vector<int> type;
+    };
+    mutable shader_locs locs_;
+
 public:
     static lighting_system& instance();
 

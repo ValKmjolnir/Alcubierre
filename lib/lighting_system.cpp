@@ -33,6 +33,15 @@ void lighting_system::clear() {
 }
 
 int lighting_system::apply_to_shader(Shader shader) const {
+    if (locs_.shader_id != shader.id) {
+        locs_.shader_id = shader.id;
+        locs_.count = GetShaderLocation(shader, "light_count");
+        locs_.position.clear();
+        locs_.color.clear();
+        locs_.intensity.clear();
+        locs_.type.clear();
+    }
+
     int active_count = 0;
 
     for (const auto& l : lights_) {
@@ -40,21 +49,24 @@ int lighting_system::apply_to_shader(Shader shader) const {
             continue;
         }
 
-        // Build uniform name prefix for this light index
-        char pos_name[64];
-        char color_name[64];
-        char intensity_name[64];
-        char type_name[64];
+        while (locs_.position.size() <= static_cast<std::size_t>(active_count)) {
+            char name[64];
+            int index = static_cast<int>(locs_.position.size());
 
-        snprintf(pos_name, sizeof(pos_name), "lights[%d].position", active_count);
-        snprintf(color_name, sizeof(color_name), "lights[%d].color", active_count);
-        snprintf(intensity_name, sizeof(intensity_name), "lights[%d].intensity", active_count);
-        snprintf(type_name, sizeof(type_name), "lights[%d].type", active_count);
+            snprintf(name, sizeof(name), "lights[%d].position", index);
+            locs_.position.push_back(GetShaderLocation(shader, name));
+            snprintf(name, sizeof(name), "lights[%d].color", index);
+            locs_.color.push_back(GetShaderLocation(shader, name));
+            snprintf(name, sizeof(name), "lights[%d].intensity", index);
+            locs_.intensity.push_back(GetShaderLocation(shader, name));
+            snprintf(name, sizeof(name), "lights[%d].type", index);
+            locs_.type.push_back(GetShaderLocation(shader, name));
+        }
 
-        int loc_pos = GetShaderLocation(shader, pos_name);
-        int loc_color = GetShaderLocation(shader, color_name);
-        int loc_intensity = GetShaderLocation(shader, intensity_name);
-        int loc_type = GetShaderLocation(shader, type_name);
+        int loc_pos = locs_.position[active_count];
+        int loc_color = locs_.color[active_count];
+        int loc_intensity = locs_.intensity[active_count];
+        int loc_type = locs_.type[active_count];
 
         // Pass position
         if (loc_pos >= 0) {
@@ -85,10 +97,8 @@ int lighting_system::apply_to_shader(Shader shader) const {
         active_count++;
     }
 
-    // Also pass the total light count
-    int loc_count = GetShaderLocation(shader, "light_count");
-    if (loc_count >= 0) {
-        SetShaderValue(shader, loc_count, &active_count, SHADER_UNIFORM_INT);
+    if (locs_.count >= 0) {
+        SetShaderValue(shader, locs_.count, &active_count, SHADER_UNIFORM_INT);
     }
 
     return active_count;

@@ -46,8 +46,10 @@ void bloom::load() {
     // Get uniform locations
     loc_bloom_intensity_ = GetShaderLocation(bloom_composite_shader_, "bloomIntensity");
     loc_brightness_threshold_ = GetShaderLocation(bloom_extract_shader_, "brightnessThreshold");
-    loc_texel_size_ = GetShaderLocation(bloom_blur_h_shader_, "texelSize");
-    loc_blur_radius_ = GetShaderLocation(bloom_blur_h_shader_, "blurRadius");
+    loc_texel_size_h_ = GetShaderLocation(bloom_blur_h_shader_, "texelSize");
+    loc_blur_radius_h_ = GetShaderLocation(bloom_blur_h_shader_, "blurRadius");
+    loc_texel_size_v_ = GetShaderLocation(bloom_blur_v_shader_, "texelSize");
+    loc_blur_radius_v_ = GetShaderLocation(bloom_blur_v_shader_, "blurRadius");
 }
 
 void bloom::unload() {
@@ -84,8 +86,8 @@ texture_handle& bloom::apply(const RenderTexture2D& texture, int width, int heig
     BeginTextureMode(bloom_h_texture_);
     ClearBackground(BLACK);
     float texel_size_h[2] = { 1.0f / (float)bright_texture_.texture.width, 0.0f };
-    SetShaderValue(bloom_blur_h_shader_, loc_texel_size_, texel_size_h, SHADER_UNIFORM_VEC2);
-    SetShaderValue(bloom_blur_h_shader_, loc_blur_radius_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(bloom_blur_h_shader_, loc_texel_size_h_, texel_size_h, SHADER_UNIFORM_VEC2);
+    SetShaderValue(bloom_blur_h_shader_, loc_blur_radius_h_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
     BeginShaderMode(bloom_blur_h_shader_);
     draw_texture_to_specific_screen(
         bright_texture_,
@@ -99,8 +101,8 @@ texture_handle& bloom::apply(const RenderTexture2D& texture, int width, int heig
     BeginTextureMode(bloom_v_texture_);
     ClearBackground(BLACK);
     float texel_size_v[2] = { 0.0f, 1.0f / (float)bright_texture_.texture.height };
-    SetShaderValue(bloom_blur_v_shader_, loc_texel_size_, texel_size_v, SHADER_UNIFORM_VEC2);
-    SetShaderValue(bloom_blur_v_shader_, loc_blur_radius_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(bloom_blur_v_shader_, loc_texel_size_v_, texel_size_v, SHADER_UNIFORM_VEC2);
+    SetShaderValue(bloom_blur_v_shader_, loc_blur_radius_v_, &bloom_blur_radius_, SHADER_UNIFORM_FLOAT);
     BeginShaderMode(bloom_blur_v_shader_);
     draw_texture_to_specific_screen(
         bloom_h_texture_,
