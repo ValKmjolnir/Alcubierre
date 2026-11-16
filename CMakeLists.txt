@@ -32,6 +32,7 @@ set(SOURCES
     lib/ui/debug_hud.cpp
     lib/ui/menu.cpp
     lib/rendering/bloom.cpp
+    lib/rendering/downsample.cpp
     lib/rendering/frame_graph.cpp
     lib/rendering/warp.cpp
     lib/rendering/fxaa.cpp

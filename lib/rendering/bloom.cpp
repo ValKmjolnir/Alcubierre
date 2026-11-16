@@ -4,6 +4,8 @@
 
 void bloom::load() {
     output.load(width, height);
+    SetTextureFilter(output.get().texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(output.get().texture, TEXTURE_WRAP_CLAMP);
 
     // Half resolution bloom textures (blur is expensive, half-res saves ~4x fill rate)
     bright_texture_ = LoadRenderTexture(width / 2, height / 2);

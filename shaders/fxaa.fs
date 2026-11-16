@@ -26,11 +26,11 @@ void main()
 
     vec3 rgbM = texture(texture0, uv).rgb;
 
-    // Sample neighbours (using textureOffset which is available in GLSL 330)
-    vec3 rgbNW = textureOffset(texture0, uv, ivec2(-1,  1)).rgb;
-    vec3 rgbNE = textureOffset(texture0, uv, ivec2( 1,  1)).rgb;
-    vec3 rgbSW = textureOffset(texture0, uv, ivec2(-1, -1)).rgb;
-    vec3 rgbSE = textureOffset(texture0, uv, ivec2( 1, -1)).rgb;
+    // Sample neighbours
+    vec3 rgbNW = texture(texture0, uv + vec2(-1.0,  1.0) * texelStep).rgb;
+    vec3 rgbNE = texture(texture0, uv + vec2( 1.0,  1.0) * texelStep).rgb;
+    vec3 rgbSW = texture(texture0, uv + vec2(-1.0, -1.0) * texelStep).rgb;
+    vec3 rgbSE = texture(texture0, uv + vec2( 1.0, -1.0) * texelStep).rgb;
 
     // Convert to luma
     float lumaNW = dot(rgbNW, LUM);
