@@ -16,6 +16,7 @@ private:
     int loc_bubble_radius_ = -1;
     int loc_wall_thickness_ = -1;
     int loc_aspect_ratio_ = -1;
+    int loc_fov_y_ = -1;
     int loc_exposure_ = -1;
 
     // settings
@@ -24,6 +25,7 @@ private:
     float warp_factor_ = 0.0f;
     float bubble_radius_ = 0.5f;
     float wall_thickness_ = 0.1f;
+    float fov_y_ = 45.0f;
     float exposure_ = 1.0f;
 
 public:
@@ -31,6 +33,7 @@ public:
     const auto& get_velocity() const { return velocity_; }
     void set_bubble_radius(float bubble_radius) { bubble_radius_ = bubble_radius; }
     void set_wall_thickness(float wall_thickness) { wall_thickness_ = wall_thickness; }
+    void set_fov_y(float fov_y) { fov_y_ = fov_y; }
     void set_exposure(float exposure) { exposure_ = exposure; }
     void set_view_direction(Vector3 direction) { view_direction_ = direction; }
     void set_warp_factor(float warp_factor);

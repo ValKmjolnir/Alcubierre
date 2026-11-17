@@ -24,6 +24,7 @@ void warp_renderer::load() {
     loc_bubble_radius_ = GetShaderLocation(warp_shader_, "bubbleRadius");
     loc_wall_thickness_ = GetShaderLocation(warp_shader_, "wallThickness");
     loc_aspect_ratio_ = GetShaderLocation(warp_shader_, "aspectRatio");
+    loc_fov_y_ = GetShaderLocation(warp_shader_, "fovY");
     loc_exposure_ = GetShaderLocation(warp_shader_, "exposure");
 }
 
@@ -71,6 +72,7 @@ texture_handle& warp_renderer::apply(const RenderTexture2D& texture, int width, 
     SetShaderValue(warp_shader_, loc_bubble_radius_, &bubble_radius_, SHADER_UNIFORM_FLOAT);
     SetShaderValue(warp_shader_, loc_wall_thickness_, &wall_thickness_, SHADER_UNIFORM_FLOAT);
     SetShaderValue(warp_shader_, loc_aspect_ratio_, &aspect, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(warp_shader_, loc_fov_y_, &fov_y_, SHADER_UNIFORM_FLOAT);
     SetShaderValue(warp_shader_, loc_exposure_, &exposure_, SHADER_UNIFORM_FLOAT);
 
     // Apply warp lens effect

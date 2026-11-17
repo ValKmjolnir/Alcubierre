@@ -145,8 +145,8 @@ void game::setup_post_processing() {
     window_.get_frame_graph().set_enable("fxaa", true);
 
     window_.get_warp_renderer().set_velocity(Vector3 { 0.0f, 0.0f, 0.0f });
-    window_.get_warp_renderer().set_bubble_radius(0.45f);
-    window_.get_warp_renderer().set_wall_thickness(0.075f);
+    window_.get_warp_renderer().set_bubble_radius(0.37f);
+    window_.get_warp_renderer().set_wall_thickness(0.04f);
     window_.get_warp_renderer().set_exposure(1.0f);
 }
 
@@ -213,7 +213,9 @@ void game::update(float dt) {
 
     Vector3 camForward = Vector3Normalize(
         Vector3Subtract(camera_.target(), camera_.position()));
-    window_.get_warp_renderer().set_view_direction(camForward);
+    auto& warp = window_.get_warp_renderer();
+    warp.set_view_direction(camForward);
+    warp.set_fov_y(camera_.fovy());
 }
 
 void game::render() {

@@ -13,6 +13,7 @@ uniform float warpFactor;         // Warp factor (1.0 = stationary, >1 = superlu
 uniform float bubbleRadius;       // Warp bubble radius (screen space, 0.3~0.8)
 uniform float wallThickness;      // Bubble wall thickness
 uniform float aspectRatio;        // Screen aspect ratio (width / height)
+uniform float fovY;               // Camera vertical FOV in degrees
 uniform float exposure;           // Exposure
 
 out vec4 fragColor;
@@ -26,9 +27,13 @@ vec2 correctAspect(vec2 delta, float ar) {
     return vec2(delta.x * ar * 0.8, delta.y);
 }
 
+vec2 uncorrectAspect(vec2 delta, float ar) {
+    return vec2(delta.x / (ar * 0.8), delta.y);
+}
+
 // Project a 3D direction onto screen UV, given the camera view direction.
-// Returns UV in [0,1] with center at (0.5, 0.5). Returns (-1,-1) if behind camera.
-vec2 projectToScreen(vec3 worldDir, vec3 viewDir, float ar) {
+// Returns UV in [0,1] with center at (0.5, 0.5), plus z; z <= 0 means behind camera.
+vec3 projectToScreen(vec3 worldDir, vec3 viewDir, float ar) {
     // Build camera basis from viewDirection
     vec3 forward = normalize(viewDir);
     vec3 worldUp = vec3(0.0, 1.0, 0.0);
@@ -41,14 +46,15 @@ vec2 projectToScreen(vec3 worldDir, vec3 viewDir, float ar) {
     float z = dot(worldDir, forward);
 
     // Behind camera
-    if (z <= 0.0) return vec2(-1.0);
+    if (z <= 0.0) return vec3(0.0, 0.0, z);
 
-    // Perspective projection
-    float fovScale = 1.0;  // matches the ~45 deg FOV
-    vec2 ndc = vec2(x, y) / (z * fovScale);
+    // Perspective projection, matching the camera's actual vertical FOV
+    float focal = 0.5 / tan(radians(0.5 * fovY));
+    float screenX = focal / ar * (x / z);
+    float screenY = focal * (y / z);
 
-    // Convert to UV [0,1] with aspect correction
-    return vec2(ndc.x / ar * 0.8 + 0.5, -ndc.y + 0.5);
+    // Convert to UV [0,1] with center at (0.5, 0.5)
+    return vec3(screenX + 0.5, -screenY + 0.5, z);
 }
 
 // Bubble wall refraction — gravitational lensing distortion.
@@ -65,22 +71,25 @@ vec2 applyBubbleRefraction(vec2 uv, float warpF) {
     // Annular region of influence centered at bubbleRadius
     float wallInner = max(0.01, bubbleRadius - wallThickness);
     float wallOuter = min(0.99, bubbleRadius + wallThickness);
+    float wallCenter = (wallInner + wallOuter) * 0.5;
+    float wallSigma = (wallOuter - wallInner) * 0.55;
 
-    // Strongest within the annular band
-    float wallFactor = smoothstep(wallInner - 0.08, wallInner, dist) *
-                       (1.0 - smoothstep(wallOuter, wallOuter + 0.08, dist));
+    float wallFactor = exp(-pow((dist - wallCenter) / wallSigma, 2.0) * 0.5);
 
     // Einstein deflection angle (analogous to gravitational lensing)
     float einsteinAngle = warpF * 0.1;
     float distortion = einsteinAngle * wallFactor / (dist + 0.02);
 
     // Radial distortion — light bends toward the bubble wall
-    uv -= radialDir * distortion * 0.5;
+    float pullLimit = 0.75 * wallInner;
+    float pullScale = min(1.0, pullLimit * (wallCenter + 0.02) / (0.29 * max(einsteinAngle, 1e-4)));
+    float pull = distortion * 0.29 * pullScale;
+    uv -= uncorrectAspect(radialDir, aspectRatio) * pull;
 
     // Tangential swirl — produces arc-like distortion
     vec2 tangentDir = vec2(-delta.y, delta.x) / dist;
     float tangentialDistortion = einsteinAngle * wallFactor * 0.12;
-    uv += tangentDir * tangentialDistortion;
+    uv += uncorrectAspect(tangentDir, aspectRatio) * tangentialDistortion;
 
     return uv;
 }
@@ -144,8 +153,9 @@ float applyBeaming(vec3 velDir, vec3 viewDir, float beta) {
 
 // Forward glow — bright spot at the projected velocity direction on screen.
 vec3 forwardGlow(vec2 uv, vec3 velDir, vec3 viewDir, float warpF) {
-    vec2 velScreenPos = projectToScreen(velDir, viewDir, aspectRatio);
-    if (velScreenPos.x < -0.5) return vec3(0.0); // behind camera
+    vec3 velPos = projectToScreen(velDir, viewDir, aspectRatio);
+    if (velPos.z <= 0.0) return vec3(0.0); // behind camera
+    vec2 velScreenPos = velPos.xy;
 
     vec2 fromPos = correctAspect(uv - velScreenPos, aspectRatio);
     float dist = length(fromPos);
@@ -159,8 +169,9 @@ vec3 forwardGlow(vec2 uv, vec3 velDir, vec3 viewDir, float warpF) {
 // Positioned at the screen-projected velocity direction.
 vec3 bowWave(vec2 uv, vec3 velDir, vec3 viewDir, float warpF) {
     // Where does the velocity direction land on screen?
-    vec2 velScreenPos = projectToScreen(velDir, viewDir, aspectRatio);
-    if (velScreenPos.x < -0.5) return vec3(0.0); // behind camera
+    vec3 velPos = projectToScreen(velDir, viewDir, aspectRatio);
+    if (velPos.z <= 0.0) return vec3(0.0); // behind camera
+    vec2 velScreenPos = velPos.xy;
 
     // Aspect-corrected distance from bow wave center
     vec2 fromCenter = correctAspect(uv - velScreenPos, aspectRatio);
@@ -175,7 +186,7 @@ vec3 bowWave(vec2 uv, vec3 velDir, vec3 viewDir, float warpF) {
 
 // Bubble wall annular glow — fixed at screen center.
 float bubbleWallGlow(vec2 uv, float warpF) {
-    float dist = length(correctAspect(uv - 0.5, aspectRatio)) * 2.0;
+    float dist = length(correctAspect(uv - 0.5, aspectRatio));
     float wallInner = max(0.01, bubbleRadius - wallThickness);
     float wallOuter = min(0.99, bubbleRadius + wallThickness);
 
@@ -189,8 +200,8 @@ float bubbleWallGlow(vec2 uv, float warpF) {
 
 // Bubble interior — flat spacetime region.
 float bubbleInterior(vec2 uv) {
-    float dist = length(correctAspect(uv - 0.5, aspectRatio)) * 2.0;
-    float interiorEdge = max(0.01, bubbleRadius - wallThickness);
+    float dist = length(correctAspect(uv - 0.5, aspectRatio));
+    float interiorEdge = max(0.01, bubbleRadius - wallThickness - 0.03);
     return 1.0 - smoothstep(interiorEdge - 0.05, interiorEdge, dist);
 }
 
@@ -226,10 +237,11 @@ void main() {
     color *= beam;
 
     // Step 5: Forward glow (positioned at projected velocity on screen)
-    color += forwardGlow(uv, velDir, viewDir, warpFactor);
+    float betaFade = smoothstep(0.0, 0.15, beta);
+    color += forwardGlow(uv, velDir, viewDir, warpFactor) * betaFade;
 
     // Step 6: Bow wave radiation (positioned at projected velocity on screen)
-    color += bowWave(uv, velDir, viewDir, warpFactor);
+    color += bowWave(uv, velDir, viewDir, warpFactor) * betaFade;
 
     // Step 7: Bubble wall annular glow (driven by warpFactor, centered on screen)
     float wallGlow = bubbleWallGlow(uv, warpFactor);
