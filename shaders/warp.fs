@@ -14,7 +14,6 @@ uniform float bubbleRadius;       // Warp bubble radius (screen space, 0.3~0.8)
 uniform float wallThickness;      // Bubble wall thickness
 uniform float aspectRatio;        // Screen aspect ratio (width / height)
 uniform float fovY;               // Camera vertical FOV in degrees
-uniform float exposure;           // Exposure
 
 out vec4 fragColor;
 
@@ -105,52 +104,6 @@ vec3 applyChromaticAberration(vec2 uv, float warpF) {
     return vec3(r, g, b);
 }
 
-// Doppler shift — depends on angle between view direction and velocity.
-// `beta` comes from the velocity vector magnitude (v/c).
-vec3 applyDopplerShift(vec3 color, vec2 uv, vec3 velDir, vec3 viewDir, float beta) {
-    // Cosine between view direction and velocity direction
-    float cosTheta = dot(normalize(viewDir + 0.001), normalize(velDir + 0.001));
-
-    float gamma = 1.0 / sqrt(max(0.001, 1.0 - beta * beta));
-
-    // Doppler factor
-    float doppler = 1.0 / (gamma * (1.0 - beta * cosTheta + 0.001));
-
-    // Color temperature mapping
-    vec3 shifted;
-    if (doppler > 1.0) {
-        // Blueshift: enhance blue channel
-        shifted = vec3(
-            color.r * 0.8,
-            color.g * doppler * 0.9,
-            color.b * doppler * 1.1
-        );
-    } else {
-        // Redshift: enhance red channel
-        float redShift = 1.0 / max(0.1, doppler);
-        shifted = vec3(
-            color.r * redShift * 1.0,
-            color.g * doppler * 0.85,
-            color.b * doppler * 0.6
-        );
-    }
-
-    return clamp(shifted, 0.0, 5.0);
-}
-
-// Relativistic beaming — brightness boost when looking along velocity.
-// `beta` comes from the velocity vector magnitude (v/c).
-float applyBeaming(vec3 velDir, vec3 viewDir, float beta) {
-    float cosTheta = dot(normalize(viewDir + 0.001), normalize(velDir + 0.001));
-    float gamma = 1.0 / sqrt(max(0.001, 1.0 - beta * beta));
-    float doppler = 1.0 / (gamma * (1.0 - beta * cosTheta + 0.001));
-
-    // in fact it should be doppler^3 (always 3.0)
-    // if beta between 0.0 - 0.99, for beautiful effect
-    // we should use this formula to replace 3.0
-    return pow(max(doppler, 0.0), beta * 0.05 + 0.25);
-}
-
 // Forward glow — bright spot at the projected velocity direction on screen.
 vec3 forwardGlow(vec2 uv, vec3 velDir, vec3 viewDir, float warpF) {
     vec3 velPos = projectToScreen(velDir, viewDir, aspectRatio);
@@ -195,7 +148,7 @@ float bubbleWallGlow(vec2 uv, float warpF) {
     float wallSigma = (wallOuter - wallInner) * 0.5 + 0.02;
     float glow = exp(-pow(dist - wallCenter, 2.0) / (2.0 * wallSigma * wallSigma));
 
-    return glow * warpF * 0.35;
+    return glow * warpF * 0.25;
 }
 
 // Bubble interior — flat spacetime region.
@@ -229,31 +182,20 @@ void main() {
     // Step 2: Chromatic aberration (driven by warpFactor)
     vec3 color = applyChromaticAberration(distortedUV, warpFactor);
 
-    // Step 3: Doppler shift (driven by viewDir vs velDir angle)
-    color = applyDopplerShift(color, distortedUV, velDir, viewDir, beta);
-
-    // Step 4: Relativistic beaming (driven by viewDir vs velDir angle)
-    float beam = applyBeaming(velDir, viewDir, beta);
-    color *= beam;
-
-    // Step 5: Forward glow (positioned at projected velocity on screen)
+    // Step 3: Forward glow (positioned at projected velocity on screen)
     float betaFade = smoothstep(0.0, 0.15, beta);
     color += forwardGlow(uv, velDir, viewDir, warpFactor) * betaFade;
 
-    // Step 6: Bow wave radiation (positioned at projected velocity on screen)
+    // Step 4: Bow wave radiation (positioned at projected velocity on screen)
     color += bowWave(uv, velDir, viewDir, warpFactor) * betaFade;
 
-    // Step 7: Bubble wall annular glow (driven by warpFactor, centered on screen)
+    // Step 5: Bubble wall annular glow (driven by warpFactor, centered on screen)
     float wallGlow = bubbleWallGlow(uv, warpFactor);
     color += vec3(0.3, 0.5, 1.0) * wallGlow;
 
-    // Step 8: Slight interior brightening (flat spacetime region)
+    // Step 6: Slight interior brightening (flat spacetime region)
     float interior = bubbleInterior(uv);
     color = mix(color, color * 1.1, interior * 0.3);
-
-    // Step 9: Tone mapping + exposure
-    color = color / (1.0 + color);  // Reinhard
-    color *= exposure;
 
     fragColor = vec4(color, 1.0);
 }

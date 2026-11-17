@@ -139,7 +139,7 @@ void game::setup_ui() {
 void game::setup_post_processing() {
     window_.get_frame_graph().set_enable("bloom", true);
     window_.get_bloom_renderer().set_bloom_threshold(0.85f);
-    window_.get_bloom_renderer().set_bloom_intensity(1.6f);
+    window_.get_bloom_renderer().set_bloom_intensity(1.2f);
     window_.get_bloom_renderer().set_bloom_blur_radius(15.0f);
 
     window_.get_frame_graph().set_enable("fxaa", true);
@@ -147,7 +147,7 @@ void game::setup_post_processing() {
     window_.get_warp_renderer().set_velocity(Vector3 { 0.0f, 0.0f, 0.0f });
     window_.get_warp_renderer().set_bubble_radius(0.37f);
     window_.get_warp_renderer().set_wall_thickness(0.04f);
-    window_.get_warp_renderer().set_exposure(1.0f);
+    window_.get_warp_renderer().set_exposure(2.0f);
 }
 
 // ============================================================================
@@ -230,7 +230,7 @@ void game::render() {
     window_.begin_scene_pass();
     window_.begin_mode_3d(camera_.get_camera());
 
-    sky_.draw(camera_.get_camera());
+    sky_.draw(camera_.get_camera(), window_.get_warp_renderer().get_velocity());
     scene_.draw_all(camera_, window_.height());
 
     if (game_config::singleton().get_enable_grid_draw()) {

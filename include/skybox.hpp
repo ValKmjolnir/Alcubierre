@@ -9,7 +9,7 @@ public:
     ~skybox();
 
     // Draw the skybox
-    void draw(const Camera3D& camera);
+    void draw(const Camera3D& camera, Vector3 velocity);
 
     // Check if skybox is loaded
     bool is_loaded() const;
@@ -31,4 +31,5 @@ private:
     bool is_loaded_;
     float seed_;
     int mvp_location_;
+    int velocity_location_;
 };

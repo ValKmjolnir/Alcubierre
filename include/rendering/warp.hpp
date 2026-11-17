@@ -17,7 +17,6 @@ private:
     int loc_wall_thickness_ = -1;
     int loc_aspect_ratio_ = -1;
     int loc_fov_y_ = -1;
-    int loc_exposure_ = -1;
 
     // settings
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
@@ -35,6 +34,7 @@ public:
     void set_wall_thickness(float wall_thickness) { wall_thickness_ = wall_thickness; }
     void set_fov_y(float fov_y) { fov_y_ = fov_y; }
     void set_exposure(float exposure) { exposure_ = exposure; }
+    const auto get_exposure() const { return exposure_; }
     void set_view_direction(Vector3 direction) { view_direction_ = direction; }
     void set_warp_factor(float warp_factor);
     const auto get_warp_factor() const { return warp_factor_; }

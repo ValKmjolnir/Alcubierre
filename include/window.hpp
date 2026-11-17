@@ -27,6 +27,11 @@ private:
     int loc_object_color_;
     int loc_ambient_strength_;
 
+    // Final tonemap blit
+    Shader tonemap_shader_;
+    bool tonemap_loaded_ = false;
+    int loc_tonemap_exposure_ = -1;
+
     // Cached meshes for lit rendering
     Mesh cube_mesh_;
     bool cube_mesh_ready_ = false;

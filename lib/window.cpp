@@ -51,6 +51,13 @@ void game_window::load() {
 
     init_frame_graph();
     init_lit_shader();
+
+    auto tonemap_res = shader_manager::instance().load("tonemap.vs", "tonemap.fs");
+    tonemap_shader_ = tonemap_res.shader;
+    tonemap_loaded_ = tonemap_res.success;
+    if (tonemap_loaded_) {
+        loc_tonemap_exposure_ = GetShaderLocation(tonemap_shader_, "exposure");
+    }
 }
 
 void game_window::unload() {
@@ -73,7 +80,18 @@ void game_window::end_scene_pass() {
 
 void game_window::apply() {
     auto& out = frame_graph_.execute(scene_texture_, width_, height_);
+
+    if (!tonemap_loaded_) {
+        draw_texture_to_specific_screen(out.get(), width_, height_);
+        return;
+    }
+
+    float exposure = get_warp_renderer().get_exposure();
+    SetShaderValue(tonemap_shader_, loc_tonemap_exposure_, &exposure, SHADER_UNIFORM_FLOAT);
+
+    BeginShaderMode(tonemap_shader_);
     draw_texture_to_specific_screen(out.get(), width_, height_);
+    EndShaderMode();
 }
 
 void game_window::draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b) {

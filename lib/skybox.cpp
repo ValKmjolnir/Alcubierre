@@ -202,7 +202,8 @@ void splat_star(unsigned char* pixels, const Vector3& star, float grid_scale, fl
 skybox::skybox() :
     is_loaded_(false),
     seed_(42.0f),
-    mvp_location_(-1) {
+    mvp_location_(-1),
+    velocity_location_(-1) {
     TraceLog(LOG_DEBUG, "Creating skybox...");
     init_mesh();
     load_shader();
@@ -244,6 +245,7 @@ void skybox::load_shader() {
 
     // Check all uniform locations
     mvp_location_ = GetShaderLocation(shader_, "mvp");
+    velocity_location_ = GetShaderLocation(shader_, "velocity");
 
     if (mvp_location_ == -1) {
         TraceLog(LOG_WARNING, "Skybox shader: 'mvp' uniform not found");
@@ -324,7 +326,7 @@ void skybox::unload_cubemap() {
     }
 }
 
-void skybox::draw(const Camera3D& camera) {
+void skybox::draw(const Camera3D& camera, Vector3 velocity) {
     // Get the view matrix without translation (skybox follows camera)
     Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
 
@@ -359,6 +361,11 @@ void skybox::draw(const Camera3D& camera) {
     }
 
     SetShaderValueMatrix(shader_, mvp_location_, mvp);
+
+    if (velocity_location_ != -1) {
+        float velocity_vec[3] = { velocity.x, velocity.y, velocity.z };
+        SetShaderValue(shader_, velocity_location_, velocity_vec, SHADER_UNIFORM_VEC3);
+    }
 
     TraceLog(LOG_DEBUG, "Skybox::draw: MVP uniform set, drawing skybox");
 
