@@ -11,32 +11,44 @@ void bloom::load() {
     bright_texture_ = LoadRenderTexture(width / 2, height / 2);
     bloom_h_texture_ = LoadRenderTexture(width / 2, height / 2);
     bloom_v_texture_ = LoadRenderTexture(width / 2, height / 2);
+    bloom_streak_texture_ = LoadRenderTexture(width / 4, height / 4);
+    bloom_streak2_texture_ = LoadRenderTexture(width / 4, height / 4);
+    bloom_flare_texture_ = LoadRenderTexture(width / 4, height / 4);
     bloom_composite_texture_ = LoadRenderTexture(width, height);
 
     // Set texture filtering
     SetTextureFilter(bright_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_h_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_v_texture_.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(bloom_streak_texture_.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(bloom_streak2_texture_.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(bloom_flare_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bloom_composite_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureWrap(bright_texture_.texture, TEXTURE_WRAP_CLAMP);
     SetTextureWrap(bloom_h_texture_.texture, TEXTURE_WRAP_CLAMP);
     SetTextureWrap(bloom_v_texture_.texture, TEXTURE_WRAP_CLAMP);
+    SetTextureWrap(bloom_streak_texture_.texture, TEXTURE_WRAP_CLAMP);
+    SetTextureWrap(bloom_streak2_texture_.texture, TEXTURE_WRAP_CLAMP);
+    SetTextureWrap(bloom_flare_texture_.texture, TEXTURE_WRAP_CLAMP);
 
     // Load bloom shaders
     auto bloom_extract_res = shader_manager::instance().load("bloom.vs", "bloom_extract.fs");
     auto bloom_blur_h_res = shader_manager::instance().load("bloom.vs", "bloom_blur_h.fs");
     auto bloom_blur_v_res = shader_manager::instance().load("bloom.vs", "bloom_blur_v.fs");
+    auto bloom_streak_res = shader_manager::instance().load("bloom.vs", "bloom_streak.fs");
     auto bloom_composite_res = shader_manager::instance().load("bloom.vs", "bloom.fs");
 
     bloom_extract_shader_ = bloom_extract_res.shader;
     bloom_blur_h_shader_ = bloom_blur_h_res.shader;
     bloom_blur_v_shader_ = bloom_blur_v_res.shader;
+    bloom_streak_shader_ = bloom_streak_res.shader;
     bloom_composite_shader_ = bloom_composite_res.shader;
 
     // Check if all shaders are valid
     bloom_shaders_loaded_ = bloom_extract_res.success &&
                             bloom_blur_h_res.success &&
                             bloom_blur_v_res.success &&
+                            bloom_streak_res.success &&
                             bloom_composite_res.success;
     if (!bloom_shaders_loaded_) {
         TraceLog(LOG_WARNING, "Bloom shaders failed to load, bloom disabled");
@@ -50,6 +62,36 @@ void bloom::load() {
     loc_blur_radius_h_ = GetShaderLocation(bloom_blur_h_shader_, "blurRadius");
     loc_texel_size_v_ = GetShaderLocation(bloom_blur_v_shader_, "texelSize");
     loc_blur_radius_v_ = GetShaderLocation(bloom_blur_v_shader_, "blurRadius");
+    loc_texel_size_streak_ = GetShaderLocation(bloom_streak_shader_, "texelSize");
+    loc_step_streak_ = GetShaderLocation(bloom_streak_shader_, "stepPx");
+    loc_sigma_streak_ = GetShaderLocation(bloom_streak_shader_, "sigmaTaps");
+    loc_tint_streak_ = GetShaderLocation(bloom_streak_shader_, "tint");
+    loc_gain_streak_ = GetShaderLocation(bloom_streak_shader_, "gain");
+}
+
+void bloom::streak_pass(const RenderTexture2D& src, RenderTexture2D& dst,
+                        float step_px, float sigma_taps, const float* tint, float gain) {
+    BeginTextureMode(dst);
+    ClearBackground(BLACK);
+    float texel_size[2] = { 1.0f / (float)width, 0.0f };
+    SetShaderValue(bloom_streak_shader_, loc_texel_size_streak_, texel_size, SHADER_UNIFORM_VEC2);
+    SetShaderValue(bloom_streak_shader_, loc_step_streak_, &step_px, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(bloom_streak_shader_, loc_sigma_streak_, &sigma_taps, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(bloom_streak_shader_, loc_tint_streak_, tint, SHADER_UNIFORM_VEC3);
+    SetShaderValue(bloom_streak_shader_, loc_gain_streak_, &gain, SHADER_UNIFORM_FLOAT);
+    BeginShaderMode(bloom_streak_shader_);
+    draw_texture_to_specific_screen(src, dst.texture.width, dst.texture.height);
+    EndShaderMode();
+    EndTextureMode();
+}
+
+void bloom::begin_flare_pass() {
+    BeginTextureMode(bloom_flare_texture_);
+    ClearBackground(BLACK);
+}
+
+void bloom::end_flare_pass() {
+    EndTextureMode();
 }
 
 void bloom::unload() {
@@ -57,6 +99,9 @@ void bloom::unload() {
     UnloadRenderTexture(bright_texture_);
     UnloadRenderTexture(bloom_h_texture_);
     UnloadRenderTexture(bloom_v_texture_);
+    UnloadRenderTexture(bloom_streak_texture_);
+    UnloadRenderTexture(bloom_streak2_texture_);
+    UnloadRenderTexture(bloom_flare_texture_);
     UnloadRenderTexture(bloom_composite_texture_);
     bloom_shaders_loaded_ = false;
 }
@@ -112,7 +157,14 @@ texture_handle& bloom::apply(const RenderTexture2D& texture, int width, int heig
     EndShaderMode();
     EndTextureMode();
 
-    // Step 4: Composite - combine scene with bloom
+    // Step 4: Horizontal anamorphic streak from the flare buffer (quarter resolution)
+    const float tint_none[3] = { 1.0f, 1.0f, 1.0f };
+    const float tint_streak[3] = { 1.0f, 0.93f, 0.82f };
+    const float streak_pre_gain = 3.5f;
+    streak_pass(bloom_flare_texture_, bloom_streak_texture_, 4.0f, 5.0f, tint_none, streak_pre_gain);
+    streak_pass(bloom_streak_texture_, bloom_streak2_texture_, 24.0f, 8.37f, tint_streak, bloom_streak_intensity_);
+
+    // Step 5: Composite - combine scene with bloom
     BeginTextureMode(bloom_composite_texture_);
     ClearBackground(BLACK);
     // First, draw scene to screen
@@ -122,6 +174,14 @@ texture_handle& bloom::apply(const RenderTexture2D& texture, int width, int heig
     BeginShaderMode(bloom_composite_shader_);
     BeginBlendMode(BLEND_ADDITIVE);
     draw_texture_to_specific_screen(bloom_v_texture_, width, height);
+    EndBlendMode();
+    EndShaderMode();
+    // Then, draw the horizontal streak on top with additive blending
+    float streak_composite_intensity = 1.0f;
+    SetShaderValue(bloom_composite_shader_, loc_bloom_intensity_, &streak_composite_intensity, SHADER_UNIFORM_FLOAT);
+    BeginShaderMode(bloom_composite_shader_);
+    BeginBlendMode(BLEND_ADDITIVE);
+    draw_texture_to_specific_screen(bloom_streak2_texture_, width, height);
     EndBlendMode();
     EndShaderMode();
     EndTextureMode();

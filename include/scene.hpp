@@ -44,4 +44,14 @@ public:
             obj->draw(cam, window_height);
         }
     }
+
+    void draw_flares(const camera_3d& cam, int rt_width, int rt_height, int window_height) const {
+        BeginBlendMode(BLEND_ADDITIVE);
+        for (auto& obj : objects_) {
+            if (obj->is_flare_source()) {
+                obj->draw_flare(cam, rt_width, rt_height, window_height);
+            }
+        }
+        EndBlendMode();
+    }
 };

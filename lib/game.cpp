@@ -43,9 +43,9 @@ game::game()
 void game::setup_scene() {
     // --- Star ---
     auto& main_star = scene_.add<star>(
-        Vector3 { 0.0f, 50.0f, 300.0f }, 255, 240, 200, 255);
+        Vector3 { 0.0f, 50.0f, 300.0f }, 255, 220, 200, 255);
     main_star.set_intensity(10.0f);
-    main_star.set_scale(600.0f);
+    main_star.set_scale(1000.0f);
 
     // --- Laser beams ---
     {
@@ -141,6 +141,7 @@ void game::setup_post_processing() {
     window_.get_bloom_renderer().set_bloom_threshold(0.85f);
     window_.get_bloom_renderer().set_bloom_intensity(1.2f);
     window_.get_bloom_renderer().set_bloom_blur_radius(15.0f);
+    window_.get_bloom_renderer().set_bloom_streak_intensity(10.0f);
 
     window_.get_frame_graph().set_enable("fxaa", true);
 
@@ -240,6 +241,11 @@ void game::render() {
     window_.end_mode_3d();
     window_.end_scene_pass();
 
+    auto& bloom_pass = window_.get_bloom_renderer();
+    bloom_pass.begin_flare_pass();
+    scene_.draw_flares(camera_, bloom_pass.flare_width(), bloom_pass.flare_height(), window_.height());
+    bloom_pass.end_flare_pass();
+
     double scene_ms = 0.0;
     if (show_hud) {
         scene_ms = std::chrono::duration<double, std::milli>(
@@ -247,6 +253,7 @@ void game::render() {
     }
 
     window_.apply();
+
 
     if (show_hud) {
         Vector3 vel = window_.get_warp_renderer().get_velocity();

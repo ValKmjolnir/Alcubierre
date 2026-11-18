@@ -14,11 +14,14 @@ private:
     int color_b_;
     int color_alpha_;
     float scale_ = 600.0f;
+    float flare_thickness_ = 0.03f;
 
     Texture2D texture_;
+    Texture2D flare_texture_;
 
 private:
     void load_texture();
+    void load_flare_texture();
 
 public:
     star();
@@ -35,4 +38,6 @@ public:
     float scale() const { return scale_; }
 
     void draw(const camera_3d& cam, int window_height) const override;
+    void draw_flare(const camera_3d& cam, int rt_width, int rt_height, int window_height) const override;
+    bool is_flare_source() const override { return true; }
 };

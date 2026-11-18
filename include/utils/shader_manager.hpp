@@ -26,6 +26,7 @@ public:
     ~shader_manager();
 
     static shader_manager& instance();
+    void unload_all();
     bool exists(const char* vs_path, const char* fs_path) const;
     load_result load(const char* vs_path, const char* fs_path);
 

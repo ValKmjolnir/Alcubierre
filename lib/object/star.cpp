@@ -5,18 +5,10 @@
 
 #include "object/star.hpp"
 
-float smooth_maxf(float a, float b, float smooth) {
-    // 1.0    ~ 5.0    ~ 10.0
-    // smooth ~ medium ~ hard
-    auto min_num = fminf(a, b);
-    auto max_num = fmaxf(a, b);
-    return max_num + logf(1.0f + expf((min_num - max_num) * smooth)) / smooth;
-}
-
 Color single_pixel(int x, int y, float center, const Color& base_color) {
     float dx = (x - center) / center;
     float dy = (y - center) / center;
-    float dist = sqrtf(dx*dx + dy*dy);
+    float dist = sqrtf(dx * dx + dy * dy);
 
     float intensity = 0.0f;
     float layer1 = 0.0f;
@@ -28,22 +20,11 @@ Color single_pixel(int x, int y, float center, const Color& base_color) {
         layer3 = powf(expf(-dist * 0.5f) * 0.125f, 1.4f) - expf(-0.5f) * 0.125f;
     }
 
-    float absDx = fabsf(dx);
-    float absDy = fabsf(dy);
-    float starburst = 0;
+    intensity = fmaxf(fmaxf(layer1, layer2), layer3);
+    intensity = Clamp(intensity, 0.0f, 1.0f);
 
-    if (absDy < 0.08f) {
-        float horizontalGlow = 1.0f - powf(absDx, 2.3f);
-        float verticalSoftness = 1.0f - powf(absDy / 0.08f, 0.6f);
-        starburst = horizontalGlow * verticalSoftness * 0.97f;
-    }
-
-    if (dist <= 1.0f) {
-        intensity = smooth_maxf(fmaxf(fmaxf(layer1, layer2), layer3), starburst, 4.0f);
-    } else {
-        intensity = fmaxf(fmaxf(fmaxf(layer1, layer2), layer3), starburst);
-    }
-    intensity = fminf(intensity, 1.0f);
+    float bump = expf(-(dist * dist) / (0.12f * 0.12f));
+    intensity = Clamp(intensity * (1.0f + 0.15f * bump), 0.0f, 1.0f);
 
     float temp = 1.0f - dist * 0.3f;
 
@@ -70,6 +51,26 @@ Image generate_layered_star(int size, const Color& base_color) {
     return im;
 }
 
+Image generate_flare_dot(int size, const Color& base_color) {
+    Image im = GenImageColor(size, size, BLANK);
+    Color *pixels = (Color *)im.data;
+
+    float center = size / 2.0f;
+    for (int y = 0; y < size; y++) {
+        for (int x = 0; x < size; x++) {
+            float dx = (x - center + 0.5f) / center;
+            float dy = (y - center + 0.5f) / center;
+            float intensity = expf(-(dx * dx + dy * dy) * 6.0f);
+
+            Color c = base_color;
+            c.a = (unsigned char)(base_color.a * intensity);
+            pixels[y * size + x] = c;
+        }
+    }
+
+    return im;
+}
+
 star::star()
     : point_light()
     , object()
@@ -79,6 +80,7 @@ star::star()
     , color_alpha_(255)
 {
     load_texture();
+    load_flare_texture();
 }
 
 star::star(const Vector3& position, int r, int g, int b, int alpha)
@@ -90,10 +92,12 @@ star::star(const Vector3& position, int r, int g, int b, int alpha)
     , color_alpha_(alpha)
 {
     load_texture();
+    load_flare_texture();
 }
 
 star::~star() {
     UnloadTexture(texture_);
+    UnloadTexture(flare_texture_);
 }
 
 void star::load_texture() {
@@ -109,6 +113,19 @@ void star::load_texture() {
     UnloadImage(img);
 }
 
+void star::load_flare_texture() {
+    const auto base_color = Color {
+        static_cast<unsigned char>(color_r_),
+        static_cast<unsigned char>(color_g_),
+        static_cast<unsigned char>(color_b_),
+        static_cast<unsigned char>(color_alpha_)
+    };
+
+    Image img = generate_flare_dot(64, base_color);
+    flare_texture_ = LoadTextureFromImage(img);
+    UnloadImage(img);
+}
+
 void star::set_color(int r, int g, int b, int alpha) {
     color_r_ = r;
     color_g_ = g;
@@ -120,6 +137,8 @@ void star::set_color(int r, int g, int b, int alpha) {
 
     UnloadTexture(texture_);
     load_texture();
+    UnloadTexture(flare_texture_);
+    load_flare_texture();
 }
 
 void star::draw(const camera_3d& cam, int window_height) const {
@@ -130,4 +149,28 @@ void star::draw(const camera_3d& cam, int window_height) const {
     float fov_factor = 2.0f * tanf(cam.fovy() * DEG2RAD / 2.0f);
     float final_scale = scale_ * (dist * fov_factor) / window_height;
     DrawBillboard(cam.get_camera(), texture_, position_, final_scale, WHITE);
+}
+
+void star::draw_flare(const camera_3d& cam, int rt_width, int rt_height, int window_height) const {
+    const Vector3 forward = Vector3Subtract(cam.target(), cam.position());
+    if (Vector3DotProduct(Vector3Subtract(position_, cam.position()), forward) <= 0.0f) {
+        return;
+    }
+
+    const Vector2 screen = GetWorldToScreenEx(position_, cam.get_camera(), rt_width, rt_height);
+    const float size = flare_thickness_ * (float)rt_height;
+
+    if (screen.x + size < 0.0f || screen.y + size < 0.0f ||
+        screen.x - size > (float)rt_width || screen.y - size > (float)rt_height) {
+        return;
+    }
+
+    const Rectangle src = {
+        0.0f, 0.0f,
+        (float)flare_texture_.width, (float)flare_texture_.height
+    };
+    const Rectangle dst = {
+        screen.x - size * 0.5f, screen.y - size * 0.5f, size, size
+    };
+    DrawTexturePro(flare_texture_, src, dst, Vector2 { 0.0f, 0.0f }, 0.0f, WHITE);
 }

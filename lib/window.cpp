@@ -21,6 +21,8 @@ game_window::game_window(int width, int height, const char* title):
 game_window::~game_window() {
     unload();
 
+    shader_manager::instance().unload_all();
+
     rlDisableBackfaceCulling();
     CloseWindow();
 }

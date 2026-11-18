@@ -124,15 +124,15 @@ load_result shader_manager::try_load_shader(const char* vs_path, const char* fs_
     return { false };
 }
 
-shader_manager::~shader_manager() {
-    if (shaders.size()) {
-        printf("shader_manager::~shader_manager(): unloading\n");
-    }
+void shader_manager::unload_all() {
     for (auto& [name, shader] : shaders) {
-        printf("  - shader [%s]: id = [%d]\n", name.c_str(), shader.id);
         UnloadShader(shader);
     }
     shaders.clear();
+}
+
+shader_manager::~shader_manager() {
+    unload_all();
 }
 
 shader_manager& shader_manager::instance() {
