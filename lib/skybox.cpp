@@ -22,9 +22,12 @@ struct star_layer {
 };
 
 const star_layer kStarLayers[] = {
-    { 30.0f, 0.1f, 0.7f, 0.4f, 1.1f },
-    { 10.0f, 0.05f, 0.45f, 0.0f, 2.7f },
-    { 2.5f, 0.025f, 0.25f, 0.0f, 4.3f },
+    { 33.0f, 0.055f, 0.7f, 0.4f, 1.1f },
+    { 33.0f, 0.055f, 0.35f, 0.0f, 7.9f },
+    { 11.0f, 0.0275f, 0.45f, 0.0f, 2.7f },
+    { 11.0f, 0.0275f, 0.6f, 0.2f, 3.4f },
+    { 2.75f, 0.01375f, 0.25f, 0.0f, 4.3f },
+    { 2.75f, 0.01375f, 0.85f, 0.1f, 2.1f },
 };
 
 float fractf(float x) {
@@ -224,7 +227,7 @@ skybox::~skybox() {
 
 void skybox::init_mesh() {
     // Create a large cube for the skybox
-    mesh_ = GenMeshCube(500.0f, 500.0f, 500.0f);
+    mesh_ = GenMeshCube(600.0f, 600.0f, 600.0f);
 }
 
 void skybox::load_shader() {
@@ -244,11 +247,11 @@ void skybox::load_shader() {
     }
 
     // Check all uniform locations
-    mvp_location_ = GetShaderLocation(shader_, "mvp");
+    mvp_location_ = GetShaderLocation(shader_, "skyMvp");
     velocity_location_ = GetShaderLocation(shader_, "velocity");
 
     if (mvp_location_ == -1) {
-        TraceLog(LOG_WARNING, "Skybox shader: 'mvp' uniform not found");
+        TraceLog(LOG_WARNING, "Skybox shader: 'skyMvp' uniform not found");
         TraceLog(LOG_WARNING, "Check console for shader compilation errors above");
     }
 
@@ -266,7 +269,7 @@ void skybox::build_cubemap() {
 
     for (size_t i = 0; i < pixels.size(); i += 4) {
         pixels[i + 0] = 0;
-        pixels[i + 1] = 0;
+        pixels[i + 1] = 13;
         pixels[i + 2] = 26;
         pixels[i + 3] = 255;
     }

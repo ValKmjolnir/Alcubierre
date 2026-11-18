@@ -17,9 +17,11 @@ private:
     menu menu_;
     debug_hud debug_hud_;
     input_manager input_;
+    ambient_light ambient_;
 
 public:
     game();
+    ~game();
     void run();
 
 private:

@@ -25,7 +25,6 @@ private:
     Material lit_material_;
     bool lit_shader_loaded_ = false;
     int loc_object_color_;
-    int loc_ambient_strength_;
 
     // Final tonemap blit
     Shader tonemap_shader_;

@@ -36,11 +36,21 @@ game::game()
     setup_post_processing();
 }
 
+game::~game() {
+    lighting_system::instance().remove(&ambient_);
+}
+
 // ============================================================================
 // Scene setup — all objects registered via scene_
 // ============================================================================
 
 void game::setup_scene() {
+    // --- Ambient light ---
+    ambient_.set_sky_color({ 0.40f, 0.44f, 0.52f });
+    ambient_.set_ground_color({ 0.10f, 0.11f, 0.13f });
+    ambient_.set_intensity(1.0f);
+    lighting_system::instance().add(&ambient_);
+
     // --- Star ---
     auto& main_star = scene_.add<star>(
         Vector3 { 0.0f, 50.0f, 600.0f }, 255, 190, 155, 255);

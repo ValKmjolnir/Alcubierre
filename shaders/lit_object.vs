@@ -19,8 +19,8 @@ void main()
     vec4 worldPos = matModel * vec4(vertexPosition, 1.0);
     fragPosition = worldPos.xyz;
 
-    // Pass normal in model space (will be normalized in fragment shader)
-    fragNormal = vertexNormal;
+    // Pass normal in world space (inverse-transpose handles non-uniform scale)
+    fragNormal = mat3(transpose(inverse(matModel))) * vertexNormal;
 
     gl_Position = mvp * vec4(vertexPosition, 1.0);
 }

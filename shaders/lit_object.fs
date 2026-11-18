@@ -6,7 +6,6 @@ in vec3 fragNormal;
 
 // Input uniform attributes
 uniform vec3 objectColor;       // Base color of the object
-uniform float ambientStrength;  // Ambient light intensity
 
 // Lighting system uniforms
 #define MAX_LIGHTS 8
@@ -18,6 +17,9 @@ struct Light {
     float type;
     vec3 direction;
     float cutoff;
+    vec3 groundColor;
+    float innerCutoff;
+    float range;
 };
 
 uniform Light lights[MAX_LIGHTS];
@@ -29,22 +31,38 @@ out vec4 fragColor;
 void main()
 {
     vec3 normal = normalize(fragNormal);
-    vec3 ambient = objectColor * ambientStrength;
 
-    // Accumulate diffuse lighting from all active lights
-    vec3 diffuse = vec3(0.0);
+    vec3 lighting = vec3(0.0);
 
     for (int i = 0; i < light_count && i < MAX_LIGHTS; i++) {
-        vec3 lightDir = normalize(lights[i].position - fragPosition);
-        float diff = max(dot(normal, lightDir), 0.0);
-        diffuse += diff * lights[i].color * lights[i].intensity * objectColor;
+        int type = int(lights[i].type + 0.5);
+
+        if (type == 0) {
+            vec3 lightDir = normalize(lights[i].position - fragPosition);
+            float diff = max(dot(normal, lightDir), 0.0);
+            lighting += diff * lights[i].color * lights[i].intensity * objectColor;
+        } else if (type == 1) {
+            vec3 lightDir = normalize(-lights[i].direction);
+            float diff = max(dot(normal, lightDir), 0.0);
+            lighting += diff * lights[i].color * lights[i].intensity * objectColor;
+        } else if (type == 2) {
+            vec3 lightDir = normalize(lights[i].position - fragPosition);
+            float diff = max(dot(normal, lightDir), 0.0);
+            float theta = dot(lightDir, normalize(-lights[i].direction));
+            float cone = smoothstep(lights[i].cutoff, lights[i].innerCutoff, theta);
+            float dist = length(lights[i].position - fragPosition);
+            float atten = 1.0 / (1.0 + dist * dist);
+            float window = clamp(1.0 - pow(dist / max(lights[i].range, 1e-4), 4.0), 0.0, 1.0);
+            atten *= window * window;
+            lighting += diff * cone * atten * lights[i].color * lights[i].intensity * objectColor;
+        } else if (type == 3) {
+            float hemi = normal.y * 0.5 + 0.5;
+            lighting += mix(lights[i].groundColor, lights[i].color, hemi) * lights[i].intensity * objectColor;
+        }
     }
 
-    // Final color = ambient + diffuse (no specular for now)
-    vec3 finalColor = ambient + diffuse;
-
     // Simple tone mapping to avoid over-bright areas
-    finalColor = finalColor / (finalColor + vec3(1.0));
+    vec3 finalColor = lighting / (lighting + vec3(1.0));
 
     fragColor = vec4(finalColor, 1.0);
 }

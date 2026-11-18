@@ -21,6 +21,11 @@ private:
         std::vector<int> color;
         std::vector<int> intensity;
         std::vector<int> type;
+        std::vector<int> direction;
+        std::vector<int> ground_color;
+        std::vector<int> cutoff;
+        std::vector<int> inner_cutoff;
+        std::vector<int> range;
     };
     mutable shader_locs locs_;
 

@@ -105,9 +105,6 @@ void game_window::draw_cube(const Vector3& position, float width, float height, 
         float color_vec3[3] = { r / 255.0f, g / 255.0f, b / 255.0f };
         SetShaderValue(lit_shader_, loc_object_color_, color_vec3, SHADER_UNIFORM_VEC3);
 
-        float ambient = 0.15f;
-        SetShaderValue(lit_shader_, loc_ambient_strength_, &ambient, SHADER_UNIFORM_FLOAT);
-
         // Draw cube with transform
         Matrix transform = MatrixScale(width, height, length);
         transform = MatrixMultiply(transform, MatrixTranslate(position.x, position.y, position.z));
@@ -139,7 +136,6 @@ void game_window::init_lit_shader() {
     lit_material_.shader = lit_shader_;
 
     loc_object_color_ = GetShaderLocation(lit_shader_, "objectColor");
-    loc_ambient_strength_ = GetShaderLocation(lit_shader_, "ambientStrength");
 
     // Create cube mesh (unit cube, will be scaled)
     cube_mesh_ = GenMeshCube(1.0f, 1.0f, 1.0f);
