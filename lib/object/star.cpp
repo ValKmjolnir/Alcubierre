@@ -151,10 +151,10 @@ void star::draw(const camera_3d& cam, int window_height) const {
     DrawBillboard(cam.get_camera(), texture_, position_, final_scale, WHITE);
 }
 
-void star::draw_flare(const camera_3d& cam, int rt_width, int rt_height, int window_height) const {
+Vector2 star::draw_flare(const camera_3d& cam, int rt_width, int rt_height, int window_height) const {
     const Vector3 forward = Vector3Subtract(cam.target(), cam.position());
     if (Vector3DotProduct(Vector3Subtract(position_, cam.position()), forward) <= 0.0f) {
-        return;
+        return Vector2 { -1.0f, -1.0f };
     }
 
     const Vector2 screen = GetWorldToScreenEx(position_, cam.get_camera(), rt_width, rt_height);
@@ -162,7 +162,7 @@ void star::draw_flare(const camera_3d& cam, int rt_width, int rt_height, int win
 
     if (screen.x + size < 0.0f || screen.y + size < 0.0f ||
         screen.x - size > (float)rt_width || screen.y - size > (float)rt_height) {
-        return;
+        return Vector2 { -1.0f, -1.0f };
     }
 
     const Rectangle src = {
@@ -173,4 +173,6 @@ void star::draw_flare(const camera_3d& cam, int rt_width, int rt_height, int win
         screen.x - size * 0.5f, screen.y - size * 0.5f, size, size
     };
     DrawTexturePro(flare_texture_, src, dst, Vector2 { 0.0f, 0.0f }, 0.0f, WHITE);
+
+    return screen;
 }

@@ -38,6 +38,7 @@ public:
     float scale() const { return scale_; }
 
     void draw(const camera_3d& cam, int window_height) const override;
-    void draw_flare(const camera_3d& cam, int rt_width, int rt_height, int window_height) const override;
+    Vector2 draw_flare(const camera_3d& cam, int rt_width, int rt_height, int window_height) const override;
+    Vector3 flare_position() const override { return position_; }
     bool is_flare_source() const override { return true; }
 };

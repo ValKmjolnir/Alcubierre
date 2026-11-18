@@ -9,8 +9,9 @@ uniform sampler2D texture0;
 uniform vec2 texelSize;   // (1.0/scene width, 0.0)
 uniform float stepPx;     // native px between taps
 uniform float sigmaTaps;  // gaussian sigma, in tap units
-uniform vec3 tint;
 uniform float gain;
+uniform float warmMix;
+uniform vec2 flareOrigin;
 
 void main()
 {
@@ -28,6 +29,13 @@ void main()
         totalWeight += weight;
     }
 
-    color = color / totalWeight;
-    fragColor = vec4(color * tint * gain, 1.0);
+    color = color / totalWeight * gain;
+
+    float peak = max(max(color.r, color.g), color.b);
+    vec3 hue = color / max(peak, 1e-5);
+    vec3 deep = color * hue;
+    vec3 neutral = vec3(peak);
+    float white = 1.0 - smoothstep(0.02, 0.045, abs(fragTexCoord.x - flareOrigin.x));
+
+    fragColor = vec4(mix(color, mix(deep, neutral, white), warmMix), 1.0);
 }

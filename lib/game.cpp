@@ -43,7 +43,7 @@ game::game()
 void game::setup_scene() {
     // --- Star ---
     auto& main_star = scene_.add<star>(
-        Vector3 { 0.0f, 50.0f, 300.0f }, 255, 220, 200, 255);
+        Vector3 { 0.0f, 50.0f, 600.0f }, 255, 190, 155, 255);
     main_star.set_intensity(10.0f);
     main_star.set_scale(1000.0f);
 
@@ -243,8 +243,10 @@ void game::render() {
 
     auto& bloom_pass = window_.get_bloom_renderer();
     bloom_pass.begin_flare_pass();
-    scene_.draw_flares(camera_, bloom_pass.flare_width(), bloom_pass.flare_height(), window_.height());
+    Vector2 flare_origin = scene_.draw_flares(
+        camera_, bloom_pass.flare_width(), bloom_pass.flare_height(), window_.height());
     bloom_pass.end_flare_pass();
+    bloom_pass.set_streak_origin(flare_origin);
 
     double scene_ms = 0.0;
     if (show_hud) {

@@ -65,20 +65,22 @@ void bloom::load() {
     loc_texel_size_streak_ = GetShaderLocation(bloom_streak_shader_, "texelSize");
     loc_step_streak_ = GetShaderLocation(bloom_streak_shader_, "stepPx");
     loc_sigma_streak_ = GetShaderLocation(bloom_streak_shader_, "sigmaTaps");
-    loc_tint_streak_ = GetShaderLocation(bloom_streak_shader_, "tint");
     loc_gain_streak_ = GetShaderLocation(bloom_streak_shader_, "gain");
+    loc_warm_streak_ = GetShaderLocation(bloom_streak_shader_, "warmMix");
+    loc_origin_streak_ = GetShaderLocation(bloom_streak_shader_, "flareOrigin");
 }
 
 void bloom::streak_pass(const RenderTexture2D& src, RenderTexture2D& dst,
-                        float step_px, float sigma_taps, const float* tint, float gain) {
+                        float step_px, float sigma_taps, float gain, float warm_mix) {
     BeginTextureMode(dst);
     ClearBackground(BLACK);
     float texel_size[2] = { 1.0f / (float)width, 0.0f };
     SetShaderValue(bloom_streak_shader_, loc_texel_size_streak_, texel_size, SHADER_UNIFORM_VEC2);
     SetShaderValue(bloom_streak_shader_, loc_step_streak_, &step_px, SHADER_UNIFORM_FLOAT);
     SetShaderValue(bloom_streak_shader_, loc_sigma_streak_, &sigma_taps, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(bloom_streak_shader_, loc_tint_streak_, tint, SHADER_UNIFORM_VEC3);
     SetShaderValue(bloom_streak_shader_, loc_gain_streak_, &gain, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(bloom_streak_shader_, loc_warm_streak_, &warm_mix, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(bloom_streak_shader_, loc_origin_streak_, &streak_origin_, SHADER_UNIFORM_VEC2);
     BeginShaderMode(bloom_streak_shader_);
     draw_texture_to_specific_screen(src, dst.texture.width, dst.texture.height);
     EndShaderMode();
@@ -157,12 +159,11 @@ texture_handle& bloom::apply(const RenderTexture2D& texture, int width, int heig
     EndShaderMode();
     EndTextureMode();
 
+
     // Step 4: Horizontal anamorphic streak from the flare buffer (quarter resolution)
-    const float tint_none[3] = { 1.0f, 1.0f, 1.0f };
-    const float tint_streak[3] = { 1.0f, 0.93f, 0.82f };
     const float streak_pre_gain = 3.5f;
-    streak_pass(bloom_flare_texture_, bloom_streak_texture_, 4.0f, 5.0f, tint_none, streak_pre_gain);
-    streak_pass(bloom_streak_texture_, bloom_streak2_texture_, 24.0f, 8.37f, tint_streak, bloom_streak_intensity_);
+    streak_pass(bloom_flare_texture_, bloom_streak_texture_, 4.0f, 5.0f, streak_pre_gain, 0.0f);
+    streak_pass(bloom_streak_texture_, bloom_streak2_texture_, 24.0f, 8.37f, bloom_streak_intensity_, 1.0f);
 
     // Step 5: Composite - combine scene with bloom
     BeginTextureMode(bloom_composite_texture_);

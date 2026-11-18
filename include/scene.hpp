@@ -45,13 +45,32 @@ public:
         }
     }
 
-    void draw_flares(const camera_3d& cam, int rt_width, int rt_height, int window_height) const {
+    Vector2 draw_flares(const camera_3d& cam, int rt_width, int rt_height, int window_height) const {
+        Vector2 origin { -1.0f, -1.0f };
         BeginBlendMode(BLEND_ADDITIVE);
         for (auto& obj : objects_) {
-            if (obj->is_flare_source()) {
-                obj->draw_flare(cam, rt_width, rt_height, window_height);
+            if (!obj->is_flare_source()) {
+                continue;
+            }
+
+            const Vector3 source = obj->flare_position();
+            bool blocked = false;
+            for (auto& other : objects_) {
+                if (other.get() != obj.get() && other->blocks_line(cam.position(), source)) {
+                    blocked = true;
+                    break;
+                }
+            }
+            if (blocked) {
+                continue;
+            }
+
+            Vector2 screen = obj->draw_flare(cam, rt_width, rt_height, window_height);
+            if (origin.x < 0.0f && screen.x >= 0.0f) {
+                origin = Vector2 { screen.x / (float)rt_width, 1.0f - screen.y / (float)rt_height };
             }
         }
         EndBlendMode();
+        return origin;
     }
 };

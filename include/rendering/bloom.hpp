@@ -38,8 +38,10 @@ private:
     int loc_texel_size_streak_ = -1;
     int loc_step_streak_ = -1;
     int loc_sigma_streak_ = -1;
-    int loc_tint_streak_ = -1;
     int loc_gain_streak_ = -1;
+    int loc_warm_streak_ = -1;
+    int loc_origin_streak_ = -1;
+    Vector2 streak_origin_ { -1.0f, -1.0f };
 
 public:
     void set_bloom_threshold(float threshold) { bloom_threshold_ = threshold; }
@@ -48,9 +50,10 @@ public:
     void set_bloom_streak_intensity(float intensity) { bloom_streak_intensity_ = intensity; }
 
     void begin_flare_pass();
+    void set_streak_origin(Vector2 uv) { streak_origin_ = uv; }
     void end_flare_pass();
     void streak_pass(const RenderTexture2D& src, RenderTexture2D& dst,
-                     float step_px, float sigma_taps, const float* tint, float gain);
+                     float step_px, float sigma_taps, float gain, float warm_mix);
     int flare_width() const { return bloom_flare_texture_.texture.width; }
     int flare_height() const { return bloom_flare_texture_.texture.height; }
 
