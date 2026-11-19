@@ -2,22 +2,22 @@
 
 // Input vertex attributes
 in vec3 vertexPosition;
-in vec3 vertexNormal;
-in vec2 vertexTexCoord;
 
 // Input uniform attributes
 uniform mat4 mvp;
+uniform vec3 projPosition;  // Projectile position (world space)
+uniform vec3 camRight;      // Camera basis for billboarding
+uniform vec3 camUp;
+uniform float glowRadius;   // Billboard half size (world units)
 
-// Output vertex attributes
-out vec3 fragPosition;
-out vec3 fragNormal;
-out vec2 fragTexCoord;
+out vec2 vLocal;
 
 void main()
 {
-    fragPosition = vertexPosition;
-    fragNormal = vertexNormal;
-    fragTexCoord = vertexTexCoord;
+    vLocal = vertexPosition.xy;
 
-    gl_Position = mvp * vec4(vertexPosition, 1.0);
+    vec3 world = projPosition
+               + (camRight * vertexPosition.x + camUp * vertexPosition.y) * glowRadius;
+
+    gl_Position = mvp * vec4(world, 1.0);
 }

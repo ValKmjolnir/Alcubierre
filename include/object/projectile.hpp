@@ -85,12 +85,17 @@ private:
     // Shader members
     Shader shader_;
     bool shader_loaded_ = false;
+    Mesh glow_mesh_ {};
+    Material glow_material_ {};
+    bool glow_ready_ = false;
     int loc_mvp = -1;
     int loc_color = -1;
     int loc_intensity = -1;
     int loc_glow_radius = -1;
+    int loc_core_frac = -1;
+    int loc_cam_right = -1;
+    int loc_cam_up = -1;
     int loc_position = -1;
-    int loc_velocity = -1;
     int loc_age = -1;
     int loc_lifetime = -1;
 

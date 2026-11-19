@@ -24,6 +24,7 @@ set(SOURCES
     lib/object/laser_beam.cpp
     lib/object/projectile.cpp
     lib/object/star.cpp
+    lib/object/ship_object.cpp
     lib/ui/widget/button.cpp
     lib/ui/widget/checkbox.cpp
     lib/ui/widget/selector.cpp

@@ -25,6 +25,8 @@ private:
     Material lit_material_;
     bool lit_shader_loaded_ = false;
     int loc_object_color_;
+    int loc_spec_strength_;
+    int loc_shininess_;
 
     // Final tonemap blit
     Shader tonemap_shader_;
@@ -57,6 +59,8 @@ public:
     void end_mode_3d() { EndMode3D(); }
 
     // Draw methods using lit shader
+    void draw_lit_mesh(const Mesh& mesh, const Matrix& transform, int r, int g, int b,
+                       float spec_strength = 0.0f, float shininess = 24.0f);
     void draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b);
     void draw_grid(int slices, float spacing) { DrawGrid(slices, spacing); }
 

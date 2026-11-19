@@ -7,6 +7,7 @@
 #include "object/laser_beam.hpp"
 #include "object/projectile.hpp"
 #include "object/cube_object.hpp"
+#include "object/ship_object.hpp"
 
 // ============================================================================
 // Constructor
@@ -16,7 +17,7 @@ game::game()
     : window_(1600, 800, "Alcubierre Warp Drive")
     , scene_(lighting_system::instance())
     , camera_(
-        Vector3 { -10.0f, 10.0f, -10.0f },
+        Vector3 { 20.0f, 20.0f, 20.0f },
         Vector3 { 0.0f, 0.0f, 0.0f },
         Vector3 { 0.0f, 1.0f, 0.0f },
         45.0f)
@@ -83,32 +84,33 @@ void game::setup_scene() {
     // --- Projectiles ---
     {
         auto& p1 = scene_.add<projectile>(
-            Vector3 { -3.0f, 2.0f, 0.0f },
-            Vector3 { 50.0f, 0.0f, 0.0f },
+            Vector3 { -3.0f, 3.2f, 0.0f },
+            Vector3 { 150.0f, 0.0f, 0.0f },
             255, 150, 0, 255);
-        p1.set_radius(0.25f);
+        p1.set_radius(0.125f);
         p1.set_lifetime(1.5f);
         p1.set_trail_enabled(true);
         p1.set_trail_length(5.0f);
         p1.set_trail_color(255, 100, 0, 180);
-        p1.set_auto_respawn(Vector3 { -3.0f, 2.0f, 0.0f });
+        p1.set_auto_respawn(Vector3 { -3.0f, 3.2f, 0.0f });
     }
     {
         auto& p2 = scene_.add<projectile>(
-            Vector3 { -3.0f, 2.0f, 2.0f },
-            Vector3 { 30.0f, 2.5f, 0.0f },
+            Vector3 { -3.0f, 3.2f, 2.0f },
+            Vector3 { 90.0f, 7.5f, 0.0f },
             50, 150, 255, 255);
-        p2.set_radius(0.25f);
+        p2.set_radius(0.125f);
         p2.set_lifetime(2.0f);
         p2.set_trail_enabled(true);
         p2.set_trail_length(5.5f);
         p2.set_trail_color(0, 100, 255, 160);
-        p2.set_auto_respawn(Vector3 { -3.0f, 2.0f, 2.0f });
+        p2.set_auto_respawn(Vector3 { -3.0f, 3.2f, 2.0f });
     }
 
+    // --- Ship ---
+    scene_.add<ship_object>(window_);
+
     // --- Cubes ---
-    scene_.add<cube_object>(window_,
-        Vector3 { 0.0f, 1.0f, 0.0f }, 2.0f, 2.0f, 2.0f, 0, 50, 125);
     scene_.add<cube_object>(window_,
         Vector3 { 16.0f, 0.5f, 0.0f }, 1.0f, 1.0f, 1.0f, 125, 50, 0);
     scene_.add<cube_object>(window_,
@@ -220,6 +222,7 @@ void game::handle_input(float dt) {
 
 void game::update(float dt) {
     camera_.update(dt);
+    lighting_system::instance().set_view_position(camera_.position());
     scene_.update_all(dt);
 
     Vector3 camForward = Vector3Normalize(

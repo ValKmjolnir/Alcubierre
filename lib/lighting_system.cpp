@@ -36,6 +36,7 @@ int lighting_system::apply_to_shader(Shader shader) const {
     if (locs_.shader_id != shader.id) {
         locs_.shader_id = shader.id;
         locs_.count = GetShaderLocation(shader, "light_count");
+        locs_.view_pos = GetShaderLocation(shader, "viewPos");
         locs_.position.clear();
         locs_.color.clear();
         locs_.intensity.clear();
@@ -147,6 +148,11 @@ int lighting_system::apply_to_shader(Shader shader) const {
 
     if (locs_.count >= 0) {
         SetShaderValue(shader, locs_.count, &active_count, SHADER_UNIFORM_INT);
+    }
+
+    if (locs_.view_pos >= 0) {
+        float view_data[3] = { view_position_.x, view_position_.y, view_position_.z };
+        SetShaderValue(shader, locs_.view_pos, view_data, SHADER_UNIFORM_VEC3);
     }
 
     return active_count;

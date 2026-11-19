@@ -1,9 +1,47 @@
 #include <raylib.h>
 #include <raymath.h>
+#include <rlgl.h>
 #include <cmath>
 
 #include "object/projectile.hpp"
+#include "utils/material_manager.hpp"
 #include "utils/shader_manager.hpp"
+
+namespace {
+
+Mesh make_glow_quad() {
+    Mesh mesh = { 0 };
+    mesh.vertexCount = 4;
+    mesh.triangleCount = 2;
+    mesh.vertices = static_cast<float*>(MemAlloc(mesh.vertexCount * 3 * sizeof(float)));
+    mesh.normals = static_cast<float*>(MemAlloc(mesh.vertexCount * 3 * sizeof(float)));
+    mesh.texcoords = static_cast<float*>(MemAlloc(mesh.vertexCount * 2 * sizeof(float)));
+    mesh.indices = static_cast<unsigned short*>(MemAlloc(6 * sizeof(unsigned short)));
+
+    const float pos[4][3] = { { -1.0f, -1.0f, 0.0f }, { 1.0f, -1.0f, 0.0f },
+                              { 1.0f, 1.0f, 0.0f }, { -1.0f, 1.0f, 0.0f } };
+    const float uv[4][2] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+    const unsigned short idx[6] = { 0, 1, 2, 0, 2, 3 };
+
+    for (int i = 0; i < 4; i++) {
+        mesh.vertices[i * 3 + 0] = pos[i][0];
+        mesh.vertices[i * 3 + 1] = pos[i][1];
+        mesh.vertices[i * 3 + 2] = pos[i][2];
+        mesh.normals[i * 3 + 0] = 0.0f;
+        mesh.normals[i * 3 + 1] = 0.0f;
+        mesh.normals[i * 3 + 2] = 1.0f;
+        mesh.texcoords[i * 2 + 0] = uv[i][0];
+        mesh.texcoords[i * 2 + 1] = uv[i][1];
+    }
+    for (int i = 0; i < 6; i++) {
+        mesh.indices[i] = idx[i];
+    }
+
+    UploadMesh(&mesh, false);
+    return mesh;
+}
+
+} // namespace
 
 projectile::projectile()
     : object()
@@ -14,7 +52,7 @@ projectile::projectile()
     , color_b_(0)
     , color_alpha_(255)
     , radius_(0.15f)
-    , intensity_(1.0f)
+    , intensity_(1.5f)
     , active_(true)
     , lifetime_(2.0f)
     , age_(0.0f)
@@ -36,7 +74,7 @@ projectile::projectile(const Vector3& position, const Vector3& velocity, int r, 
     , color_b_(b)
     , color_alpha_(alpha)
     , radius_(0.15f)
-    , intensity_(1.0f)
+    , intensity_(1.5f)
     , active_(true)
     , lifetime_(2.0f)
     , age_(0.0f)
@@ -173,13 +211,25 @@ void projectile::load_shader(const char* vs_path, const char* fs_path) {
     loc_color = GetShaderLocation(shader_, "color");
     loc_intensity = GetShaderLocation(shader_, "intensity");
     loc_glow_radius = GetShaderLocation(shader_, "glowRadius");
+    loc_core_frac = GetShaderLocation(shader_, "coreFrac");
+    loc_cam_right = GetShaderLocation(shader_, "camRight");
+    loc_cam_up = GetShaderLocation(shader_, "camUp");
     loc_position = GetShaderLocation(shader_, "projPosition");
-    loc_velocity = GetShaderLocation(shader_, "projVelocity");
     loc_age = GetShaderLocation(shader_, "projAge");
     loc_lifetime = GetShaderLocation(shader_, "projLifetime");
+
+    glow_mesh_ = make_glow_quad();
+    glow_material_ = LoadMaterialDefault();
+    glow_material_.shader = shader_;
+    glow_ready_ = true;
 }
 
 void projectile::unload_shader() {
+    if (glow_ready_) {
+        safe_unload_material(glow_material_);
+        UnloadMesh(glow_mesh_);
+        glow_ready_ = false;
+    }
     if (shader_loaded_) {
         shader_loaded_ = false;
     }
@@ -227,7 +277,7 @@ void projectile::set_auto_respawn(const Vector3& point) {
     auto_respawn_ = true;
 }
 
-void projectile::draw(const camera_3d& /*cam*/, int /*window_height*/) const {
+void projectile::draw(const camera_3d& cam, int /*window_height*/) const {
     if (!active_) return;
 
     // Lazy load shader on first draw
@@ -247,10 +297,25 @@ void projectile::draw(const camera_3d& /*cam*/, int /*window_height*/) const {
         draw_trail();
     }
 
-    // Begin shader drawing mode
-    BeginShaderMode(shader_);
+    const float hot = Clamp(intensity_ * 0.5f, 0.0f, 1.0f);
+    const Color core_color = {
+        static_cast<unsigned char>(color_r_ + (255 - color_r_) * hot),
+        static_cast<unsigned char>(color_g_ + (255 - color_g_) * hot),
+        static_cast<unsigned char>(color_b_ + (255 - color_b_) * hot),
+        static_cast<unsigned char>(base_alpha)
+    };
+    DrawSphere(position_, radius_ * 0.45f, core_color);
 
-    // Set shader uniforms
+    // Additive glow, bright enough to clear the bloom luma threshold
+    const float core_radius = fmaxf(radius_ * 0.9f, 0.11f);
+    const float glow_radius = core_radius * 3.0f;
+    if (!glow_ready_) {
+        return;
+    }
+
+    rlDisableDepthMask();
+    BeginBlendMode(BLEND_ADDITIVE);
+
     float color_vec4[4] = {
         color_r_ / 255.0f,
         color_g_ / 255.0f,
@@ -261,24 +326,30 @@ void projectile::draw(const camera_3d& /*cam*/, int /*window_height*/) const {
 
     SetShaderValue(shader_, loc_intensity, &intensity_, SHADER_UNIFORM_FLOAT);
 
-    float glow = 8.0f;
+    float glow = glow_radius;
+    float core_frac = core_radius / glow_radius;
     SetShaderValue(shader_, loc_glow_radius, &glow, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader_, loc_core_frac, &core_frac, SHADER_UNIFORM_FLOAT);
+
+    const Vector3 forward = Vector3Normalize(Vector3Subtract(cam.target(), cam.position()));
+    const Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, cam.up()));
+    const Vector3 up = Vector3CrossProduct(right, forward);
+
+    float right_vec3[3] = { right.x, right.y, right.z };
+    float up_vec3[3] = { up.x, up.y, up.z };
+    SetShaderValue(shader_, loc_cam_right, right_vec3, SHADER_UNIFORM_VEC3);
+    SetShaderValue(shader_, loc_cam_up, up_vec3, SHADER_UNIFORM_VEC3);
 
     float position_vec3[3] = { position_.x, position_.y, position_.z };
     SetShaderValue(shader_, loc_position, position_vec3, SHADER_UNIFORM_VEC3);
 
-    float velocity_vec3[3] = { velocity_.x, velocity_.y, velocity_.z };
-    SetShaderValue(shader_, loc_velocity, velocity_vec3, SHADER_UNIFORM_VEC3);
-
     SetShaderValue(shader_, loc_age, &age_, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader_, loc_lifetime, &lifetime_, SHADER_UNIFORM_FLOAT);
 
-    // Draw the projectile core as a small sphere (hot tip only)
-    // The shader creates the glow effect around it
-    const float core_radius = radius_ * 0.3f;
-    DrawSphere(position_, core_radius, WHITE);
+    DrawMesh(glow_mesh_, glow_material_, MatrixIdentity());
 
-    EndShaderMode();
+    EndBlendMode();
+    rlEnableDepthMask();
 }
 
 void projectile::draw_trail() const {
@@ -330,13 +401,4 @@ void projectile::draw_trail() const {
                         static_cast<unsigned char>(seg_alpha) });
         }
     }
-
-    // Add bright core at projectile base (where trail meets projectile)
-    const float core_radius = radius_ * 0.5f;
-    const int core_alpha = static_cast<int>(color_alpha_ * 0.6f * (calculate_age_alpha() / 255.0f));
-    DrawSphere(position_, core_radius,
-        Color { static_cast<unsigned char>(color_r_),
-                static_cast<unsigned char>(color_g_),
-                static_cast<unsigned char>(color_b_),
-                static_cast<unsigned char>(core_alpha) });
 }

@@ -6,6 +6,9 @@ in vec3 fragNormal;
 
 // Input uniform attributes
 uniform vec3 objectColor;       // Base color of the object
+uniform vec3 viewPos;           // Camera position, for specular
+uniform float specStrength;     // Per-object specular amount
+uniform float shininess;        // Per-object highlight tightness
 
 // Lighting system uniforms
 #define MAX_LIGHTS 8
@@ -28,6 +31,14 @@ uniform int light_count;
 // Output fragment color
 out vec4 fragColor;
 
+float specular_factor(vec3 normal, vec3 lightDir)
+{
+    vec3 viewDir = normalize(viewPos - fragPosition);
+    vec3 halfDir = normalize(lightDir + viewDir);
+    float ndoth = max(dot(normal, halfDir), 0.0);
+    return pow(ndoth, shininess) * specStrength;
+}
+
 void main()
 {
     vec3 normal = normalize(fragNormal);
@@ -40,21 +51,24 @@ void main()
         if (type == 0) {
             vec3 lightDir = normalize(lights[i].position - fragPosition);
             float diff = max(dot(normal, lightDir), 0.0);
-            lighting += diff * lights[i].color * lights[i].intensity * objectColor;
+            float spec = specular_factor(normal, lightDir);
+            lighting += (diff * objectColor + spec) * lights[i].color * lights[i].intensity;
         } else if (type == 1) {
             vec3 lightDir = normalize(-lights[i].direction);
             float diff = max(dot(normal, lightDir), 0.0);
-            lighting += diff * lights[i].color * lights[i].intensity * objectColor;
+            float spec = specular_factor(normal, lightDir);
+            lighting += (diff * objectColor + spec) * lights[i].color * lights[i].intensity;
         } else if (type == 2) {
             vec3 lightDir = normalize(lights[i].position - fragPosition);
             float diff = max(dot(normal, lightDir), 0.0);
+            float spec = specular_factor(normal, lightDir);
             float theta = dot(lightDir, normalize(-lights[i].direction));
             float cone = smoothstep(lights[i].cutoff, lights[i].innerCutoff, theta);
             float dist = length(lights[i].position - fragPosition);
             float atten = 1.0 / (1.0 + dist * dist);
             float window = clamp(1.0 - pow(dist / max(lights[i].range, 1e-4), 4.0), 0.0, 1.0);
             atten *= window * window;
-            lighting += diff * cone * atten * lights[i].color * lights[i].intensity * objectColor;
+            lighting += (diff * objectColor + spec) * cone * atten * lights[i].color * lights[i].intensity;
         } else if (type == 3) {
             float hemi = normal.y * 0.5 + 0.5;
             lighting += mix(lights[i].groundColor, lights[i].color, hemi) * lights[i].intensity * objectColor;

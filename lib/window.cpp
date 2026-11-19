@@ -96,19 +96,27 @@ void game_window::apply() {
     EndShaderMode();
 }
 
+void game_window::draw_lit_mesh(const Mesh& mesh, const Matrix& transform, int r, int g, int b,
+                                float spec_strength, float shininess) {
+    if (!lit_shader_loaded_) {
+        return;
+    }
+
+    lighting_system::instance().apply_to_shader(lit_shader_);
+
+    float color_vec3[3] = { r / 255.0f, g / 255.0f, b / 255.0f };
+    SetShaderValue(lit_shader_, loc_object_color_, color_vec3, SHADER_UNIFORM_VEC3);
+    SetShaderValue(lit_shader_, loc_spec_strength_, &spec_strength, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(lit_shader_, loc_shininess_, &shininess, SHADER_UNIFORM_FLOAT);
+
+    DrawMesh(mesh, lit_material_, transform);
+}
+
 void game_window::draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b) {
     if (lit_shader_loaded_ && cube_mesh_ready_) {
-        // Pass lighting data from lighting_system
-        lighting_system::instance().apply_to_shader(lit_shader_);
-
-        // Set object-specific uniforms
-        float color_vec3[3] = { r / 255.0f, g / 255.0f, b / 255.0f };
-        SetShaderValue(lit_shader_, loc_object_color_, color_vec3, SHADER_UNIFORM_VEC3);
-
-        // Draw cube with transform
         Matrix transform = MatrixScale(width, height, length);
         transform = MatrixMultiply(transform, MatrixTranslate(position.x, position.y, position.z));
-        DrawMesh(cube_mesh_, lit_material_, transform);
+        draw_lit_mesh(cube_mesh_, transform, r, g, b);
     } else {
         // Fallback to raylib default
         const Color color = {
@@ -136,6 +144,8 @@ void game_window::init_lit_shader() {
     lit_material_.shader = lit_shader_;
 
     loc_object_color_ = GetShaderLocation(lit_shader_, "objectColor");
+    loc_spec_strength_ = GetShaderLocation(lit_shader_, "specStrength");
+    loc_shininess_ = GetShaderLocation(lit_shader_, "shininess");
 
     // Create cube mesh (unit cube, will be scaled)
     cube_mesh_ = GenMeshCube(1.0f, 1.0f, 1.0f);

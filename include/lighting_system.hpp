@@ -13,10 +13,12 @@ private:
     lighting_system& operator=(const lighting_system&) = delete;
 
     std::vector<light*> lights_;
+    Vector3 view_position_ { 0.0f, 0.0f, 0.0f };
 
     struct shader_locs {
         unsigned int shader_id = 0;
         int count = -1;
+        int view_pos = -1;
         std::vector<int> position;
         std::vector<int> color;
         std::vector<int> intensity;
@@ -40,6 +42,9 @@ public:
     // Pass light data to a shader
     // Returns the number of active lights passed
     int apply_to_shader(Shader shader) const;
+
+    // Camera position, needed by view-dependent terms such as specular
+    void set_view_position(const Vector3& position) { view_position_ = position; }
 
     // Query
     int active_light_count() const;
