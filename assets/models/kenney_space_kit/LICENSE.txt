@@ -1,0 +1,27 @@
+Space Kit — Kenney
+==================
+
+Source:  https://kenney.nl/assets/space-kit
+Author:  Kenney (https://kenney.nl)
+License: CC0 1.0 Universal (Public Domain Dedication)
+         https://creativecommons.org/publicdomain/zero/1.0/
+
+The models in this directory are CC0: they may be copied, modified and
+redistributed for any purpose, commercial or not, without attribution.
+Attribution to Kenney is appreciated but not required.
+
+Contents
+--------
+craft_cargoA.glb
+craft_cargoB.glb
+craft_miner.glb
+craft_racer.glb
+craft_speederA.glb
+craft_speederB.glb
+craft_speederC.glb
+craft_speederD.glb
+    The eight spacecraft from the Space Kit, converted to glTF by the kit.
+
+escort.glb
+    A byte-identical copy of craft_cargoB.glb kept under the name used by an
+    earlier scene layout. The same CC0 terms apply.

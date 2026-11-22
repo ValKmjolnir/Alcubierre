@@ -54,6 +54,10 @@ void game_window::load() {
     init_frame_graph();
     init_lit_shader();
 
+    Image white = GenImageColor(1, 1, WHITE);
+    white_texture_ = LoadTextureFromImage(white);
+    UnloadImage(white);
+
     auto tonemap_res = shader_manager::instance().load("tonemap.vs", "tonemap.fs");
     tonemap_shader_ = tonemap_res.shader;
     tonemap_loaded_ = tonemap_res.success;
@@ -63,6 +67,11 @@ void game_window::load() {
 }
 
 void game_window::unload() {
+    if (white_texture_.id > 0) {
+        UnloadTexture(white_texture_);
+        white_texture_ = { 0 };
+    }
+
     UnloadRenderTexture(scene_texture_);
 
     unload_frame_graph();
@@ -96,18 +105,41 @@ void game_window::apply() {
     EndShaderMode();
 }
 
-void game_window::draw_lit_mesh(const Mesh& mesh, const Matrix& transform, int r, int g, int b,
-                                float spec_strength, float shininess) {
+void game_window::begin_mode_3d(const Camera3D& camera) {
+    BeginMode3D(camera);
+
+    const float aspect = static_cast<float>(GetScreenWidth()) / static_cast<float>(GetScreenHeight());
+    rlSetMatrixProjection(MatrixPerspective(
+        static_cast<double>(camera.fovy) * DEG2RAD,
+        static_cast<double>(aspect),
+        static_cast<double>(clip_near_),
+        static_cast<double>(clip_far_)));
+}
+
+void game_window::set_clip_planes(float near_plane, float far_plane) {
+    clip_near_ = near_plane;
+    clip_far_ = far_plane;
+}
+
+void game_window::draw_lit_mesh(const Mesh& mesh, const Matrix& transform,
+                                const lit_surface& surface) {
     if (!lit_shader_loaded_) {
         return;
     }
 
     lighting_system::instance().apply_to_shader(lit_shader_);
 
-    float color_vec3[3] = { r / 255.0f, g / 255.0f, b / 255.0f };
+    float color_vec3[3] = {
+        surface.albedo.r / 255.0f,
+        surface.albedo.g / 255.0f,
+        surface.albedo.b / 255.0f
+    };
     SetShaderValue(lit_shader_, loc_object_color_, color_vec3, SHADER_UNIFORM_VEC3);
-    SetShaderValue(lit_shader_, loc_spec_strength_, &spec_strength, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(lit_shader_, loc_shininess_, &shininess, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(lit_shader_, loc_spec_strength_, &surface.spec_strength, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(lit_shader_, loc_shininess_, &surface.shininess, SHADER_UNIFORM_FLOAT);
+
+    Texture2D albedo = (surface.texture.id > 0) ? surface.texture : white_texture_;
+    lit_material_.maps[MATERIAL_MAP_DIFFUSE].texture = albedo;
 
     DrawMesh(mesh, lit_material_, transform);
 }
@@ -116,7 +148,14 @@ void game_window::draw_cube(const Vector3& position, float width, float height, 
     if (lit_shader_loaded_ && cube_mesh_ready_) {
         Matrix transform = MatrixScale(width, height, length);
         transform = MatrixMultiply(transform, MatrixTranslate(position.x, position.y, position.z));
-        draw_lit_mesh(cube_mesh_, transform, r, g, b);
+        lit_surface surface;
+        surface.albedo = Color {
+            static_cast<unsigned char>(r),
+            static_cast<unsigned char>(g),
+            static_cast<unsigned char>(b),
+            255
+        };
+        draw_lit_mesh(cube_mesh_, transform, surface);
     } else {
         // Fallback to raylib default
         const Color color = {
@@ -154,6 +193,10 @@ void game_window::init_lit_shader() {
 
 void game_window::unload_lit_shader() {
     if (lit_shader_loaded_) {
+        // draw_lit_mesh() points the diffuse map at the white texture or at a
+        // model's own texture; clear it so UnloadMaterial does not free a
+        // texture owned elsewhere.
+        lit_material_.maps[MATERIAL_MAP_DIFFUSE].texture = Texture2D { 0 };
         safe_unload_material(lit_material_);
         lit_shader_loaded_ = false;
     }

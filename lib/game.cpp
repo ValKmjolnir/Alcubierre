@@ -6,8 +6,8 @@
 #include "object/star.hpp"
 #include "object/laser_beam.hpp"
 #include "object/projectile.hpp"
-#include "object/cube_object.hpp"
 #include "object/ship_object.hpp"
+#include "object/model_object.hpp"
 
 // ============================================================================
 // Constructor
@@ -17,7 +17,7 @@ game::game()
     : window_(1600, 800, "Alcubierre Warp Drive")
     , scene_(lighting_system::instance())
     , camera_(
-        Vector3 { 20.0f, 20.0f, 20.0f },
+        Vector3 { 8.0f, 10.0f, 38.0f },
         Vector3 { 0.0f, 0.0f, 0.0f },
         Vector3 { 0.0f, 1.0f, 0.0f },
         45.0f)
@@ -46,6 +46,22 @@ game::~game() {
 // ============================================================================
 
 void game::setup_scene() {
+    // The capital ship sits 24 km out, so the far plane has to clear raylib's
+    // 1000-unit default; near is raised to keep 24-bit depth usable.
+    window_.set_clip_planes(0.25f, 10000.0f);
+
+    // Fleet layout, shared by the hulls and the laser attach points.
+    const Vector3 player_pos { 0.0f, 0.0f, 0.0f };
+    const Vector3 escort_pos { -40.0f, -4.0f, -35.0f };
+    const float escort_yaw = -60.0f;
+    const Vector3 titan_pos { 110.0f, 40.0f, -2400.0f };
+    const float titan_yaw = 105.0f;
+
+    const auto hull_point = [](const Vector3& centre, float yaw_deg, const Vector3& local) {
+        return Vector3Add(centre, Vector3RotateByAxisAngle(
+            local, Vector3 { 0.0f, 1.0f, 0.0f }, yaw_deg * DEG2RAD));
+    };
+
     // --- Ambient light ---
     ambient_.set_sky_color({ 0.40f, 0.44f, 0.52f });
     ambient_.set_ground_color({ 0.10f, 0.11f, 0.13f });
@@ -59,23 +75,36 @@ void game::setup_scene() {
     main_star.set_scale(1000.0f);
 
     // --- Laser beams ---
+    // Attach points are hull-local: the corvette fires from its bow deck, the
+    // single shot lands on the escort's near flank, and the escort's return
+    // fire leaves its five dorsal hardpoint rings (see tool/build_ship.py).
     {
         auto& beam = scene_.add<laser_beam>(
-            Vector3 { 0.5f, 1.0f, 0.5f },
-            Vector3 { 16.0f, 0.5f, 0.0f },
+            hull_point(player_pos, 0.0f, Vector3 { 0.0f, 0.45f, -6.35f }),
+            hull_point(escort_pos, escort_yaw, Vector3 { 1.40f, 0.15f, 0.3f }),
             255, 150, 100, 255);
-        beam.set_width(0.03f);
+        beam.set_width(0.1f);
         beam.set_pulse_enabled(false);
         beam.set_pulse_speed(4.0f);
         beam.set_firing(true);
     }
 
+    const Vector3 escort_mounts[] = {
+        { 0.0f, 1.12f, -4.36f },
+        { 0.0f, 1.48f, -1.84f },
+        { -0.81f, 1.03f, -2.56f },
+        { 0.81f, 1.03f, -2.56f },
+        { 0.0f, 1.48f, 1.93f },
+    };
     for (int i = 0; i < 10; i++) {
+        const Vector3& mount = escort_mounts[i / 2];
+        const float barrel_offset = (i % 2 == 0) ? -0.18f : 0.18f;
         auto& b = scene_.add<laser_beam>(
-            Vector3 { 16.0f, -15.0f, -5.0f + static_cast<float>(i) },
+            hull_point(escort_pos, escort_yaw,
+                       Vector3 { mount.x + barrel_offset, mount.y, mount.z }),
             Vector3 { 0.0f, 1.0f, 0.0f },
             255, 155 + i * 10, i * 20, 255);
-        b.set_width(0.03f);
+        b.set_width(0.12f);
         b.set_pulse_enabled(true);
         b.set_pulse_speed(2.0f);
         b.set_firing(true);
@@ -107,14 +136,16 @@ void game::setup_scene() {
         p2.set_auto_respawn(Vector3 { -3.0f, 3.2f, 2.0f });
     }
 
-    // --- Ship ---
-    scene_.add<ship_object>(window_);
-
-    // --- Cubes ---
-    scene_.add<cube_object>(window_,
-        Vector3 { 16.0f, 0.5f, 0.0f }, 1.0f, 1.0f, 1.0f, 125, 50, 0);
-    scene_.add<cube_object>(window_,
-        Vector3 { 16.0f, -15.0f, 0.0f }, 10.0f, 3.0f, 15.0f, 0, 100, 50);
+    // --- Fleet ---
+    // 1 unit = 10 m: the player craft and the escort are 15-unit corvettes,
+    // the capital ship is a 10 km titan 24 km out so both frame together.
+    scene_.add<ship_object>(window_, hull_class::corvette, player_pos, 0.0f);
+    auto& escort = scene_.add<model_object>(window_, "assets/models/ship_py.glb", 15.0f,
+        escort_pos, escort_yaw);
+    if (!escort.loaded()) {
+        TraceLog(LOG_WARNING, "escort model failed to load");
+    }
+    scene_.add<ship_object>(window_, hull_class::titan, titan_pos, titan_yaw);
 }
 
 // ============================================================================
@@ -260,6 +291,7 @@ void game::render() {
         camera_, bloom_pass.flare_width(), bloom_pass.flare_height(), window_.height());
     bloom_pass.end_flare_pass();
     bloom_pass.set_streak_origin(flare_origin);
+
 
     double scene_ms = 0.0;
     if (show_hud) {

@@ -45,9 +45,11 @@ void camera_3d::update(float dt) {
     }
 
     float wheel = GetMouseWheelMove();
-    const float zoom_speed = (1.0f + distance_ / 10.0f) * dt * 120.0f;
-    distance_ -= wheel * zoom_speed;
-    distance_ = Clamp(distance_, 16.0f, 200.0f);
+    if (wheel != 0.0f) {
+        // Multiplicative so the same notch feels identical at 10 units and 3 km
+        distance_ *= powf(1.15f, -wheel);
+        distance_ = Clamp(distance_, 8.0f, 6000.0f);
+    }
 
     camera_.position.x = camera_.target.x + distance_ * cosf(pitch_) * sinf(yaw_);
     camera_.position.y = camera_.target.y + distance_ * sinf(pitch_);

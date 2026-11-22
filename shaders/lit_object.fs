@@ -3,8 +3,10 @@
 // Input fragment attributes
 in vec3 fragPosition;
 in vec3 fragNormal;
+in vec2 fragTexCoord;
 
 // Input uniform attributes
+uniform sampler2D texture0;     // Albedo map (raylib binds MATERIAL_MAP_DIFFUSE here)
 uniform vec3 objectColor;       // Base color of the object
 uniform vec3 viewPos;           // Camera position, for specular
 uniform float specStrength;     // Per-object specular amount
@@ -42,6 +44,7 @@ float specular_factor(vec3 normal, vec3 lightDir)
 void main()
 {
     vec3 normal = normalize(fragNormal);
+    vec3 albedo = objectColor * texture(texture0, fragTexCoord).rgb;
 
     vec3 lighting = vec3(0.0);
 
@@ -52,12 +55,12 @@ void main()
             vec3 lightDir = normalize(lights[i].position - fragPosition);
             float diff = max(dot(normal, lightDir), 0.0);
             float spec = specular_factor(normal, lightDir);
-            lighting += (diff * objectColor + spec) * lights[i].color * lights[i].intensity;
+            lighting += (diff * albedo + spec) * lights[i].color * lights[i].intensity;
         } else if (type == 1) {
             vec3 lightDir = normalize(-lights[i].direction);
             float diff = max(dot(normal, lightDir), 0.0);
             float spec = specular_factor(normal, lightDir);
-            lighting += (diff * objectColor + spec) * lights[i].color * lights[i].intensity;
+            lighting += (diff * albedo + spec) * lights[i].color * lights[i].intensity;
         } else if (type == 2) {
             vec3 lightDir = normalize(lights[i].position - fragPosition);
             float diff = max(dot(normal, lightDir), 0.0);
@@ -68,10 +71,10 @@ void main()
             float atten = 1.0 / (1.0 + dist * dist);
             float window = clamp(1.0 - pow(dist / max(lights[i].range, 1e-4), 4.0), 0.0, 1.0);
             atten *= window * window;
-            lighting += (diff * objectColor + spec) * cone * atten * lights[i].color * lights[i].intensity;
+            lighting += (diff * albedo + spec) * cone * atten * lights[i].color * lights[i].intensity;
         } else if (type == 3) {
             float hemi = normal.y * 0.5 + 0.5;
-            lighting += mix(lights[i].groundColor, lights[i].color, hemi) * lights[i].intensity * objectColor;
+            lighting += mix(lights[i].groundColor, lights[i].color, hemi) * lights[i].intensity * albedo;
         }
     }
 

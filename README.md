@@ -24,6 +24,12 @@ This engine aims to create a 3D engine with specific shapes for Alcubierre metri
   - [utils](lib/utils): Utilities.
 - [shaders](shaders): Shaders.
 
+## Credits
+
+- Spacecraft models in [assets/models/kenney_space_kit](assets/models/kenney_space_kit)
+  come from [Kenney's Space Kit](https://kenney.nl/assets/space-kit) and are
+  released under CC0 1.0. See the license file in that directory.
+
 ## Build
 
 Support Windows (mingw-w64), MacOS, Linux (not tested).

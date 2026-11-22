@@ -148,7 +148,17 @@ void star::draw(const camera_3d& cam, int window_height) const {
     }
     float fov_factor = 2.0f * tanf(cam.fovy() * DEG2RAD / 2.0f);
     float final_scale = scale_ * (dist * fov_factor) / window_height;
+
+    // The sprite holds a constant ~55 deg apparent size. DrawBillboard queues
+    // into the rlgl batch, which only flushes at EndMode3D -- after every
+    // DrawMesh -- so the quad would paint over the ships whenever the star is
+    // in front of the camera. Flush it here, depth-free: it is a backdrop.
+    rlDisableDepthTest();
+    rlDisableDepthMask();
     DrawBillboard(cam.get_camera(), texture_, position_, final_scale, WHITE);
+    rlDrawRenderBatchActive();
+    rlEnableDepthMask();
+    rlEnableDepthTest();
 }
 
 Vector2 star::draw_flare(const camera_3d& cam, int rt_width, int rt_height, int window_height) const {

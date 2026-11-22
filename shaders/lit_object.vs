@@ -12,6 +12,7 @@ uniform mat4 matModel;
 // Output vertex attributes
 out vec3 fragPosition;
 out vec3 fragNormal;
+out vec2 fragTexCoord;
 
 void main()
 {
@@ -21,6 +22,7 @@ void main()
 
     // Pass normal in world space (inverse-transpose handles non-uniform scale)
     fragNormal = mat3(transpose(inverse(matModel))) * vertexNormal;
+    fragTexCoord = vertexTexCoord;
 
     gl_Position = mvp * vec4(vertexPosition, 1.0);
 }
