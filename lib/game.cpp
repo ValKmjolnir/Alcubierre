@@ -4,10 +4,8 @@
 #include "game.hpp"
 #include "utils/game_config.hpp"
 #include "object/star.hpp"
-#include "object/laser_beam.hpp"
-#include "object/projectile.hpp"
-#include "object/ship_object.hpp"
-#include "object/model_object.hpp"
+#include "ship/ship.hpp"
+#include "ship/ship_class.hpp"
 
 // ============================================================================
 // Constructor
@@ -57,11 +55,6 @@ void game::setup_scene() {
     const Vector3 titan_pos { 110.0f, 40.0f, -2400.0f };
     const float titan_yaw = 105.0f;
 
-    const auto hull_point = [](const Vector3& centre, float yaw_deg, const Vector3& local) {
-        return Vector3Add(centre, Vector3RotateByAxisAngle(
-            local, Vector3 { 0.0f, 1.0f, 0.0f }, yaw_deg * DEG2RAD));
-    };
-
     // --- Ambient light ---
     ambient_.set_sky_color({ 0.40f, 0.44f, 0.52f });
     ambient_.set_ground_color({ 0.10f, 0.11f, 0.13f });
@@ -74,78 +67,56 @@ void game::setup_scene() {
     main_star.set_intensity(10.0f);
     main_star.set_scale(1000.0f);
 
-    // --- Laser beams ---
-    // Attach points are hull-local: the corvette fires from its bow deck, the
-    // single shot lands on the escort's near flank, and the escort's return
-    // fire leaves its five dorsal hardpoint rings (see tool/build_ship.py).
-    {
-        auto& beam = scene_.add<laser_beam>(
-            hull_point(player_pos, 0.0f, Vector3 { 0.0f, 0.45f, -6.35f }),
-            hull_point(escort_pos, escort_yaw, Vector3 { 1.40f, 0.15f, 0.3f }),
-            255, 150, 100, 255);
-        beam.set_width(0.1f);
-        beam.set_pulse_enabled(false);
-        beam.set_pulse_speed(4.0f);
-        beam.set_firing(true);
-    }
-
-    const Vector3 escort_mounts[] = {
-        { 0.0f, 1.12f, -4.36f },
-        { 0.0f, 1.48f, -1.84f },
-        { -0.81f, 1.03f, -2.56f },
-        { 0.81f, 1.03f, -2.56f },
-        { 0.0f, 1.48f, 1.93f },
-    };
-    for (int i = 0; i < 10; i++) {
-        const Vector3& mount = escort_mounts[i / 2];
-        const float barrel_offset = (i % 2 == 0) ? -0.18f : 0.18f;
-        auto& b = scene_.add<laser_beam>(
-            hull_point(escort_pos, escort_yaw,
-                       Vector3 { mount.x + barrel_offset, mount.y, mount.z }),
-            Vector3 { 0.0f, 1.0f, 0.0f },
-            255, 155 + i * 10, i * 20, 255);
-        b.set_width(0.12f);
-        b.set_pulse_enabled(true);
-        b.set_pulse_speed(2.0f);
-        b.set_firing(true);
-    }
-
-    // --- Projectiles ---
-    {
-        auto& p1 = scene_.add<projectile>(
-            Vector3 { -3.0f, 3.2f, 0.0f },
-            Vector3 { 150.0f, 0.0f, 0.0f },
-            255, 150, 0, 255);
-        p1.set_radius(0.125f);
-        p1.set_lifetime(1.5f);
-        p1.set_trail_enabled(true);
-        p1.set_trail_length(5.0f);
-        p1.set_trail_color(255, 100, 0, 180);
-        p1.set_auto_respawn(Vector3 { -3.0f, 3.2f, 0.0f });
-    }
-    {
-        auto& p2 = scene_.add<projectile>(
-            Vector3 { -3.0f, 3.2f, 2.0f },
-            Vector3 { 90.0f, 7.5f, 0.0f },
-            50, 150, 255, 255);
-        p2.set_radius(0.125f);
-        p2.set_lifetime(2.0f);
-        p2.set_trail_enabled(true);
-        p2.set_trail_length(5.5f);
-        p2.set_trail_color(0, 100, 255, 160);
-        p2.set_auto_respawn(Vector3 { -3.0f, 3.2f, 2.0f });
-    }
-
     // --- Fleet ---
     // 1 unit = 10 m: the player craft and the escort are 15-unit corvettes,
     // the capital ship is a 10 km titan 24 km out so both frame together.
-    scene_.add<ship_object>(window_, hull_class::corvette, player_pos, 0.0f);
-    auto& escort = scene_.add<model_object>(window_, "assets/models/ship_py.glb", 15.0f,
-        escort_pos, escort_yaw);
-    if (!escort.loaded()) {
-        TraceLog(LOG_WARNING, "escort model failed to load");
+    const auto ship_class_of = [](const char* id) -> const ship_class_def& {
+        const ship_class_def* def = find_ship_class(id);
+        if (!def) {
+            TraceLog(LOG_FATAL, "unknown ship class %s", id);
+        }
+        return *def;
+    };
+    const auto weapon_of = [](const char* id) -> const weapon_def& {
+        const weapon_def* def = find_weapon(id);
+        if (!def) {
+            TraceLog(LOG_FATAL, "unknown weapon %s", id);
+        }
+        return *def;
+    };
+
+    auto& player = scene_.add<ship>(
+        window_, ship_class_of("corvette_blockout"), player_pos, 0.0f);
+    auto& escort = scene_.add<ship>(
+        window_, ship_class_of("frigate_glb"), escort_pos, escort_yaw);
+    auto& titan = scene_.add<ship>(
+        window_, ship_class_of("titan_blockout"), titan_pos, titan_yaw);
+
+    // Player: bow laser, aft-spine autocannon, forward-spine support emitter.
+    player.install_weapon(0, weapon_of("pulse_laser_s"));
+    player.install_weapon(1, weapon_of("autocannon_s"));
+    player.install_weapon(2, weapon_of("shield_restorer_s"));
+
+    // Escort: five dorsal laser sockets, two ventral point-defence sockets.
+    for (int i = 0; i < 5; i++) {
+        escort.install_weapon(i, weapon_of("pulse_laser_s"));
     }
-    scene_.add<ship_object>(window_, hull_class::titan, titan_pos, titan_yaw);
+    escort.install_weapon(5, weapon_of("point_defence_s"));
+    escort.install_weapon(6, weapon_of("point_defence_s"));
+
+    // Titan: spinal lance, two dorsal barbettes, two ventral batteries and
+    // four point-defence clusters.
+    titan.install_weapon(0, weapon_of("spinal_lance_c"));
+    titan.install_weapon(1, weapon_of("beam_lance_c"));
+    titan.install_weapon(2, weapon_of("beam_lance_c"));
+    titan.install_weapon(3, weapon_of("flak_battery_c"));
+    titan.install_weapon(4, weapon_of("flak_battery_c"));
+    for (int i = 5; i < 9; i++) {
+        titan.install_weapon(i, weapon_of("point_defence_c"));
+    }
+
+    player.aim_at(escort.aim_point());
+    escort.aim_at(player.aim_point());
 }
 
 // ============================================================================

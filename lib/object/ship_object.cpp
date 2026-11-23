@@ -289,13 +289,7 @@ void ship_object::build_titan() {
     const Color deck_color { 74, 78, 86, 255 };
     const Color tower_color { 132, 137, 146, 255 };
     const Color nozzle_color { 38, 40, 46, 255 };
-    const Color barrel_color { 66, 70, 78, 255 };
     const Color mouth_color { 26, 28, 34, 255 };
-
-    const Vector3 up { 0.0f, 1.0f, 0.0f };
-    const Vector3 fwd { 0.0f, 0.0f, -1.0f };
-    const Vector3 down { 0.0f, -1.0f, 0.0f };
-    const Vector3 right { 1.0f, 0.0f, 0.0f };
 
     // --- Hull loft: ram, two stepped shoulders, midships, flared stern ---
     add(make_tapered_box(22.0f, 18.0f, 50.0f, 34.0f, 50.0f),
@@ -364,66 +358,21 @@ void ship_object::build_titan() {
         box_matrix(20.0f, 8.0f, 16.0f, Vector3 { -24.0f, 188.0f, 120.0f }),
         hull_mid, 0.3f, 12.0f);
 
-    // --- Spinal lance overhanging the bow ---
+    // --- Spinal lance housing: the weapon itself is mounted at runtime ---
     add(GenMeshCube(1.0f, 1.0f, 1.0f),
-        box_matrix(26.0f, 20.0f, 130.0f, Vector3 { 0.0f, 78.0f, -300.0f }),
+        box_matrix(26.0f, 20.0f, 130.0f, Vector3 { 0.0f, 72.0f, -300.0f }),
         hull_mid, 0.3f, 12.0f);
-    add(GenMeshCylinder(6.0f, 190.0f, 12),
-        axis_matrix(Vector3 { 0.0f, 78.0f, -450.0f }, 190.0f, fwd),
-        barrel_color, 0.6f, 16.0f);
     add(GenMeshCube(1.0f, 1.0f, 1.0f),
         box_matrix(10.0f, 16.0f, 60.0f, Vector3 { 0.0f, 66.0f, -350.0f }),
         hull_dark, 0.2f, 10.0f);
 
-    // --- Dorsal main turrets, superfiring ---
-    add(GenMeshCylinder(26.0f, 12.0f, 16),
-        axis_matrix(Vector3 { 0.0f, 71.0f, -190.0f }, 12.0f, up), hull_mid, 0.3f, 12.0f);
-    add(GenMeshCube(1.0f, 1.0f, 1.0f),
-        box_matrix(50.0f, 26.0f, 42.0f, Vector3 { 0.0f, 90.0f, -190.0f }),
-        hull_light, 0.4f, 14.0f);
-    for (int i = -1; i <= 1; i++) {
-        add(GenMeshCylinder(2.6f, 70.0f, 10),
-            axis_matrix(Vector3 { i * 16.0f, 90.0f, -246.0f }, 70.0f, fwd),
-            barrel_color, 0.6f, 16.0f);
-    }
-    add(GenMeshCylinder(26.0f, 26.0f, 16),
-        axis_matrix(Vector3 { 0.0f, 78.0f, -85.0f }, 26.0f, up), hull_mid, 0.3f, 12.0f);
-    add(GenMeshCube(1.0f, 1.0f, 1.0f),
-        box_matrix(50.0f, 26.0f, 42.0f, Vector3 { 0.0f, 104.0f, -85.0f }),
-        hull_light, 0.4f, 14.0f);
-    for (int i = -1; i <= 1; i++) {
-        add(GenMeshCylinder(2.6f, 70.0f, 10),
-            axis_matrix(Vector3 { i * 16.0f, 104.0f, -141.0f }, 70.0f, fwd),
-            barrel_color, 0.6f, 16.0f);
-    }
-
-    // --- Ventral turrets, mirrored under the keel shoulders ---
-    for (int side = -1; side <= 1; side += 2) {
-        const float x = 42.0f * side;
-        const float z = (side < 0) ? -150.0f : 110.0f;
-        add(GenMeshCylinder(24.0f, 12.0f, 16),
-            axis_matrix(Vector3 { x, -63.0f, z }, 12.0f, up), hull_mid, 0.3f, 12.0f);
-        add(GenMeshCube(1.0f, 1.0f, 1.0f),
-            box_matrix(46.0f, 26.0f, 40.0f, Vector3 { x, -82.0f, z }),
-            hull_light, 0.4f, 14.0f);
-        for (int i = -1; i <= 1; i++) {
-            add(GenMeshCylinder(2.6f, 60.0f, 10),
-                axis_matrix(Vector3 { x + i * 14.0f, -126.0f, z }, 60.0f, down),
-                barrel_color, 0.6f, 16.0f);
-        }
-    }
-
-    // --- Flank casemates: broadside guns set into the hull sides ---
+    // --- Flank casemates: broadside armour blisters ---
     for (int side = -1; side <= 1; side += 2) {
         for (int k = 0; k < 2; k++) {
             const float z = (k == 0) ? -270.0f : 70.0f;
             add(GenMeshCube(1.0f, 1.0f, 1.0f),
                 box_matrix(22.0f, 28.0f, 50.0f, Vector3 { 80.0f * side, 12.0f, z }),
                 hull_panel, 0.35f, 12.0f);
-            add(GenMeshCylinder(2.4f, 34.0f, 10),
-                axis_matrix(Vector3 { 108.0f * side, 12.0f, z }, 34.0f,
-                            Vector3 { 1.0f * side, 0.0f, 0.0f }),
-                barrel_color, 0.5f, 14.0f);
         }
     }
 
@@ -496,7 +445,7 @@ void ship_object::build_titan() {
         box_matrix(6.0f, 34.0f, 6.0f, Vector3 { 20.0f, 26.0f, -420.0f }),
         hull_mid, 0.1f, 8.0f);
 
-    // --- Point-defence clusters ---
+    // --- Point-defence blisters under the deck edge ---
     for (int side = -1; side <= 1; side += 2) {
         for (int k = 0; k < 2; k++) {
             const float z = (k == 0) ? -230.0f : 280.0f;

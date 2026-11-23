@@ -26,6 +26,10 @@ set(SOURCES
     lib/object/star.cpp
     lib/object/ship_object.cpp
     lib/object/model_object.cpp
+    lib/combat/weapon_def.cpp
+    lib/combat/weapon_mount.cpp
+    lib/ship/ship.cpp
+    lib/ship/ship_class.cpp
     lib/ui/widget/button.cpp
     lib/ui/widget/checkbox.cpp
     lib/ui/widget/selector.cpp
