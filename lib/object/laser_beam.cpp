@@ -1,5 +1,6 @@
 #include <raylib.h>
 #include <raymath.h>
+#include <rlgl.h>
 #include <cmath>
 
 #include "object/laser_beam.hpp"
@@ -20,14 +21,14 @@ laser_beam::laser_beam()
     , pulse_enabled_(false)
     , pulse_speed_(10.0f)
     , pulse_phase_(0.0f)
+    , pulse_scale_(0.0f)
+    , was_firing_(false)
     , shader_{ 0 }
     , shader_loaded_(false)
     , loc_mvp(-1)
     , loc_color(-1)
     , loc_intensity(-1)
-    , loc_glow_radius(-1)
-    , loc_line_start(-1)
-    , loc_line_end(-1)
+    , loc_pulse(-1)
 {
 }
 
@@ -46,14 +47,14 @@ laser_beam::laser_beam(const Vector3& start, const Vector3& end, int r, int g, i
     , pulse_enabled_(false)
     , pulse_speed_(10.0f)
     , pulse_phase_(0.0f)
+    , pulse_scale_(0.0f)
+    , was_firing_(false)
     , shader_{ 0 }
     , shader_loaded_(false)
     , loc_mvp(-1)
     , loc_color(-1)
     , loc_intensity(-1)
-    , loc_glow_radius(-1)
-    , loc_line_start(-1)
-    , loc_line_end(-1)
+    , loc_pulse(-1)
 {
 }
 
@@ -110,9 +111,7 @@ void laser_beam::load_shader(const char* vs_path, const char* fs_path) {
     loc_mvp = GetShaderLocation(shader_, "mvp");
     loc_color = GetShaderLocation(shader_, "color");
     loc_intensity = GetShaderLocation(shader_, "intensity");
-    loc_glow_radius = GetShaderLocation(shader_, "glowRadius");
-    loc_line_start = GetShaderLocation(shader_, "lineStart");
-    loc_line_end = GetShaderLocation(shader_, "lineEnd");
+    loc_pulse = GetShaderLocation(shader_, "pulse");
 }
 
 void laser_beam::unload_shader() {
@@ -126,20 +125,29 @@ bool laser_beam::is_shader_loaded() const {
     return shader_loaded_;
 }
 
-int laser_beam::calculate_pulse_alpha() const {
-    if (!pulse_enabled_) {
-        return color_alpha_;
-    }
-
-    const float pulse = sinf(pulse_phase_);
-    const float pulse_factor = 0.5f + 0.5f * (pulse < 0.0f? -1.0f : pulse);
-    return static_cast<int>(color_alpha_ * pulse_factor);
-}
-
 void laser_beam::update(float dt) {
     if (!active_) return;
 
+    if (!firing_) {
+        was_firing_ = false;
+        pulse_phase_ = 0.0f;
+        pulse_scale_ = 0.0f;
+        return;
+    }
+
+    if (!was_firing_) {
+        was_firing_ = true;
+        pulse_phase_ = 0.0f;
+    }
+
+    if (!pulse_enabled_ || pulse_speed_ <= 0.0f) {
+        pulse_scale_ = 1.0f;
+        return;
+    }
+
     pulse_phase_ += pulse_speed_ * dt;
+    const float pulse = sinf(pulse_phase_);
+    pulse_scale_ = 0.5f + 0.5f * (pulse < 0.0f ? -1.0f : pulse);
 }
 
 void laser_beam::draw(const camera_3d& /*cam*/, int /*window_height*/) const {
@@ -154,43 +162,36 @@ void laser_beam::draw(const camera_3d& /*cam*/, int /*window_height*/) const {
         TraceLog(LOG_FATAL, "laser_beam: Failed to load shader");
     }
 
-    const int base_alpha = pulse_enabled_ ? calculate_pulse_alpha() : color_alpha_;
-    if (base_alpha <= 0) {
+    const float base_alpha = color_alpha_ / 255.0f;
+    if (base_alpha <= 0.0f || pulse_scale_ <= 0.001f) {
         return;
     }
 
-    // Begin shader drawing mode
-    BeginShaderMode(shader_);
-
-    // Set shader uniforms
     float color_vec4[4] = {
         color_r_ / 255.0f,
         color_g_ / 255.0f,
         color_b_ / 255.0f,
-        base_alpha / 255.0f
+        base_alpha
     };
+
+    rlDisableDepthMask();
+    BeginBlendMode(BLEND_ADDITIVE);
+    BeginShaderMode(shader_);
+
     SetShaderValue(shader_, loc_color, color_vec4, SHADER_UNIFORM_VEC4);
-
     SetShaderValue(shader_, loc_intensity, &intensity_, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader_, loc_pulse, &pulse_scale_, SHADER_UNIFORM_FLOAT);
 
-    float glow = 12.0f;  // Wider glow
-    SetShaderValue(shader_, loc_glow_radius, &glow, SHADER_UNIFORM_FLOAT);
-
-    float start_vec3[3] = { start_.x, start_.y, start_.z };
-    SetShaderValue(shader_, loc_line_start, start_vec3, SHADER_UNIFORM_VEC3);
-
-    float end_vec3[3] = { end_.x, end_.y, end_.z };
-    SetShaderValue(shader_, loc_line_end, end_vec3, SHADER_UNIFORM_VEC3);
-
-    // Draw the laser beam as a cylinder
     const float radius = width_ * 0.75f;
     const Color color = {
         static_cast<unsigned char>(color_r_),
         static_cast<unsigned char>(color_g_),
         static_cast<unsigned char>(color_b_),
-        static_cast<unsigned char>(base_alpha)
+        255
     };
     DrawCylinderEx(start_, end_, radius, radius, 8, color);
 
     EndShaderMode();
+    EndBlendMode();
+    rlEnableDepthMask();
 }

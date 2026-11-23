@@ -20,6 +20,8 @@ private:
     bool pulse_enabled_;
     float pulse_speed_;
     float pulse_phase_;
+    float pulse_scale_;
+    bool was_firing_;
 
     // Shader members
     Shader shader_;
@@ -27,11 +29,7 @@ private:
     int loc_mvp;
     int loc_color;
     int loc_intensity;
-    int loc_glow_radius;
-    int loc_line_start;
-    int loc_line_end;
-
-    int calculate_pulse_alpha() const;
+    int loc_pulse;
 
 public:
     laser_beam();
@@ -72,7 +70,8 @@ public:
     void set_firing(bool firing);
     bool is_firing() const;
 
-    // Pulse animation
+    // Pulse animation: while firing, the whole beam's brightness cycles.
+    // pulse_speed is the angular rate of that cycle.
     void set_pulse_enabled(bool enabled);
     bool is_pulse_enabled() const;
     void set_pulse_speed(float speed);

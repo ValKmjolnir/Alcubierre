@@ -115,8 +115,8 @@ void game::setup_scene() {
         titan.install_weapon(i, weapon_of("point_defence_c"));
     }
 
-    player.aim_at(escort.aim_point());
-    escort.aim_at(player.aim_point());
+    player.aim_at(escort);
+    escort.aim_at(player);
 }
 
 // ============================================================================

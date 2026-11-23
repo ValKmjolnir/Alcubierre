@@ -32,6 +32,7 @@ public:
     Matrix model_matrix() const;
 
     void aim_at(const Vector3& world_point);
+    void aim_at(ship& target);
     void clear_targets();
 
     bool install_weapon(int slot_index, const weapon_def& def);
@@ -54,4 +55,5 @@ private:
     std::vector<std::unique_ptr<weapon_mount>> mounts_;
     Vector3 target_ { 0.0f, 0.0f, 0.0f };
     bool has_target_ = false;
+    ship* target_ship_ = nullptr;
 };

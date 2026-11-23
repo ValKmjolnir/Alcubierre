@@ -12,6 +12,7 @@
 class game_window;
 class laser_beam;
 class projectile;
+class ship;
 
 // Runtime instance of one fitted weapon: owns its turret meshes, its aim
 // solution and the beam/projectile effects it spawns.
@@ -27,6 +28,7 @@ public:
     const hardpoint_def& slot() const { return *slot_; }
 
     void set_target(const Vector3& world_point);
+    void set_target(ship& target_ship);
     void clear_target();
 
     void update(float dt, const Matrix& ship_model);
@@ -41,7 +43,12 @@ private:
 
     Vector3 target_ { 0.0f, 0.0f, 0.0f };
     bool has_target_ = false;
+    ship* target_ship_ = nullptr;
     float cooldown_ = 0.0f;
+    float beam_damage_timer_ = 0.0f;
+
+    Vector3 impact_point_ { 0.0f, 0.0f, 0.0f };
+    float impact_time_ = 1.0f;
 
     Vector3 aim_ { 0.0f, 0.0f, -1.0f };
     Matrix base_transform_ {};

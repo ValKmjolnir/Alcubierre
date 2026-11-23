@@ -1,11 +1,14 @@
 #include "combat/weapon_mount.hpp"
 
+#include <raylib.h>
 #include <raymath.h>
+#include <rlgl.h>
 
 #include <cmath>
 
 #include "object/laser_beam.hpp"
 #include "object/projectile.hpp"
+#include "ship/ship.hpp"
 #include "window.hpp"
 
 namespace {
@@ -13,6 +16,7 @@ namespace {
 constexpr float kBarrelSpacing = 0.34f;
 constexpr float kBarrelAxisY = 0.30f;
 constexpr float kBarrelStartZ = 0.35f;
+constexpr float kImpactDuration = 0.16f;
 
 float clampf(float value, float lo, float hi) {
     return fminf(fmaxf(value, lo), hi);
@@ -116,11 +120,19 @@ weapon_mount::~weapon_mount() {
 
 void weapon_mount::set_target(const Vector3& world_point) {
     target_ = world_point;
+    target_ship_ = nullptr;
+    has_target_ = true;
+}
+
+void weapon_mount::set_target(ship& target_ship) {
+    target_ = target_ship.aim_point();
+    target_ship_ = &target_ship;
     has_target_ = true;
 }
 
 void weapon_mount::clear_target() {
     has_target_ = false;
+    target_ship_ = nullptr;
 }
 
 Vector3 weapon_mount::muzzle_position(int barrel) const {
@@ -202,12 +214,18 @@ void weapon_mount::update(float dt, const Matrix& ship_model) {
     gun_transform_ = MatrixMultiply(gun_transform_, to_ship);
     gun_transform_ = MatrixMultiply(gun_transform_, ship_model);
 
+    impact_time_ += dt;
+
     if (def_->delivery == weapon_delivery::beam) {
+        const Vector3 mount_world = Vector3Transform(slot_->position, ship_model);
+        const bool target_in_range = has_target_ && in_arc
+            && Vector3Distance(mount_world, target_) <= def_->range;
+
         for (size_t i = 0; i < beams_.size(); i++) {
             auto& beam = *beams_[i];
             beam.update(dt);
 
-            if (!has_target_ || !in_arc) {
+            if (!target_in_range) {
                 beam.set_firing(false);
                 continue;
             }
@@ -221,10 +239,32 @@ void weapon_mount::update(float dt, const Matrix& ship_model) {
             beam.set_positions(start, target_);
             beam.set_firing(true);
         }
+
+        if (target_in_range && target_ship_) {
+            beam_damage_timer_ -= dt;
+            if (beam_damage_timer_ <= 0.0f) {
+                target_ship_->take_damage(def_->damage);
+                beam_damage_timer_ += def_->cooldown;
+            }
+        } else {
+            beam_damage_timer_ = 0.0f;
+        }
     } else if (def_->delivery == weapon_delivery::projectile) {
         cooldown_ -= dt;
         for (auto& shot : shots_) {
+            const Vector3 previous = shot->position();
             shot->update(dt);
+
+            if (!shot->is_active() || !target_ship_) {
+                continue;
+            }
+
+            if (target_ship_->blocks_line(previous, shot->position())) {
+                target_ship_->take_damage(def_->damage);
+                shot->set_active(false);
+                impact_point_ = previous;
+                impact_time_ = 0.0f;
+            }
         }
 
         if (has_target_ && in_arc && cooldown_ <= 0.0f) {
@@ -278,5 +318,22 @@ void weapon_mount::draw(game_window& win, const camera_3d& cam, int window_heigh
     }
     for (const auto& shot : shots_) {
         shot->draw(cam, window_height);
+    }
+
+    if (impact_time_ < kImpactDuration) {
+        const float t = clampf(impact_time_ / kImpactDuration, 0.0f, 1.0f);
+        const float radius = fmaxf(def_->projectile_radius * 6.0f, 0.25f) * (1.0f - 0.5f * t);
+        const Color color {
+            static_cast<unsigned char>(fminf(def_->color.r + 60.0f, 255.0f)),
+            static_cast<unsigned char>(fminf(def_->color.g + 60.0f, 255.0f)),
+            static_cast<unsigned char>(fminf(def_->color.b + 60.0f, 255.0f)),
+            static_cast<unsigned char>(255.0f * (1.0f - t))
+        };
+
+        rlDisableDepthMask();
+        BeginBlendMode(BLEND_ADDITIVE);
+        DrawSphereEx(impact_point_, radius, 6, 8, color);
+        EndBlendMode();
+        rlEnableDepthMask();
     }
 }

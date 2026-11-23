@@ -87,6 +87,7 @@ bool ship::blocks_line(const Vector3& from, const Vector3& to) const {
 
 void ship::aim_at(const Vector3& world_point) {
     target_ = world_point;
+    target_ship_ = nullptr;
     has_target_ = true;
 
     for (auto& mount : mounts_) {
@@ -96,8 +97,21 @@ void ship::aim_at(const Vector3& world_point) {
     }
 }
 
+void ship::aim_at(ship& target) {
+    target_ = target.aim_point();
+    target_ship_ = &target;
+    has_target_ = true;
+
+    for (auto& mount : mounts_) {
+        if (mount) {
+            mount->set_target(target);
+        }
+    }
+}
+
 void ship::clear_targets() {
     has_target_ = false;
+    target_ship_ = nullptr;
 
     for (auto& mount : mounts_) {
         if (mount) {
@@ -119,7 +133,9 @@ bool ship::install_weapon(int slot_index, const weapon_def& def) {
     }
 
     mounts_[slot_index] = std::make_unique<weapon_mount>(def, slot);
-    if (has_target_) {
+    if (target_ship_) {
+        mounts_[slot_index]->set_target(*target_ship_);
+    } else if (has_target_) {
         mounts_[slot_index]->set_target(target_);
     }
     return true;
