@@ -141,6 +141,10 @@ Vector3 weapon_mount::muzzle_position(int barrel) const {
     return Vector3Transform(local, gun_transform_);
 }
 
+Vector3 weapon_mount::fire_direction() const {
+    return Vector3Normalize(dir_transform(Vector3 { 0.0f, 0.0f, -1.0f }, gun_transform_));
+}
+
 void weapon_mount::update(float dt, const Matrix& ship_model) {
     const float scale = def_->turret_scale;
 
@@ -183,26 +187,23 @@ void weapon_mount::update(float dt, const Matrix& ship_model) {
         local_aim = Vector3Normalize(local_aim);
     }
 
-    aim_ = Vector3Normalize(dir_transform(local_aim, ship_model));
-    const Vector3 mount_up_world = Vector3Normalize(dir_transform(mount_up, ship_model));
-
     Vector3 gun_up = Vector3Subtract(
-        mount_up_world, Vector3Scale(aim_, Vector3DotProduct(mount_up_world, aim_)));
+        up_ortho, Vector3Scale(local_aim, Vector3DotProduct(up_ortho, local_aim)));
     if (Vector3Length(gun_up) < 1e-4f) {
-        gun_up = any_perpendicular(aim_);
+        gun_up = any_perpendicular(local_aim);
     }
     gun_up = Vector3Normalize(gun_up);
-    const Vector3 gun_right = Vector3Normalize(Vector3CrossProduct(aim_, gun_up));
+    const Vector3 gun_right = Vector3Normalize(Vector3CrossProduct(local_aim, gun_up));
 
     const Vector3 slot_pos = slot_->position;
     const Matrix to_ship = MatrixTranslate(slot_pos.x, slot_pos.y, slot_pos.z);
 
-    const Vector3 base_x = any_perpendicular(mount_up_world);
-    const Vector3 base_z = Vector3CrossProduct(base_x, mount_up_world);
+    const Vector3 base_x = any_perpendicular(mount_up);
+    const Vector3 base_z = Vector3CrossProduct(base_x, mount_up);
     base_transform_ = MatrixScale(scale, scale, scale);
     base_transform_ = MatrixMultiply(
         base_transform_, MatrixTranslate(0.0f, -0.09f * scale, 0.0f));
-    base_transform_ = MatrixMultiply(base_transform_, basis(base_x, mount_up_world, base_z));
+    base_transform_ = MatrixMultiply(base_transform_, basis(base_x, mount_up, base_z));
     base_transform_ = MatrixMultiply(base_transform_, to_ship);
     base_transform_ = MatrixMultiply(base_transform_, ship_model);
 
@@ -210,9 +211,11 @@ void weapon_mount::update(float dt, const Matrix& ship_model) {
     gun_transform_ = MatrixMultiply(
         gun_transform_, MatrixTranslate(0.0f, 0.10f * scale, 0.0f));
     gun_transform_ = MatrixMultiply(
-        gun_transform_, basis(gun_right, gun_up, Vector3Scale(aim_, -1.0f)));
+        gun_transform_, basis(gun_right, gun_up, Vector3Scale(local_aim, -1.0f)));
     gun_transform_ = MatrixMultiply(gun_transform_, to_ship);
     gun_transform_ = MatrixMultiply(gun_transform_, ship_model);
+
+    const Vector3 fire_dir = fire_direction();
 
     impact_time_ += dt;
 
@@ -236,7 +239,9 @@ void weapon_mount::update(float dt, const Matrix& ship_model) {
                 continue;
             }
 
-            beam.set_positions(start, target_);
+            const float reach = fmaxf(
+                Vector3DotProduct(Vector3Subtract(target_, start), fire_dir), 0.0f);
+            beam.set_positions(start, Vector3Add(start, Vector3Scale(fire_dir, reach)));
             beam.set_firing(true);
         }
 
@@ -276,7 +281,7 @@ void weapon_mount::update(float dt, const Matrix& ship_model) {
                         continue;
                     }
                     shot.set_position(muzzle_position(static_cast<int>(i)));
-                    shot.set_velocity(Vector3Scale(aim_, def_->projectile_speed));
+                    shot.set_velocity(Vector3Scale(fire_dir, def_->projectile_speed));
                     shot.set_age(0.0f);
                     shot.set_active(true);
                 }

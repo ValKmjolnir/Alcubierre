@@ -35,7 +35,7 @@ public:
     void draw(game_window& win, const camera_3d& cam, int window_height) const;
 
 private:
-    void fire_projectiles(const Vector3& aim);
+    Vector3 fire_direction() const;
     Vector3 muzzle_position(int barrel) const;
 
     const weapon_def* def_;
@@ -50,7 +50,6 @@ private:
     Vector3 impact_point_ { 0.0f, 0.0f, 0.0f };
     float impact_time_ = 1.0f;
 
-    Vector3 aim_ { 0.0f, 0.0f, -1.0f };
     Matrix base_transform_ {};
     Matrix gun_transform_ {};
 
