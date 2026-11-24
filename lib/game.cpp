@@ -50,7 +50,7 @@ void game::setup_scene() {
 
     // Fleet layout, shared by the hulls and the laser attach points.
     const Vector3 player_pos { 0.0f, 0.0f, 0.0f };
-    const Vector3 escort_pos { -40.0f, -4.0f, -35.0f };
+    const Vector3 escort_pos { -46.0f, -4.5f, -40.0f };
     const float escort_yaw = -60.0f;
     const Vector3 titan_pos { 110.0f, 40.0f, -2400.0f };
     const float titan_yaw = 105.0f;
@@ -86,13 +86,13 @@ void game::setup_scene() {
     };
 
     auto& player = scene_.add<ship>(
-        window_, ship_class_of("corvette_blockout"), player_pos, 0.0f);
+        window_, ship_class_of("corvette_glb"), player_pos, 0.0f);
     auto& escort = scene_.add<ship>(
-        window_, ship_class_of("frigate_glb"), escort_pos, escort_yaw);
+        window_, ship_class_of("corvette_glb"), escort_pos, escort_yaw);
     auto& titan = scene_.add<ship>(
         window_, ship_class_of("titan_blockout"), titan_pos, titan_yaw);
 
-    // Player: bow laser, aft-spine autocannon, forward-spine support emitter.
+    // Player: three of the hull's sockets, the remaining four stay empty.
     player.install_weapon(0, weapon_of("pulse_laser_s"));
     player.install_weapon(1, weapon_of("autocannon_s"));
     player.install_weapon(2, weapon_of("shield_restorer_s"));

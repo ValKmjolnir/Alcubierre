@@ -14,7 +14,6 @@ enum class ship_size {
 };
 
 enum class hull_visual {
-    procedural_corvette,
     procedural_titan,
     glb
 };

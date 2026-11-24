@@ -9,19 +9,7 @@ const Vector3 kDown { 0.0f, -1.0f, 0.0f };
 std::vector<ship_class_def> build_catalog() {
     return {
         {
-            "corvette_blockout", "Corvette", ship_size::frigate, 15.0f,
-            hull_visual::procedural_corvette, nullptr, 0.0f,
-            { 450.0f, 600.0f, 800.0f },
-            {
-                // Bow deck: limited traverse so the turret reads as a fixed
-                // bow mount instead of a fully rotating barbette.
-                { { 0.0f, 0.84f, -5.35f }, kForward, kUp, weapon_size::small, 75.0f, -20.0f, 30.0f },
-                { { 0.0f, 1.44f, -0.58f }, kForward, kUp, weapon_size::small, 150.0f, -10.0f, 80.0f },
-                { { 0.0f, 1.44f, 1.28f }, kForward, kUp, weapon_size::small, 150.0f, -10.0f, 80.0f },
-            },
-        },
-        {
-            "frigate_glb", "Frigate", ship_size::frigate, 15.0f,
+            "corvette_glb", "Corvette", ship_size::frigate, 15.0f,
             hull_visual::glb, "assets/models/ship_py.glb", 15.0f,
             { 600.0f, 800.0f, 900.0f },
             {

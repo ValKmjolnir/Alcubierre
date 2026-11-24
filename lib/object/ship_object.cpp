@@ -8,26 +8,9 @@
 
 namespace {
 
-// The corvette blockout was authored at 12.9 units overall; 15 units is 150 m.
-constexpr float kCorvetteScale = 15.0f / 12.9f;
-
 Matrix box_matrix(float w, float h, float l, const Vector3& pos, float rot_x_deg = 0.0f) {
     Matrix m = MatrixScale(w, h, l);
     m = MatrixMultiply(m, MatrixRotateX(rot_x_deg * DEG2RAD));
-    return MatrixMultiply(m, MatrixTranslate(pos.x, pos.y, pos.z));
-}
-
-// GenMeshCylinder spans y in [0, height]; recenter, then +90 deg about X maps it onto +Z
-Matrix cylinder_matrix(const Vector3& pos, float height) {
-    Matrix m = MatrixTranslate(0.0f, -height * 0.5f, 0.0f);
-    m = MatrixMultiply(m, MatrixRotateX(90.0f * DEG2RAD));
-    return MatrixMultiply(m, MatrixTranslate(pos.x, pos.y, pos.z));
-}
-
-// Same, but -90 deg about X maps +Y onto -Z (guns pointing at the bow)
-Matrix barrel_matrix(const Vector3& pos, float length) {
-    Matrix m = MatrixTranslate(0.0f, -length * 0.5f, 0.0f);
-    m = MatrixMultiply(m, MatrixRotateX(-90.0f * DEG2RAD));
     return MatrixMultiply(m, MatrixTranslate(pos.x, pos.y, pos.z));
 }
 
@@ -137,17 +120,11 @@ ship_object::ship_object(game_window& win, hull_class cls, const Vector3& positi
     , class_(cls)
     , position_(position)
     , yaw_deg_(yaw_deg) {
-    const float scale = (cls == hull_class::corvette) ? kCorvetteScale : 1.0f;
-
     model_ = MatrixMultiply(
-        MatrixMultiply(MatrixScale(scale, scale, scale), MatrixRotateY(yaw_deg * DEG2RAD)),
+        MatrixRotateY(yaw_deg * DEG2RAD),
         MatrixTranslate(position.x, position.y, position.z));
 
-    if (cls == hull_class::corvette) {
-        build_corvette();
-    } else {
-        build_titan();
-    }
+    build_titan();
 }
 
 ship_object::~ship_object() {
@@ -173,13 +150,6 @@ bool ship_object::blocks_line(const Vector3& from, const Vector3& to) const {
     const Vector3 a = Vector3Transform(from, inv);
     const Vector3 b = Vector3Transform(to, inv);
 
-    if (class_ == hull_class::corvette) {
-        return ray_hits_box(a, b, -2.1f, -1.0f, -6.0f, 2.1f, 1.0f, -1.8f)
-            || ray_hits_box(a, b, -3.35f, -1.05f, -1.8f, 3.35f, 1.25f, 2.6f)
-            || ray_hits_box(a, b, -2.7f, -1.85f, 1.6f, 2.7f, -0.3f, 6.9f)
-            || ray_hits_box(a, b, -0.35f, 1.0f, 0.2f, 0.35f, 2.35f, 2.6f);
-    }
-
     return ray_hits_box(a, b, -80.0f, -57.0f, -500.0f, 80.0f, 57.0f, -140.0f)
         || ray_hits_box(a, b, -108.0f, -57.0f, -140.0f, 108.0f, 57.0f, 140.0f)
         || ray_hits_box(a, b, -80.0f, -130.0f, 140.0f, 80.0f, 90.0f, 500.0f)
@@ -199,86 +169,6 @@ Vector3 ship_object::cockpit_forward() const {
 void ship_object::add(Mesh mesh, const Matrix& transform, Color color,
                       float spec_strength, float shininess) {
     parts_.push_back(part { mesh, transform, color, spec_strength, shininess });
-}
-
-void ship_object::build_corvette() {
-    const Color hull_light { 165, 170, 180, 255 };
-    const Color hull_panel { 148, 153, 163, 255 };
-    const Color hull_mid { 120, 126, 138, 255 };
-    const Color hull_dark { 60, 64, 74, 255 };
-    const Color nozzle_color { 32, 34, 40, 255 };
-    const Color canopy_color { 35, 70, 95, 255 };
-    const Color fin_color { 140, 144, 154, 255 };
-
-    // Fore hull: z -6.0..-1.8, long taper down to a narrow nose
-    add(make_tapered_box(1.1f, 0.55f, 2.1f, 1.0f, 4.2f),
-        MatrixTranslate(0.0f, 0.0f, -3.9f), hull_mid, 1.8f, 12.0f);
-
-    // Mid hull: three sections with slightly different cross sections
-    add(make_tapered_box(2.1f, 1.0f, 2.3f, 1.05f, 1.2f),
-        MatrixTranslate(0.0f, 0.0f, -1.2f), hull_light, 2.0f, 12.0f);
-    add(make_tapered_box(2.3f, 1.05f, 2.2f, 1.0f, 1.8f),
-        MatrixTranslate(0.0f, 0.0f, 0.3f), hull_panel, 2.0f, 12.0f);
-    add(make_tapered_box(2.2f, 1.0f, 2.0f, 0.95f, 1.4f),
-        MatrixTranslate(0.0f, 0.0f, 1.9f), hull_light, 2.0f, 12.0f);
-
-    // Tail cone: z +2.6..+5.6, tapering to a blunt stern
-    add(make_tapered_box(2.0f, 0.95f, 1.0f, 0.42f, 3.0f),
-        MatrixTranslate(0.0f, 0.0f, 4.1f), hull_mid, 2.0f, 12.0f);
-
-    // Engine pods hanging under the wings, nozzles at z +6.6
-    for (int side = -1; side <= 1; side += 2) {
-        const float x = 1.95f * side;
-        add(GenMeshCylinder(0.72f, 5.2f, 24), cylinder_matrix(Vector3 { x, -1.12f, 4.2f }, 5.2f),
-            hull_mid, 1.8f, 16.0f);
-        add(GenMeshCylinder(0.5f, 0.6f, 24), cylinder_matrix(Vector3 { x, -1.12f, 6.6f }, 0.6f),
-            nozzle_color, 0.8f, 8.0f);
-    }
-
-    // Wings over the pods
-    for (int side = -1; side <= 1; side += 2) {
-        add(GenMeshCube(1.0f, 1.0f, 1.0f),
-            box_matrix(1.2f, 0.16f, 1.8f, Vector3 { 2.7f * side, -0.35f, 1.7f }),
-            hull_mid, 1.8f, 16.0f);
-        add(GenMeshCube(1.0f, 1.0f, 1.0f),
-            box_matrix(0.22f, 0.22f, 1.2f, Vector3 { 3.28f * side, -0.35f, 1.7f }),
-            hull_dark, 0.8f, 8.0f);
-    }
-
-    // Dorsal fin, leaning back
-    add(GenMeshCube(1.0f, 1.0f, 1.0f),
-        box_matrix(0.22f, 1.3f, 2.4f, Vector3 { 0.0f, 1.65f, 1.4f }, 14.0f),
-        fin_color, 1.8f, 12.0f);
-
-    // Canopy: glass box on a wider base frame
-    add(GenMeshCube(1.0f, 1.0f, 1.0f),
-        box_matrix(1.3f, 0.55f, 2.0f, Vector3 { 0.0f, 0.95f, -4.1f }),
-        canopy_color, 2.5f, 20.0f);
-    add(GenMeshCube(1.0f, 1.0f, 1.0f),
-        box_matrix(1.45f, 0.16f, 1.5f, Vector3 { 0.0f, 0.7f, -3.9f }),
-        hull_panel, 1.4f, 12.0f);
-
-    // Dorsal spine blocks
-    add(GenMeshCube(1.0f, 1.0f, 1.0f),
-        box_matrix(0.6f, 0.26f, 1.3f, Vector3 { 0.0f, 1.1f, -0.5f }),
-        hull_panel, 1.8f, 16.0f);
-    add(GenMeshCube(1.0f, 1.0f, 1.0f),
-        box_matrix(0.6f, 0.26f, 1.3f, Vector3 { 0.0f, 1.1f, 1.1f }),
-        hull_panel, 1.8f, 16.0f);
-
-    // Side blisters
-    for (int side = -1; side <= 1; side += 2) {
-        add(GenMeshCube(1.0f, 1.0f, 1.0f),
-            box_matrix(0.55f, 0.4f, 2.2f, Vector3 { 2.35f * side, 0.05f, 0.7f }),
-            hull_mid, 1.4f, 12.0f);
-    }
-
-    // Ventral strakes
-    for (int side = -1; side <= 1; side += 2) {
-        add(GenMeshCube(1.0f, 1.0f, 1.0f),
-            box_matrix(0.12f, 0.3f, 2.8f, Vector3 { 0.95f * side, -1.05f, 0.6f }),
-            hull_dark, 0.8f, 8.0f);
-    }
 }
 
 void ship_object::build_titan() {

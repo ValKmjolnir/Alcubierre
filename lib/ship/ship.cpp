@@ -18,10 +18,6 @@ ship::ship(game_window& win, const ship_class_def& cls, const Vector3& position,
     , yaw_deg_(yaw_deg)
     , health_(cls.durability) {
     switch (cls.visual) {
-    case hull_visual::procedural_corvette:
-        hull_ = std::make_unique<ship_object>(
-            win, hull_class::corvette, position, yaw_deg);
-        break;
     case hull_visual::procedural_titan:
         hull_ = std::make_unique<ship_object>(
             win, hull_class::titan, position, yaw_deg);

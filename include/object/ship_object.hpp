@@ -9,10 +9,8 @@
 class game_window;
 
 // Local space: nose along -Z, origin at the hull centre.
-// corvette — 15 units long (150 m at 1 unit = 10 m)
-// titan    — 1000 units long (10 km), macro blocks only
+// titan — 1000 units long (10 km), macro blocks only
 enum class hull_class {
-    corvette,
     titan
 };
 
@@ -43,7 +41,6 @@ public:
     float yaw_deg() const { return yaw_deg_; }
 
 private:
-    void build_corvette();
     void build_titan();
     void add(Mesh mesh, const Matrix& transform, Color color, float spec_strength, float shininess);
 
