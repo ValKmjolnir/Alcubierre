@@ -21,7 +21,3 @@ craft_speederB.glb
 craft_speederC.glb
 craft_speederD.glb
     The eight spacecraft from the Space Kit, converted to glTF by the kit.
-
-escort.glb
-    A byte-identical copy of craft_cargoB.glb kept under the name used by an
-    earlier scene layout. The same CC0 terms apply.
