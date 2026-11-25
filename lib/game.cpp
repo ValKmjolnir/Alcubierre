@@ -44,15 +44,16 @@ game::~game() {
 // ============================================================================
 
 void game::setup_scene() {
-    // The capital ship sits 24 km out, so the far plane has to clear raylib's
-    // 1000-unit default; near is raised to keep 24-bit depth usable.
+    // The capital ship still sits well beyond the near fleet, so the far plane
+    // has to clear raylib's 1000-unit default; near is raised to keep 24-bit
+    // depth usable.
     window_.set_clip_planes(0.25f, 10000.0f);
 
     // Fleet layout, shared by the hulls and the laser attach points.
     const Vector3 player_pos { 0.0f, 0.0f, 0.0f };
     const Vector3 escort_pos { -46.0f, -4.5f, -40.0f };
     const float escort_yaw = -60.0f;
-    const Vector3 titan_pos { 110.0f, 40.0f, -2400.0f };
+    const Vector3 titan_pos { 110.0f, 40.0f, -1500.0f };
     const float titan_yaw = 105.0f;
 
     // --- Ambient light ---
@@ -69,7 +70,7 @@ void game::setup_scene() {
 
     // --- Fleet ---
     // 1 unit = 10 m: the player craft and the escort are 15-unit corvettes,
-    // the capital ship is a 10 km titan 24 km out so both frame together.
+    // the capital ship is a 10 km titan 15 km out so both frame together.
     const auto ship_class_of = [](const char* id) -> const ship_class_def& {
         const ship_class_def* def = find_ship_class(id);
         if (!def) {

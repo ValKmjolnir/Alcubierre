@@ -5,3 +5,5 @@
 - `ship_py.glb` — the player and escort corvette used by the scene. Generated
   from `tool/build_ship.py` (run it with Blender), so it carries no
   third-party license; it is built to the project's own blockout spec.
+- `titan_py.glb` — the 10 km titan hull used by the scene. Generated from
+  `tool/build_titan.py` (run it with Blender), likewise project-authored.

@@ -26,20 +26,22 @@ std::vector<ship_class_def> build_catalog() {
         },
         {
             "titan_blockout", "Titan", ship_size::titan, 1000.0f,
-            hull_visual::procedural_titan, nullptr, 0.0f,
+            hull_visual::glb, "assets/models/titan_py.glb", 1000.0f,
             { 180000.0f, 240000.0f, 300000.0f },
             {
-                // Spinal mount sits on the lance housing; the two dorsal
-                // barbettes step up the spine, so their mount planes differ.
-                { { 0.0f, 82.0f, -300.0f }, kForward, kUp, weapon_size::capital, 6.0f, -5.0f, 12.0f },
-                { { 0.0f, 80.0f, -190.0f }, kForward, kUp, weapon_size::capital, 150.0f, -10.0f, 80.0f },
-                { { 0.0f, 88.0f, -60.0f }, kForward, kUp, weapon_size::capital, 150.0f, -10.0f, 80.0f },
-                { { -42.0f, -57.0f, -150.0f }, kForward, kDown, weapon_size::large, 140.0f, 0.0f, 70.0f },
-                { { 42.0f, -57.0f, 110.0f }, kForward, kDown, weapon_size::large, 140.0f, 0.0f, 70.0f },
-                { { -60.0f, 65.0f, -230.0f }, kForward, kUp, weapon_size::small, 120.0f, -10.0f, 75.0f },
-                { { 60.0f, 65.0f, -230.0f }, kForward, kUp, weapon_size::small, 120.0f, -10.0f, 75.0f },
-                { { -60.0f, 65.0f, 280.0f }, kForward, kUp, weapon_size::small, 120.0f, -10.0f, 75.0f },
-                { { 60.0f, 65.0f, 280.0f }, kForward, kUp, weapon_size::small, 120.0f, -10.0f, 75.0f },
+                // Sockets authored in tool/build_titan.py, already converted to
+                // hull-local world units (centred, scaled to 1000).  The model
+                // is re-centred on its bounds, so re-copy this table whenever
+                // the hull's bounding box changes.
+                { { 0.0f, -2.0f, -299.9f }, kForward, kUp, weapon_size::capital, 6.0f, -5.0f, 12.0f },
+                { { 0.0f, 29.0f, -199.9f }, kForward, kUp, weapon_size::capital, 150.0f, -10.0f, 80.0f },
+                { { 0.0f, 35.0f, 180.1f }, kForward, kUp, weapon_size::capital, 150.0f, -10.0f, 80.0f },
+                { { -26.0f, -40.0f, 90.1f }, kForward, kDown, weapon_size::large, 140.0f, 0.0f, 70.0f },
+                { { 26.0f, -39.0f, 230.0f }, kForward, kDown, weapon_size::large, 140.0f, 0.0f, 70.0f },
+                { { -33.0f, 14.0f, -159.9f }, kForward, kUp, weapon_size::small, 120.0f, -10.0f, 75.0f },
+                { { 33.0f, 14.0f, -159.9f }, kForward, kUp, weapon_size::small, 120.0f, -10.0f, 75.0f },
+                { { -35.0f, 18.0f, 250.0f }, kForward, kUp, weapon_size::small, 120.0f, -10.0f, 75.0f },
+                { { 35.0f, 18.0f, 250.0f }, kForward, kUp, weapon_size::small, 120.0f, -10.0f, 75.0f },
             },
         },
     };
