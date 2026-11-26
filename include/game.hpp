@@ -4,9 +4,12 @@
 #include "scene.hpp"
 #include "camera.hpp"
 #include "skybox.hpp"
+#include "rendering/grid.hpp"
 #include "ui/menu.hpp"
 #include "ui/debug_window.hpp"
 #include "utils/input_manager.hpp"
+
+class ship;
 
 class game {
 private:
@@ -14,10 +17,12 @@ private:
     scene scene_;
     camera_3d camera_;
     skybox sky_;
+    grid grid_;
     menu menu_;
     debug_window debug_window_;
     input_manager input_;
     ambient_light ambient_;
+    ship* locked_ship_ = nullptr;
 
 public:
     game();

@@ -41,6 +41,7 @@ set(SOURCES
     lib/ui/menu.cpp
     lib/rendering/bloom.cpp
     lib/rendering/downsample.cpp
+    lib/rendering/grid.cpp
     lib/rendering/frame_graph.cpp
     lib/rendering/warp.cpp
     lib/rendering/fxaa.cpp

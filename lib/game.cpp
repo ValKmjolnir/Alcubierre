@@ -20,6 +20,7 @@ game::game()
         Vector3 { 0.0f, 1.0f, 0.0f },
         45.0f)
     , sky_()
+    , grid_(10.0f, 320.0f, Color { 120, 200, 255, 255 })
     , menu_(window_)
     , debug_window_(window_)
     , input_()
@@ -88,6 +89,7 @@ void game::setup_scene() {
 
     auto& player = scene_.add<ship>(
         window_, ship_class_of("corvette_glb"), player_pos, 0.0f);
+    locked_ship_ = &player;
     auto& escort = scene_.add<ship>(
         window_, ship_class_of("corvette_glb"), escort_pos, escort_yaw);
     auto& titan = scene_.add<ship>(
@@ -242,6 +244,10 @@ void game::update(float dt) {
 
     // The menu and the debug window own the mouse while the pointer is over them.
     const bool ui_owns_mouse = menu_.get_show_menu() || debug_window_.captures_mouse();
+
+    if (locked_ship_) {
+        camera_.set_target(locked_ship_->position());
+    }
     camera_.update(dt, !ui_owns_mouse);
     lighting_system::instance().set_view_position(camera_.position());
     scene_.update_all(dt);
@@ -268,8 +274,8 @@ void game::render() {
     sky_.draw(camera_.get_camera(), window_.get_warp_renderer().get_velocity());
     scene_.draw_all(camera_, window_.height());
 
-    if (game_config::singleton().get_enable_grid_draw()) {
-        window_.draw_grid(40, 8.0f);
+    if (game_config::singleton().get_enable_grid_draw() && locked_ship_) {
+        grid_.draw(locked_ship_->position());
     }
 
     window_.end_mode_3d();

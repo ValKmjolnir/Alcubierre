@@ -85,7 +85,6 @@ public:
     // Draw methods using lit shader
     void draw_lit_mesh(const Mesh& mesh, const Matrix& transform, const lit_surface& surface);
     void draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b);
-    void draw_grid(int slices, float spacing) { DrawGrid(slices, spacing); }
 
     // Bloom post-processing
     void begin_scene_pass();
