@@ -26,7 +26,7 @@ private:
     int height_;
 
     // Main scene texture
-    RenderTexture2D scene_texture_;
+    RenderTexture2D scene_texture_ {};
     float ssaa_factor_ = 1.25f;
 
     // Scene projection clip planes (world units, 1 unit = 10 m)
@@ -60,6 +60,7 @@ private:
 
     void load();
     void unload();
+    void create_scene_texture();
     void init_lit_shader();
     void unload_lit_shader();
 
@@ -69,6 +70,10 @@ public:
 
     void begin_drawing() { BeginDrawing(); }
     void end_drawing() { EndDrawing(); }
+
+    // Resize the window and rebuild every render target that depends on it.
+    // Returns false when the size is invalid, unchanged, or clamped away.
+    bool set_resolution(int w, int h);
 
     // 3D camera methods
     // raylib's BeginMode3D hardcodes near 0.01 / far 1000, so the projection is

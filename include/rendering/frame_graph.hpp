@@ -51,5 +51,6 @@ public:
     frame_graph(int w, int h): target(w, h) {}
     void load();
     void unload();
+    void resize(int w, int h);
     texture_handle& execute(const RenderTexture2D& input, int width, int height);
 };

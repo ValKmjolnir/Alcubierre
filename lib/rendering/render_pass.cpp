@@ -9,6 +9,14 @@ void render_pass::unload() {
     output.unload();
 }
 
+void render_pass::resize(int w, int h) {
+    width = w;
+    height = h;
+    output.set(w, h);
+    SetTextureFilter(output.get().texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(output.get().texture, TEXTURE_WRAP_CLAMP);
+}
+
 bool render_pass::ready() const {
     return enabled && output.ready();
 }

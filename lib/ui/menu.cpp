@@ -56,14 +56,44 @@ void menu::add_new_textbox(int x,
 void menu::add_new_selector(int x,
                             int y,
                             int width,
-                            int height) {
-    selectors.emplace_back(x, y, width, height, Color { 0x00, 0xdd, 0xff, 200 });
+                            int height,
+                            const resolution_option* options,
+                            int option_count) {
+    selectors.emplace_back(
+        x, y, width, height,
+        Color { 0x00, 0xdd, 0xff, 200 },
+        options, option_count,
+        &window
+    );
+}
+
+void menu::set_show_menu(bool flag) {
+    show_menu_ = flag;
+    if (!show_menu_) {
+        cancel_input();
+    }
+}
+
+void menu::cancel_input() {
+    if (hovered_widget) {
+        hovered_widget->cancel_mouse_press();
+        hovered_widget = nullptr;
+    }
 }
 
 void menu::check_mouse_press() {
+    const auto pos = GetMousePosition();
+
     if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
         if (hovered_widget) {
-            hovered_widget->handle_mouse_release();
+            // A press only turns into a click if the button is released on the
+            // widget, unless the widget keeps the mouse for the whole drag.
+            if (hovered_widget->is_hovered(static_cast<int>(pos.x), static_cast<int>(pos.y)) ||
+                hovered_widget->commits_outside_release()) {
+                hovered_widget->handle_mouse_release();
+            } else {
+                hovered_widget->cancel_mouse_press();
+            }
             hovered_widget = nullptr;
         }
         return;
@@ -72,7 +102,6 @@ void menu::check_mouse_press() {
         return;
     }
 
-    auto pos = GetMousePosition();
     hovered_widget = nullptr;
     for (auto& button : buttons) {
         if (button.is_hovered(pos.x, pos.y)) {
@@ -113,7 +142,11 @@ void menu::draw() {
     if (!show_menu_) {
         return;
     }
-    DrawRectangle(0, 0, int(window.width() * 0.31), window.height(), { 0, 0, 0, 150 });
+    int panel_width = int(window.width() * 0.31f);
+    if (panel_width < 480) {
+        panel_width = 480;
+    }
+    DrawRectangle(0, 0, panel_width, window.height(), { 0, 0, 0, 150 });
 
     check_mouse_press();
 

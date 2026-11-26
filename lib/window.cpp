@@ -40,16 +40,24 @@ void game_window::unload_frame_graph() {
     frame_graph_.unload();
 }
 
-void game_window::load() {
+void game_window::create_scene_texture() {
+    if (scene_texture_.id > 0) {
+        UnloadRenderTexture(scene_texture_);
+    }
+
     // SSAA texture if ssaa_factor_ > 1.0
     scene_texture_ = LoadRenderTexture(
-        width_ * ssaa_factor_,
-        height_ * ssaa_factor_
+        static_cast<int>(width_ * ssaa_factor_),
+        static_cast<int>(height_ * ssaa_factor_)
     );
 
     // Set texture filtering
     SetTextureFilter(scene_texture_.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureWrap(scene_texture_.texture, TEXTURE_WRAP_CLAMP);
+}
+
+void game_window::load() {
+    create_scene_texture();
 
     init_frame_graph();
     init_lit_shader();
@@ -76,6 +84,33 @@ void game_window::unload() {
 
     unload_frame_graph();
     unload_lit_shader();
+}
+
+bool game_window::set_resolution(int w, int h) {
+    if (w <= 0 || h <= 0) {
+        return false;
+    }
+
+    const int monitor_width = GetMonitorWidth(GetCurrentMonitor());
+    const int monitor_height = GetMonitorHeight(GetCurrentMonitor());
+    if (w > monitor_width) {
+        w = monitor_width;
+    }
+    if (h > monitor_height) {
+        h = monitor_height;
+    }
+
+    if (w == width_ && h == height_) {
+        return false;
+    }
+
+    SetWindowSize(w, h);
+    width_ = w;
+    height_ = h;
+
+    create_scene_texture();
+    frame_graph_.resize(w, h);
+    return true;
 }
 
 void game_window::begin_scene_pass() {

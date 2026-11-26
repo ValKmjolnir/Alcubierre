@@ -2,10 +2,16 @@
 #include "utils/shader_manager.hpp"
 #include "utils/draw_texture.hpp"
 
-void bloom::load() {
-    output.load(width, height);
-    SetTextureFilter(output.get().texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureWrap(output.get().texture, TEXTURE_WRAP_CLAMP);
+void bloom::create_textures() {
+    if (bloom_textures_ready_) {
+        UnloadRenderTexture(bright_texture_);
+        UnloadRenderTexture(bloom_h_texture_);
+        UnloadRenderTexture(bloom_v_texture_);
+        UnloadRenderTexture(bloom_streak_texture_);
+        UnloadRenderTexture(bloom_streak2_texture_);
+        UnloadRenderTexture(bloom_flare_texture_);
+        UnloadRenderTexture(bloom_composite_texture_);
+    }
 
     // Half resolution bloom textures (blur is expensive, half-res saves ~4x fill rate)
     bright_texture_ = LoadRenderTexture(width / 2, height / 2);
@@ -30,6 +36,16 @@ void bloom::load() {
     SetTextureWrap(bloom_streak_texture_.texture, TEXTURE_WRAP_CLAMP);
     SetTextureWrap(bloom_streak2_texture_.texture, TEXTURE_WRAP_CLAMP);
     SetTextureWrap(bloom_flare_texture_.texture, TEXTURE_WRAP_CLAMP);
+
+    bloom_textures_ready_ = true;
+}
+
+void bloom::load() {
+    output.load(width, height);
+    SetTextureFilter(output.get().texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(output.get().texture, TEXTURE_WRAP_CLAMP);
+
+    create_textures();
 
     // Load bloom shaders
     auto bloom_extract_res = shader_manager::instance().load("bloom.vs", "bloom_extract.fs");
@@ -98,14 +114,22 @@ void bloom::end_flare_pass() {
 
 void bloom::unload() {
     output.unload();
-    UnloadRenderTexture(bright_texture_);
-    UnloadRenderTexture(bloom_h_texture_);
-    UnloadRenderTexture(bloom_v_texture_);
-    UnloadRenderTexture(bloom_streak_texture_);
-    UnloadRenderTexture(bloom_streak2_texture_);
-    UnloadRenderTexture(bloom_flare_texture_);
-    UnloadRenderTexture(bloom_composite_texture_);
+    if (bloom_textures_ready_) {
+        UnloadRenderTexture(bright_texture_);
+        UnloadRenderTexture(bloom_h_texture_);
+        UnloadRenderTexture(bloom_v_texture_);
+        UnloadRenderTexture(bloom_streak_texture_);
+        UnloadRenderTexture(bloom_streak2_texture_);
+        UnloadRenderTexture(bloom_flare_texture_);
+        UnloadRenderTexture(bloom_composite_texture_);
+        bloom_textures_ready_ = false;
+    }
     bloom_shaders_loaded_ = false;
+}
+
+void bloom::resize(int w, int h) {
+    render_pass::resize(w, h);
+    create_textures();
 }
 
 texture_handle& bloom::apply(const RenderTexture2D& texture, int width, int height) {

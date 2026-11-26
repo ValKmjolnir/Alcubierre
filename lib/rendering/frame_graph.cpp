@@ -34,6 +34,15 @@ void frame_graph::unload() {
     }
 }
 
+void frame_graph::resize(int w, int h) {
+    target.set(w, h);
+    result.set(w, h);
+    SetTextureFilter(result.get().texture, TEXTURE_FILTER_BILINEAR);
+    for (auto& pass: passes) {
+        pass->resize(w, h);
+    }
+}
+
 texture_handle& frame_graph::execute(const RenderTexture2D& input,
                                      int width,
                                      int height) {

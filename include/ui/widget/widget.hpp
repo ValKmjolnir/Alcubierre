@@ -6,6 +6,9 @@ protected:
 
 public:
     virtual bool is_hovered(int, int) const { return false; }
+    // True for widgets whose drag owns the mouse until release, e.g. a slider
+    // that keeps tracking the cursor after it leaves the track.
+    virtual bool commits_outside_release() const { return false; }
     virtual void mouse_press_call_back() {}
     virtual void mouse_release_call_back() {}
     void handle_mouse_press() {
@@ -16,5 +19,7 @@ public:
         mouse_pressed = false;
         mouse_release_call_back();
     }
+    // Drop a press without running the callback (menu closed mid-press)
+    void cancel_mouse_press() { mouse_pressed = false; }
     bool get_mouse_pressed() const { return mouse_pressed; }
 };

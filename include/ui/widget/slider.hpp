@@ -28,6 +28,8 @@ public:
                mouse_y <= y + height / 4 * 3;
     }
 
+    bool commits_outside_release() const override { return true; }
+
 public:
     slider(int x,
            int y,

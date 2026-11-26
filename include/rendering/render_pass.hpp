@@ -26,6 +26,7 @@ public:
         name(n), width(w), height(h) {}
     virtual void load();
     virtual void unload();
+    virtual void resize(int w, int h);
     virtual bool ready() const;
     virtual texture_handle& apply(const RenderTexture2D& texture, int width, int height);
 };

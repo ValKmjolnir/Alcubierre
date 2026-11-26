@@ -125,6 +125,13 @@ void game::setup_scene() {
 // ============================================================================
 
 void game::setup_ui() {
+    static const resolution_option resolutions[] = {
+        { 800, 400, "800x400" },
+        { 1280, 720, "1280x720" },
+        { 1600, 800, "1600x800" },
+        { 1920, 1080, "1920x1080" },
+    };
+
     menu_.add_new_textbox(40, 10, 100, 20, 18, WHITE, "Press ESC to toggle menu");
     menu_.add_new_textbox(40, 35, 100, 20, 18, GRAY, "Draw grid");
     menu_.add_new_checkbox(180, 35, 20,
@@ -142,7 +149,9 @@ void game::setup_ui() {
         &game_config::set_max_fps);
 
     menu_.add_new_textbox(40, 110, 100, 20, 18, GRAY, "Resolution");
-    menu_.add_new_selector(180, 110, 200, 20);
+    menu_.add_new_selector(180, 110, 200, 20,
+        resolutions,
+        int(sizeof(resolutions) / sizeof(resolutions[0])));
 
     menu_.add_new_button(
         40, 135, 240, 30,
@@ -224,7 +233,8 @@ void game::handle_input(float dt) {
 }
 
 void game::update(float dt) {
-    camera_.update(dt);
+    // The menu owns the mouse while it is open, so orbiting/zooming is disabled.
+    camera_.update(dt, !menu_.get_show_menu());
     lighting_system::instance().set_view_position(camera_.position());
     scene_.update_all(dt);
 

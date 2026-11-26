@@ -36,5 +36,6 @@ public:
     void set_projection(int projection) { camera_.projection = projection; }
 
     // Camera control
-    void update(float dt);
+    // accept_mouse = false when a menu owns the mouse; yaw/pitch/zoom are skipped
+    void update(float dt, bool accept_mouse = true);
 };

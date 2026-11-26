@@ -19,7 +19,7 @@ camera_3d::camera_3d(const Vector3& position, const Vector3& target, const Vecto
     camera_.projection = CAMERA_PERSPECTIVE;
 }
 
-void camera_3d::update(float dt) {
+void camera_3d::update(float dt, bool accept_mouse) {
     // lazy initialization
     if (!initialized_) {
         Vector3 offset = Vector3Subtract(camera_.position, camera_.target);
@@ -31,7 +31,7 @@ void camera_3d::update(float dt) {
     }
 
     // only rotate when left mouse button is down
-    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+    if (accept_mouse && IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
         Vector2 delta = GetMouseDelta();
         const float rotate_speed = 0.003f * dt * 120.0f;
         const float dead_zone = 1.0f;
@@ -44,7 +44,7 @@ void camera_3d::update(float dt) {
         pitch_ = Clamp(pitch_, -1.5f, 1.5f);
     }
 
-    float wheel = GetMouseWheelMove();
+    float wheel = accept_mouse ? GetMouseWheelMove() : 0.0f;
     if (wheel != 0.0f) {
         // Multiplicative so the same notch feels identical at 10 units and 3 km
         distance_ *= powf(1.15f, -wheel);

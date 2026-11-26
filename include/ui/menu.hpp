@@ -23,6 +23,8 @@ private:
 
     widget* hovered_widget = nullptr;
 
+    void cancel_input();
+
 public:
     menu(game_window& window) : window(window) {}
     void add_new_button(int x,
@@ -55,10 +57,12 @@ public:
     void add_new_selector(int x,
                           int y,
                           int width,
-                          int height);
+                          int height,
+                          const resolution_option* options,
+                          int option_count);
 
     void check_mouse_press();
     void draw();
-    void set_show_menu(bool flag) { show_menu_ = flag; }
+    void set_show_menu(bool flag);
     bool get_show_menu() const { return show_menu_; }
 };

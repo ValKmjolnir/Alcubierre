@@ -29,6 +29,7 @@ private:
     Shader bloom_composite_shader_;
 
     bool bloom_shaders_loaded_ = false;
+    bool bloom_textures_ready_ = false;
     int loc_bloom_intensity_ = -1;
     int loc_brightness_threshold_ = -1;
     int loc_texel_size_h_ = -1;
@@ -42,6 +43,8 @@ private:
     int loc_warm_streak_ = -1;
     int loc_origin_streak_ = -1;
     Vector2 streak_origin_ { -1.0f, -1.0f };
+
+    void create_textures();
 
 public:
     void set_bloom_threshold(float threshold) { bloom_threshold_ = threshold; }
@@ -61,6 +64,7 @@ public:
     bloom(const char* name, int w, int h): render_pass(name, w, h) {}
     void load();
     void unload();
+    void resize(int w, int h) override;
     bool ready() const {
         return enabled && bloom_shaders_loaded_ && output.ready();
     }
