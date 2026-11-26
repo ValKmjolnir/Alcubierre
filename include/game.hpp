@@ -7,6 +7,7 @@
 #include "rendering/grid.hpp"
 #include "ui/menu.hpp"
 #include "ui/debug_window.hpp"
+#include "ui/ship_status.hpp"
 #include "utils/input_manager.hpp"
 
 class ship;
@@ -20,6 +21,7 @@ private:
     grid grid_;
     menu menu_;
     debug_window debug_window_;
+    ship_status status_;
     input_manager input_;
     ambient_light ambient_;
     ship* locked_ship_ = nullptr;

@@ -23,6 +23,7 @@ game::game()
     , grid_(10.0f, 320.0f, Color { 120, 200, 255, 255 })
     , menu_(window_)
     , debug_window_(window_)
+    , status_(window_)
     , input_()
 {
     game_config::singleton().set_max_fps(80);
@@ -247,6 +248,7 @@ void game::update(float dt) {
 
     if (locked_ship_) {
         camera_.set_target(locked_ship_->position());
+        status_.update(dt, locked_ship_->health(), locked_ship_->max_health());
     }
     camera_.update(dt, !ui_owns_mouse);
     lighting_system::instance().set_view_position(camera_.position());
@@ -297,6 +299,7 @@ void game::render() {
 
     window_.apply();
 
+    status_.draw();
     menu_.draw(!debug_window_.captures_mouse());
 
     if (show_hud) {
