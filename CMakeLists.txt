@@ -35,7 +35,9 @@ set(SOURCES
     lib/ui/widget/selector.cpp
     lib/ui/widget/slider.cpp
     lib/ui/widget/textbox.cpp
-    lib/ui/debug_hud.cpp
+    lib/ui/ui_window.cpp
+    lib/ui/debug_window.cpp
+    lib/ui/text_wrap.cpp
     lib/ui/menu.cpp
     lib/rendering/bloom.cpp
     lib/rendering/downsample.cpp

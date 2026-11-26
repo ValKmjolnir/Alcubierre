@@ -19,6 +19,14 @@ void game_config::set_enable_debug_hud(bool flag) {
     enable_debug_hud = flag;
 }
 
+void game_config::set_enable_bloom(bool flag) {
+    enable_bloom = flag;
+}
+
+void game_config::set_enable_fxaa(bool flag) {
+    enable_fxaa = flag;
+}
+
 void game_config::set_max_fps(int fps) {
     max_fps = fps;
     SetTargetFPS(max_fps);

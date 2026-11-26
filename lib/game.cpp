@@ -21,7 +21,7 @@ game::game()
         45.0f)
     , sky_()
     , menu_(window_)
-    , debug_hud_(window_)
+    , debug_window_(window_)
     , input_()
 {
     game_config::singleton().set_max_fps(80);
@@ -161,13 +161,10 @@ void game::setup_ui() {
 }
 
 void game::setup_post_processing() {
-    window_.get_frame_graph().set_enable("bloom", true);
     window_.get_bloom_renderer().set_bloom_threshold(0.85f);
     window_.get_bloom_renderer().set_bloom_intensity(1.2f);
     window_.get_bloom_renderer().set_bloom_blur_radius(15.0f);
     window_.get_bloom_renderer().set_bloom_streak_intensity(10.0f);
-
-    window_.get_frame_graph().set_enable("fxaa", true);
 
     window_.get_warp_renderer().set_velocity(Vector3 { 0.0f, 0.0f, 0.0f });
     window_.get_warp_renderer().set_bubble_radius(0.37f);
@@ -180,22 +177,27 @@ void game::setup_post_processing() {
 // ============================================================================
 
 void game::handle_input(float dt) {
+    auto& config = game_config::singleton();
+
     if (IsKeyPressed(KEY_ESCAPE)) {
         menu_.set_show_menu(!menu_.get_show_menu());
-        if (menu_.get_show_menu()) {
-            input_.show_mouse();
-        } else {
-            input_.hide_mouse();
-        }
     }
-
+    if (IsKeyPressed(KEY_F1)) {
+        config.set_enable_debug_hud(!config.get_enable_debug_hud());
+    }
     if (IsKeyPressed(KEY_B)) {
-        auto& fg = window_.get_frame_graph();
-        fg.set_enable("bloom", !fg.enabled("bloom"));
+        config.set_enable_bloom(!config.get_enable_bloom());
     }
     if (IsKeyPressed(KEY_F)) {
-        auto& fg = window_.get_frame_graph();
-        fg.set_enable("fxaa", !fg.enabled("fxaa"));
+        config.set_enable_fxaa(!config.get_enable_fxaa());
+    }
+
+    debug_window_.set_visible(config.get_enable_debug_hud());
+
+    if (menu_.get_show_menu() || debug_window_.get_visible()) {
+        input_.show_mouse();
+    } else {
+        input_.hide_mouse();
     }
 
     // Warp factor (PgUp / PgDn)
@@ -233,8 +235,14 @@ void game::handle_input(float dt) {
 }
 
 void game::update(float dt) {
-    // The menu owns the mouse while it is open, so orbiting/zooming is disabled.
-    camera_.update(dt, !menu_.get_show_menu());
+    auto& config = game_config::singleton();
+    auto& frame_graph = window_.get_frame_graph();
+    frame_graph.set_enable("bloom", config.get_enable_bloom());
+    frame_graph.set_enable("fxaa", config.get_enable_fxaa());
+
+    // The menu and the debug window own the mouse while the pointer is over them.
+    const bool ui_owns_mouse = menu_.get_show_menu() || debug_window_.captures_mouse();
+    camera_.update(dt, !ui_owns_mouse);
     lighting_system::instance().set_view_position(camera_.position());
     scene_.update_all(dt);
 
@@ -283,20 +291,19 @@ void game::render() {
 
     window_.apply();
 
+    menu_.draw(!debug_window_.captures_mouse());
 
     if (show_hud) {
         Vector3 vel = window_.get_warp_renderer().get_velocity();
         float beta = Vector3Length(vel);
         Vector3 camForward = Vector3Normalize(
             Vector3Subtract(camera_.target(), camera_.position()));
-        debug_hud_.draw(beta, camForward);
 
         auto timings = window_.get_frame_graph().get_pass_timings();
         timings["scene"] = scene_ms;
-        debug_hud_.draw_timings(timings);
+        debug_window_.update(beta, camForward, timings);
+        debug_window_.draw();
     }
-
-    menu_.draw();
 }
 
 // ============================================================================

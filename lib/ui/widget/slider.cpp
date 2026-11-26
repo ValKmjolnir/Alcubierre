@@ -4,6 +4,11 @@
 
 #include "ui/widget/slider.hpp"
 
+void slider::move(int dx, int dy) {
+    x += dx;
+    y += dy;
+}
+
 void slider::draw() {
     int real_value = (game_config::singleton().*get)();
     ratio = (real_value - min_value) * 1.0 / (max_value - min_value);

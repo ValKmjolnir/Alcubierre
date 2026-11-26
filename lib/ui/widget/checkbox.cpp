@@ -1,5 +1,10 @@
 #include "ui/widget/checkbox.hpp"
 
+void checkbox::move(int dx, int dy) {
+    x += dx;
+    y += dy;
+}
+
 void checkbox::draw() {
     auto checked = (game_config::singleton().*get)();
 

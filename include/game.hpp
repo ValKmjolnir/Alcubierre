@@ -5,7 +5,7 @@
 #include "camera.hpp"
 #include "skybox.hpp"
 #include "ui/menu.hpp"
-#include "ui/debug_hud.hpp"
+#include "ui/debug_window.hpp"
 #include "utils/input_manager.hpp"
 
 class game {
@@ -15,7 +15,7 @@ private:
     camera_3d camera_;
     skybox sky_;
     menu menu_;
-    debug_hud debug_hud_;
+    debug_window debug_window_;
     input_manager input_;
     ambient_light ambient_;
 

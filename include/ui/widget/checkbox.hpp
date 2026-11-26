@@ -30,6 +30,7 @@ public:
              config_get_funcptr gc,
              config_set_funcptr sc) :
         x(x), y(y), size(size), color(color), get(gc), set(sc) {}
-    void draw();
+    void draw() override;
+    void move(int dx, int dy) override;
     void mouse_release_call_back() override;
 };

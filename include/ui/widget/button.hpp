@@ -47,6 +47,7 @@ public:
         width(width), height(height),
         color(color), operation(op),
         text(text), callback(callback) {}
-    void draw();
+    void draw() override;
+    void move(int dx, int dy) override;
     void mouse_release_call_back() override;
 };

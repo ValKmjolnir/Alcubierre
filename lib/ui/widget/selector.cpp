@@ -62,6 +62,11 @@ void selector::mouse_release_call_back() {
     window->set_resolution(options[next].width, options[next].height);
 }
 
+void selector::move(int dx, int dy) {
+    x += dx;
+    y += dy;
+}
+
 void selector::draw_text_centered(const Rectangle& target,
                                   const char* text,
                                   int fontsize,

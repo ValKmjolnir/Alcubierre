@@ -1,32 +1,17 @@
 #pragma once
 
-#include <vector>
+#include "ui/ui_window.hpp"
 
-#include "utils/game_config.hpp"
-#include "ui/widget/widget.hpp"
-#include "ui/widget/button.hpp"
-#include "ui/widget/checkbox.hpp"
-#include "ui/widget/selector.hpp"
-#include "ui/widget/slider.hpp"
-#include "ui/widget/textbox.hpp"
-#include "window.hpp"
+class game_window;
 
 class menu {
 private:
     game_window& window;
-    std::vector<button> buttons;
-    std::vector<checkbox> checkboxes;
-    std::vector<selector> selectors;
-    std::vector<slider> sliders;
-    std::vector<textbox> textboxes;
+    ui_window panel;
     bool show_menu_ = false;
 
-    widget* hovered_widget = nullptr;
-
-    void cancel_input();
-
 public:
-    menu(game_window& window) : window(window) {}
+    menu(game_window& window);
     void add_new_button(int x,
                         int y,
                         int width,
@@ -62,7 +47,7 @@ public:
                           int option_count);
 
     void check_mouse_press();
-    void draw();
+    void draw(bool accept_input = true);
     void set_show_menu(bool flag);
     bool get_show_menu() const { return show_menu_; }
 };

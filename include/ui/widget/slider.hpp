@@ -45,6 +45,7 @@ public:
         color(color),
         min_value(min_value), max_value(max_value),
         get(gf), set(cf) {}
-    void draw();
+    void draw() override;
+    void move(int dx, int dy) override;
     void mouse_release_call_back() override;
 };

@@ -29,5 +29,8 @@ public:
         width(width), height(height),
         fontsize(fontsize), color(color),
         text(text) {}
-    void draw();
+    void draw() override;
+    void move(int dx, int dy) override;
+    void set_text(const std::string& value) { text = value; }
+    void set_color(Color value) { color = value; }
 };

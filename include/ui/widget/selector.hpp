@@ -48,8 +48,9 @@ public:
         options(options), option_count(option_count),
         window(window) {}
 
+    void draw() override;
+    void move(int dx, int dy) override;
     bool is_hovered(int mouse_x, int mouse_y) const override;
     void mouse_press_call_back() override;
     void mouse_release_call_back() override;
-    void draw();
 };

@@ -1,6 +1,11 @@
 #include "utils/game_config.hpp"
 #include "ui/widget/button.hpp"
 
+void button::move(int dx, int dy) {
+    x += dx;
+    y += dy;
+}
+
 void button::draw() {
     Rectangle rec = { (float)x, (float)y, (float)width, (float)height };
     
