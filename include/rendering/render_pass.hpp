@@ -24,6 +24,7 @@ public:
 public:
     render_pass(const char* n, int w, int h):
         name(n), width(w), height(h) {}
+    virtual ~render_pass() = default;
     virtual void load();
     virtual void unload();
     virtual void resize(int w, int h);

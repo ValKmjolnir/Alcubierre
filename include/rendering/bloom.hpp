@@ -62,11 +62,11 @@ public:
 
 public:
     bloom(const char* name, int w, int h): render_pass(name, w, h) {}
-    void load();
-    void unload();
+    void load() override;
+    void unload() override;
     void resize(int w, int h) override;
-    bool ready() const {
+    bool ready() const override {
         return enabled && bloom_shaders_loaded_ && output.ready();
     }
-    texture_handle& apply(const RenderTexture2D& texture, int width, int height);
+    texture_handle& apply(const RenderTexture2D& texture, int width, int height) override;
 };

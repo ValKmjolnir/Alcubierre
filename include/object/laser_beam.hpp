@@ -34,7 +34,7 @@ private:
 public:
     laser_beam();
     laser_beam(const Vector3& start, const Vector3& end, int r = 255, int g = 0, int b = 0, int alpha = 255);
-    ~laser_beam();
+    ~laser_beam() override;
 
     // Beam properties
     Vector3 start() const { return start_; }

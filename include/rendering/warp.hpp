@@ -42,7 +42,7 @@ public:
 
 public:
     warp_renderer(const char* n, int w, int h): render_pass(n, w, h) {}
-    ~warp_renderer() = default;
+    ~warp_renderer() override = default;
     void load() override;
     void unload() override;
     bool ready() const override {

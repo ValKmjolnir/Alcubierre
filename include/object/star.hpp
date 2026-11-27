@@ -26,7 +26,7 @@ private:
 public:
     star();
     star(const Vector3& position, int r = 255, int g = 200, int b = 100, int alpha = 255);
-    ~star();
+    ~star() override;
 
     int color_r() const { return color_r_; }
     int color_g() const { return color_g_; }
