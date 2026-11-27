@@ -1,6 +1,7 @@
 #pragma once
 
 #include <raylib.h>
+#include <functional>
 #include <string>
 
 #include "ui/widget/widget.hpp"
@@ -25,6 +26,7 @@ private:
 
     bool flag = false;
     config_set_funcptr callback = nullptr;
+    std::function<void()> action;
 
 public:
     bool is_hovered(int mouse_x, int mouse_y) const override {
@@ -50,4 +52,5 @@ public:
     void draw() override;
     void move(int dx, int dy) override;
     void mouse_release_call_back() override;
+    void set_action(std::function<void()> fn) { action = fn; }
 };

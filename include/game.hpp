@@ -11,6 +11,7 @@
 #include "ui/debug_window.hpp"
 #include "ui/grid_toggle.hpp"
 #include "ui/ship_status.hpp"
+#include "ui/start_screen.hpp"
 #include "ui/target_marker.hpp"
 #include "ui/target_status.hpp"
 #include "utils/input_manager.hpp"
@@ -26,12 +27,15 @@ private:
     grid grid_;
     menu menu_;
     debug_window debug_window_;
+    start_screen start_screen_;
     ship_status status_;
     grid_toggle grid_button_;
     target_marker marker_;
     target_status target_status_;
     input_manager input_;
     ambient_light ambient_;
+
+    bool started_ = false;
 
     ship* player_ship_ = nullptr;
     std::vector<ship*> hostiles_;

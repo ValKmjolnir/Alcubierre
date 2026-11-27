@@ -17,6 +17,12 @@ void menu::add_new_button(int x,
     panel.add_new_button(x, y, width, height, op, text, cb);
 }
 
+void menu::add_back_button(int x, int y, int width, int height, const char* text) {
+    button& back = panel.add_new_button(
+        x, y, width, height, button_operation::NONE, text, nullptr);
+    back.set_action([this] { set_show_menu(false); });
+}
+
 void menu::add_new_checkbox(int x,
                             int y,
                             int size,

@@ -19,6 +19,7 @@ public:
                         button_operation op,
                         const char* text,
                         config_set_funcptr cb);
+    void add_back_button(int x, int y, int width, int height, const char* text);
     void add_new_checkbox(int x,
                           int y,
                           int size,

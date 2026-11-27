@@ -29,6 +29,7 @@ game::game()
     , grid_(10.0f, 320.0f, Color { 120, 200, 255, 255 })
     , menu_(window_)
     , debug_window_(window_)
+    , start_screen_(window_)
     , status_(window_)
     , target_status_(window_)
     , input_()
@@ -161,8 +162,10 @@ void game::setup_ui() {
         resolutions,
         int(sizeof(resolutions) / sizeof(resolutions[0])));
 
+    menu_.add_back_button(40, 110, 240, 30, "back");
+
     menu_.add_new_button(
-        40, 110, 240, 30,
+        40, 150, 240, 30,
         button_operation::SET_TRUE,
         "exit game",
         &game_config::set_should_exit);
@@ -204,67 +207,89 @@ void game::handle_input(float dt) {
 
     input_.show_mouse();
 
-    const bool ui_owns_mouse = menu_.get_show_menu() || debug_window_.captures_mouse();
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        press_position_ = GetMousePosition();
-        const int mouse_x = int(press_position_.x);
-        const int mouse_y = int(press_position_.y);
-        const bool over_grid = grid_button_.contains(status_.bounds(), mouse_x, mouse_y);
-        grid_press_armed_ = over_grid
-            && !menu_.get_show_menu()
-            && !debug_window_.captures_mouse();
-        pick_armed_ = !ui_owns_mouse
-            && !over_grid
-            && !status_.contains(mouse_x, mouse_y)
-            && !target_status_.contains(mouse_x, mouse_y);
-    }
-    if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
-        const Vector2 release_position = GetMousePosition();
-        if (grid_press_armed_
-            && grid_button_.contains(status_.bounds(),
-                                     int(release_position.x),
-                                     int(release_position.y))) {
-            config.set_enable_grid_draw(!config.get_enable_grid_draw());
+    if (!started_) {
+        if (!menu_.get_show_menu()) {
+            switch (start_screen_.update()) {
+            case start_action::start:
+                started_ = true;
+                break;
+            case start_action::settings:
+                menu_.set_show_menu(true);
+                break;
+            case start_action::quit:
+                config.set_should_exit(true);
+                break;
+            case start_action::none:
+                break;
+            }
+        } else {
+            start_screen_.cancel_input();
         }
-        if (pick_armed_ && Vector2Distance(press_position_, release_position) < 4.0f) {
-            select_target_at_mouse();
+    } else {
+        const bool ui_owns_mouse = menu_.get_show_menu() || debug_window_.captures_mouse();
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            press_position_ = GetMousePosition();
+            const int mouse_x = int(press_position_.x);
+            const int mouse_y = int(press_position_.y);
+            const bool over_grid = grid_button_.contains(status_.bounds(), mouse_x, mouse_y);
+            grid_press_armed_ = over_grid
+                && !menu_.get_show_menu()
+                && !debug_window_.captures_mouse();
+            pick_armed_ = !ui_owns_mouse
+                && !over_grid
+                && !status_.contains(mouse_x, mouse_y)
+                && !target_status_.contains(mouse_x, mouse_y);
         }
-        grid_press_armed_ = false;
-        pick_armed_ = false;
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+            const Vector2 release_position = GetMousePosition();
+            if (grid_press_armed_
+                && grid_button_.contains(status_.bounds(),
+                                         int(release_position.x),
+                                         int(release_position.y))) {
+                config.set_enable_grid_draw(!config.get_enable_grid_draw());
+            }
+            if (pick_armed_ && Vector2Distance(press_position_, release_position) < 4.0f) {
+                select_target_at_mouse();
+            }
+            grid_press_armed_ = false;
+            pick_armed_ = false;
+        }
     }
 
-    // Warp factor (PgUp / PgDn)
-    auto& warp = window_.get_warp_renderer();
-    warp.update_warp_factor(dt);
+    if (started_) {
+        // Warp factor (PgUp / PgDn)
+        auto& warp = window_.get_warp_renderer();
+        warp.update_warp_factor(dt);
 
-    // Velocity: beta (UP/DOWN), direction (LEFT/RIGHT)
-    Vector3 vel = warp.get_velocity();
-    float beta = Vector3Length(vel);
-    float dirX = 0.0f, dirZ = 1.0f;
-    if (beta > 0.001f) {
-        dirX = vel.x / beta;
-        dirZ = vel.z / beta;
+        // Velocity: beta (UP/DOWN), direction (LEFT/RIGHT)
+        Vector3 vel = warp.get_velocity();
+        float beta = Vector3Length(vel);
+        float dirX = 0.0f, dirZ = 1.0f;
+        if (beta > 0.001f) {
+            dirX = vel.x / beta;
+            dirZ = vel.z / beta;
+        }
+        float beta_step = 0.0025f * dt * 120.0f;
+        if (IsKeyDown(KEY_UP)) {
+            beta = fminf(beta + beta_step, 10.0f);
+        }
+        if (IsKeyDown(KEY_DOWN)) {
+            beta = fmaxf(beta - beta_step, 0.0f);
+        }
+        if (IsKeyDown(KEY_RIGHT) && beta > 0.001f) {
+            float angle = atan2f(dirX, dirZ) + 0.0025f * dt * 120.0f;
+            dirX = sinf(angle);
+            dirZ = cosf(angle);
+        }
+        if (IsKeyDown(KEY_LEFT) && beta > 0.001f) {
+            float angle = atan2f(dirX, dirZ) - 0.0025f * dt * 120.0f;
+            dirX = sinf(angle);
+            dirZ = cosf(angle);
+        }
+        vel.x = dirX * beta;
+        vel.z = dirZ * beta;
+        warp.set_velocity(vel);
     }
-    float beta_step = 0.0025f * dt * 120.0f;
-    if (IsKeyDown(KEY_UP)) {
-        beta = fminf(beta + beta_step, 10.0f);
-    }
-    if (IsKeyDown(KEY_DOWN)) {
-        beta = fmaxf(beta - beta_step, 0.0f);
-    }
-    if (IsKeyDown(KEY_RIGHT) && beta > 0.001f) {
-        float angle = atan2f(dirX, dirZ) + 0.0025f * dt * 120.0f;
-        dirX = sinf(angle);
-        dirZ = cosf(angle);
-    }
-    if (IsKeyDown(KEY_LEFT) && beta > 0.001f) {
-        float angle = atan2f(dirX, dirZ) - 0.0025f * dt * 120.0f;
-        dirX = sinf(angle);
-        dirZ = cosf(angle);
-    }
-    vel.x = dirX * beta;
-    vel.z = dirZ * beta;
-    warp.set_velocity(vel);
 }
 
 void game::update(float dt) {
@@ -275,6 +300,21 @@ void game::update(float dt) {
 
     // The menu and the debug window own the mouse while the pointer is over them.
     const bool ui_owns_mouse = menu_.get_show_menu() || debug_window_.captures_mouse();
+
+    if (!started_) {
+        if (player_ship_) {
+            camera_.set_target(player_ship_->position());
+        }
+        camera_.update(dt, false);
+        lighting_system::instance().set_view_position(camera_.position());
+
+        const Vector3 cam_forward = Vector3Normalize(
+            Vector3Subtract(camera_.target(), camera_.position()));
+        auto& warp = window_.get_warp_renderer();
+        warp.set_view_direction(cam_forward);
+        warp.set_fov_y(camera_.fovy());
+        return;
+    }
 
     if (player_ship_) {
         camera_.set_target(player_ship_->position());
@@ -368,6 +408,24 @@ void game::render() {
 
     bool show_hud = game_config::singleton().get_enable_debug_hud();
     window_.get_frame_graph().set_timing_enabled(show_hud);
+
+    if (!started_) {
+        window_.begin_scene_pass();
+        window_.begin_mode_3d(camera_.get_camera());
+        sky_.draw(camera_.get_camera(), window_.get_warp_renderer().get_velocity());
+        window_.end_mode_3d();
+        window_.end_scene_pass();
+
+        auto& bloom_pass = window_.get_bloom_renderer();
+        bloom_pass.begin_flare_pass();
+        bloom_pass.end_flare_pass();
+        bloom_pass.set_streak_origin(Vector2 { -1.0f, -1.0f });
+
+        window_.apply();
+        start_screen_.draw();
+        menu_.draw(true);
+        return;
+    }
 
     clock::time_point scene_t0;
     if (show_hud) scene_t0 = clock::now();

@@ -19,6 +19,10 @@ void button::draw() {
 }
 
 void button::mouse_release_call_back() {
+    if (action) {
+        action();
+        return;
+    }
     if (!callback) {
         return;
     }
