@@ -37,6 +37,7 @@ set(SOURCES
     lib/ui/widget/textbox.cpp
     lib/ui/ui_window.cpp
     lib/ui/debug_window.cpp
+    lib/ui/grid_toggle.cpp
     lib/ui/ship_status.cpp
     lib/ui/target_marker.cpp
     lib/ui/target_status.cpp

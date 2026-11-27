@@ -1,5 +1,7 @@
 #pragma once
 
+#include <raylib.h>
+
 class game_window;
 struct ship_durability;
 
@@ -23,5 +25,6 @@ public:
 
     void update(float dt, const ship_durability& current, const ship_durability& maximum);
     void draw() const;
+    Rectangle bounds() const;
     bool contains(int x, int y) const;
 };

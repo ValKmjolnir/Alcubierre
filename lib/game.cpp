@@ -145,28 +145,24 @@ void game::setup_ui() {
     };
 
     menu_.add_new_textbox(40, 10, 100, 20, 18, WHITE, "Press ESC to toggle menu");
-    menu_.add_new_textbox(40, 35, 100, 20, 18, GRAY, "Draw grid");
-    menu_.add_new_checkbox(180, 35, 20,
-        &game_config::get_enable_grid_draw,
-        &game_config::set_enable_grid_draw);
 
-    menu_.add_new_textbox(40, 60, 100, 20, 18, GRAY, "Debug hud");
-    menu_.add_new_checkbox(180, 60, 20,
+    menu_.add_new_textbox(40, 35, 100, 20, 18, GRAY, "Debug hud");
+    menu_.add_new_checkbox(180, 35, 20,
         &game_config::get_enable_debug_hud,
         &game_config::set_enable_debug_hud);
 
-    menu_.add_new_textbox(40, 85, 100, 20, 18, GRAY, "Max FPS");
-    menu_.add_new_slider(180, 85, 200, 20, 10, 240,
+    menu_.add_new_textbox(40, 60, 100, 20, 18, GRAY, "Max FPS");
+    menu_.add_new_slider(180, 60, 200, 20, 10, 240,
         &game_config::get_max_fps,
         &game_config::set_max_fps);
 
-    menu_.add_new_textbox(40, 110, 100, 20, 18, GRAY, "Resolution");
-    menu_.add_new_selector(180, 110, 200, 20,
+    menu_.add_new_textbox(40, 85, 100, 20, 18, GRAY, "Resolution");
+    menu_.add_new_selector(180, 85, 200, 20,
         resolutions,
         int(sizeof(resolutions) / sizeof(resolutions[0])));
 
     menu_.add_new_button(
-        40, 135, 240, 30,
+        40, 110, 240, 30,
         button_operation::SET_TRUE,
         "exit game",
         &game_config::set_should_exit);
@@ -213,14 +209,27 @@ void game::handle_input(float dt) {
         press_position_ = GetMousePosition();
         const int mouse_x = int(press_position_.x);
         const int mouse_y = int(press_position_.y);
+        const bool over_grid = grid_button_.contains(status_.bounds(), mouse_x, mouse_y);
+        grid_press_armed_ = over_grid
+            && !menu_.get_show_menu()
+            && !debug_window_.captures_mouse();
         pick_armed_ = !ui_owns_mouse
+            && !over_grid
             && !status_.contains(mouse_x, mouse_y)
             && !target_status_.contains(mouse_x, mouse_y);
     }
     if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
-        if (pick_armed_ && Vector2Distance(press_position_, GetMousePosition()) < 4.0f) {
+        const Vector2 release_position = GetMousePosition();
+        if (grid_press_armed_
+            && grid_button_.contains(status_.bounds(),
+                                     int(release_position.x),
+                                     int(release_position.y))) {
+            config.set_enable_grid_draw(!config.get_enable_grid_draw());
+        }
+        if (pick_armed_ && Vector2Distance(press_position_, release_position) < 4.0f) {
             select_target_at_mouse();
         }
+        grid_press_armed_ = false;
         pick_armed_ = false;
     }
 
@@ -393,6 +402,7 @@ void game::render() {
     window_.apply();
 
     status_.draw();
+    grid_button_.draw(status_.bounds());
 
     if (target_ship_ && player_ship_) {
         const float distance_km = Vector3Distance(

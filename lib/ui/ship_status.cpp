@@ -65,9 +65,19 @@ void ship_status::update(float dt, const ship_durability& current, const ship_du
     initialized_ = true;
 }
 
+Rectangle ship_status::bounds() const {
+    return {
+        float(window_.width() - kPanelWidth) * 0.5f,
+        float(window_.height() - kPanelHeight - kMargin),
+        float(kPanelWidth),
+        float(kPanelHeight)
+    };
+}
+
 void ship_status::draw() const {
-    const int x = (window_.width() - kPanelWidth) / 2;
-    const int y = window_.height() - kPanelHeight - kMargin;
+    const Rectangle panel = bounds();
+    const int x = int(panel.x);
+    const int y = int(panel.y);
 
     DrawRectangle(x, y, kPanelWidth, kPanelHeight, Color { 10, 14, 20, 205 });
     DrawRectangleLines(x, y, kPanelWidth, kPanelHeight, Color { 0x00, 0xdd, 0xff, 90 });
@@ -106,8 +116,7 @@ void ship_status::draw() const {
 }
 
 bool ship_status::contains(int x, int y) const {
-    const int left = (window_.width() - kPanelWidth) / 2;
-    const int top = window_.height() - kPanelHeight - kMargin;
-    return x >= left && x < left + kPanelWidth
-        && y >= top && y < top + kPanelHeight;
+    const Rectangle panel = bounds();
+    return float(x) >= panel.x && float(x) < panel.x + panel.width
+        && float(y) >= panel.y && float(y) < panel.y + panel.height;
 }

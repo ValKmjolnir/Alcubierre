@@ -9,6 +9,7 @@
 #include "rendering/grid.hpp"
 #include "ui/menu.hpp"
 #include "ui/debug_window.hpp"
+#include "ui/grid_toggle.hpp"
 #include "ui/ship_status.hpp"
 #include "ui/target_marker.hpp"
 #include "ui/target_status.hpp"
@@ -26,6 +27,7 @@ private:
     menu menu_;
     debug_window debug_window_;
     ship_status status_;
+    grid_toggle grid_button_;
     target_marker marker_;
     target_status target_status_;
     input_manager input_;
@@ -39,6 +41,7 @@ private:
 
     Vector2 press_position_ {};
     bool pick_armed_ = false;
+    bool grid_press_armed_ = false;
 
 public:
     game();
