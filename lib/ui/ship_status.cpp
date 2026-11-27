@@ -2,6 +2,7 @@
 
 #include <cstdio>
 
+#include "ui/durability_style.hpp"
 #include "ui/ship_status.hpp"
 #include "ship/ship_class.hpp"
 #include "window.hpp"
@@ -21,36 +22,6 @@ constexpr int kRowTop = 6;
 constexpr float kGhostHoldSeconds = 0.35f;
 constexpr float kGhostDecayPerSecond = 0.9f;
 
-Color layer_color(int index) {
-    switch (index) {
-    case 0: return Color { 0x58, 0xb4, 0xff, 255 };
-    case 1: return Color { 0xff, 0xb4, 0x58, 255 };
-    default: return Color { 0xff, 0x6a, 0x5a, 255 };
-    }
-}
-
-const char* layer_label(int index) {
-    switch (index) {
-    case 0: return "SHIELD";
-    case 1: return "ARMOR";
-    default: return "STRUCTURE";
-    }
-}
-
-float layer_fraction(float current, float maximum) {
-    if (maximum <= 0.0f) {
-        return 0.0f;
-    }
-    const float fraction = current / maximum;
-    if (fraction < 0.0f) {
-        return 0.0f;
-    }
-    if (fraction > 1.0f) {
-        return 1.0f;
-    }
-    return fraction;
-}
-
 }
 
 ship_status::ship_status(game_window& window) : window_(window) {}
@@ -69,9 +40,9 @@ void ship_status::update_layer(int index, float fraction, float dt, float hold_s
 }
 
 void ship_status::update(float dt, const ship_durability& current, const ship_durability& maximum) {
-    const float shield = layer_fraction(current.shield, maximum.shield);
-    const float armor = layer_fraction(current.armor, maximum.armor);
-    const float structure = layer_fraction(current.structure, maximum.structure);
+    const float shield = durability_fraction(current.shield, maximum.shield);
+    const float armor = durability_fraction(current.armor, maximum.armor);
+    const float structure = durability_fraction(current.structure, maximum.structure);
 
     fraction_[0] = shield;
     fraction_[1] = armor;
@@ -106,11 +77,11 @@ void ship_status::draw() const {
 
     for (int i = 0; i < 3; i++) {
         const int row_y = y + kRowTop + i * (kRowHeight + kRowGap);
-        const Color color = layer_color(i);
+        const Color color = durability_layer_color(i);
         const float fraction = fraction_[i];
 
         const Color label_color = (fraction > 0.0f) ? color : Color { 110, 120, 132, 255 };
-        DrawText(layer_label(i), x + kPadding, row_y + 1, 12, label_color);
+        DrawText(durability_layer_label(i), x + kPadding, row_y + 1, 12, label_color);
 
         DrawRectangle(bar_x, row_y, bar_width, kRowHeight, Color { 26, 32, 42, 230 });
 
@@ -132,4 +103,11 @@ void ship_status::draw() const {
                  12,
                  Color { 200, 210, 220, 255 });
     }
+}
+
+bool ship_status::contains(int x, int y) const {
+    const int left = (window_.width() - kPanelWidth) / 2;
+    const int top = window_.height() - kPanelHeight - kMargin;
+    return x >= left && x < left + kPanelWidth
+        && y >= top && y < top + kPanelHeight;
 }

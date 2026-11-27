@@ -6,7 +6,7 @@
 #include "window.hpp"
 
 debug_window::debug_window(game_window& window) :
-    panel(window.width() - 400, 40, 380, 340, Color { 8, 12, 18, 215 }),
+    panel(window.width() - 400, 40, 380, 360, Color { 8, 12, 18, 215 }),
     window(window) {
     panel.set_title("Debug");
     panel.set_draggable(true);
@@ -28,9 +28,9 @@ debug_window::debug_window(game_window& window) :
     camera_ = &panel.add_new_textbox(12, 158, 350, 20, 16, WHITE, "");
     panel.add_new_textbox(
         12, 180, 356, 20, 12, WHITE,
-        wrap_text("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp",
+        wrap_text("UP/DOWN = beta, LEFT/RIGHT = direction, PgUp/PgDn = warp, click = lock target",
                   12, 356).c_str());
-    timings_ = &panel.add_new_textbox(12, 216, 356, 100, 12, WHITE, "");
+    timings_ = &panel.add_new_textbox(12, 232, 356, 110, 12, WHITE, "");
 
     panel.add_new_button(380 - 26, 3, 20, 20,
         button_operation::SET_FALSE,

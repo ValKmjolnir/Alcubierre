@@ -7,6 +7,12 @@
 #include "ship/ship.hpp"
 #include "ship/ship_class.hpp"
 
+namespace {
+
+constexpr float kTargetLockSeconds = 0.8f;
+
+}
+
 // ============================================================================
 // Constructor
 // ============================================================================
@@ -24,6 +30,7 @@ game::game()
     , menu_(window_)
     , debug_window_(window_)
     , status_(window_)
+    , target_status_(window_)
     , input_()
 {
     game_config::singleton().set_max_fps(80);
@@ -90,11 +97,13 @@ void game::setup_scene() {
 
     auto& player = scene_.add<ship>(
         window_, ship_class_of("corvette_glb"), player_pos, 0.0f);
-    locked_ship_ = &player;
+    player_ship_ = &player;
     auto& escort = scene_.add<ship>(
         window_, ship_class_of("corvette_glb"), escort_pos, escort_yaw);
     auto& titan = scene_.add<ship>(
         window_, ship_class_of("titan_blockout"), titan_pos, titan_yaw);
+    hostiles_.push_back(&escort);
+    hostiles_.push_back(&titan);
 
     // Player: three of the hull's sockets, the remaining four stay empty.
     player.install_weapon(0, weapon_of("pulse_laser_s"));
@@ -197,10 +206,22 @@ void game::handle_input(float dt) {
 
     debug_window_.set_visible(config.get_enable_debug_hud());
 
-    if (menu_.get_show_menu() || debug_window_.get_visible()) {
-        input_.show_mouse();
-    } else {
-        input_.hide_mouse();
+    input_.show_mouse();
+
+    const bool ui_owns_mouse = menu_.get_show_menu() || debug_window_.captures_mouse();
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        press_position_ = GetMousePosition();
+        const int mouse_x = int(press_position_.x);
+        const int mouse_y = int(press_position_.y);
+        pick_armed_ = !ui_owns_mouse
+            && !status_.contains(mouse_x, mouse_y)
+            && !target_status_.contains(mouse_x, mouse_y);
+    }
+    if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+        if (pick_armed_ && Vector2Distance(press_position_, GetMousePosition()) < 4.0f) {
+            select_target_at_mouse();
+        }
+        pick_armed_ = false;
     }
 
     // Warp factor (PgUp / PgDn)
@@ -246,10 +267,23 @@ void game::update(float dt) {
     // The menu and the debug window own the mouse while the pointer is over them.
     const bool ui_owns_mouse = menu_.get_show_menu() || debug_window_.captures_mouse();
 
-    if (locked_ship_) {
-        camera_.set_target(locked_ship_->position());
-        status_.update(dt, locked_ship_->health(), locked_ship_->max_health());
+    if (player_ship_) {
+        camera_.set_target(player_ship_->position());
+        status_.update(dt, player_ship_->health(), player_ship_->max_health());
     }
+
+    update_target_lock(dt);
+
+    float distance_km = 0.0f;
+    if (target_ship_ && player_ship_) {
+        distance_km = Vector3Distance(
+            player_ship_->position(), target_ship_->aim_point()) * 0.01f;
+    }
+    const float lock_progress = target_locked_
+        ? 1.0f
+        : lock_elapsed_ / kTargetLockSeconds;
+    target_status_.update(dt, target_ship_, distance_km, lock_progress, target_locked_);
+
     camera_.update(dt, !ui_owns_mouse);
     lighting_system::instance().set_view_position(camera_.position());
     scene_.update_all(dt);
@@ -259,6 +293,65 @@ void game::update(float dt) {
     auto& warp = window_.get_warp_renderer();
     warp.set_view_direction(camForward);
     warp.set_fov_y(camera_.fovy());
+}
+
+void game::update_target_lock(float dt) {
+    if (!target_ship_) {
+        return;
+    }
+    if (target_ship_->destroyed()) {
+        clear_target();
+        return;
+    }
+    if (target_locked_) {
+        return;
+    }
+
+    lock_elapsed_ += dt;
+    if (lock_elapsed_ >= kTargetLockSeconds) {
+        lock_elapsed_ = kTargetLockSeconds;
+        target_locked_ = true;
+    }
+}
+
+void game::set_target(ship* target) {
+    if (target == target_ship_) {
+        return;
+    }
+    target_ship_ = target;
+    lock_elapsed_ = 0.0f;
+    target_locked_ = false;
+}
+
+void game::clear_target() {
+    target_ship_ = nullptr;
+    lock_elapsed_ = 0.0f;
+    target_locked_ = false;
+}
+
+void game::select_target_at_mouse() {
+    const Ray ray = GetScreenToWorldRayEx(
+        GetMousePosition(), camera_.get_camera(), window_.width(), window_.height());
+    const Vector3 end = Vector3Add(
+        ray.position, Vector3Scale(ray.direction, 20000.0f));
+
+    ship* best = nullptr;
+    float best_distance = 0.0f;
+    for (ship* candidate : hostiles_) {
+        if (!candidate || candidate->destroyed()) {
+            continue;
+        }
+        if (!candidate->blocks_line(ray.position, end)) {
+            continue;
+        }
+        const float distance = Vector3Distance(ray.position, candidate->position());
+        if (!best || distance < best_distance) {
+            best = candidate;
+            best_distance = distance;
+        }
+    }
+
+    set_target(best);
 }
 
 void game::render() {
@@ -276,8 +369,8 @@ void game::render() {
     sky_.draw(camera_.get_camera(), window_.get_warp_renderer().get_velocity());
     scene_.draw_all(camera_, window_.height());
 
-    if (game_config::singleton().get_enable_grid_draw() && locked_ship_) {
-        grid_.draw(locked_ship_->position());
+    if (game_config::singleton().get_enable_grid_draw() && player_ship_) {
+        grid_.draw(player_ship_->position());
     }
 
     window_.end_mode_3d();
@@ -300,6 +393,18 @@ void game::render() {
     window_.apply();
 
     status_.draw();
+
+    if (target_ship_ && player_ship_) {
+        const float distance_km = Vector3Distance(
+            player_ship_->position(), target_ship_->aim_point()) * 0.01f;
+        const float lock_progress = target_locked_
+            ? 1.0f
+            : lock_elapsed_ / kTargetLockSeconds;
+        marker_.draw(camera_, window_.width(), window_.height(),
+                     *target_ship_, distance_km, lock_progress, target_locked_);
+        target_status_.draw();
+    }
+
     menu_.draw(!debug_window_.captures_mouse());
 
     if (show_hud) {

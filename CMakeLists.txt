@@ -38,6 +38,9 @@ set(SOURCES
     lib/ui/ui_window.cpp
     lib/ui/debug_window.cpp
     lib/ui/ship_status.cpp
+    lib/ui/target_marker.cpp
+    lib/ui/target_status.cpp
+    lib/ui/durability_style.cpp
     lib/ui/text_wrap.cpp
     lib/ui/menu.cpp
     lib/rendering/bloom.cpp
