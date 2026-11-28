@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "scene.hpp"
+#include "scenes/scene.hpp"
 
 class game_window;
 class ship;

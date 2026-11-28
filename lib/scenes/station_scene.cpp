@@ -6,6 +6,7 @@
 
 #include "object/star.hpp"
 #include "object/station_object.hpp"
+#include "scenes/scene_rebase.hpp"
 #include "scenes/warp_path.hpp"
 #include "ship/ship.hpp"
 #include "ship/ship_class.hpp"
@@ -17,9 +18,12 @@ station_scene::station_scene(lighting_system& lights)
         Vector3Scale(kWarpDirection, -10.0f * kWarpUnitsPerAu), "FLEET") {}
 
 void station_scene::build(game_window& window) {
-    const Vector3 star_position = Vector3Subtract(
-        Vector3 { 0.0f, 50.0f, 3000.0f },
-        Vector3Scale(kWarpDirection, kWarpTravelDistance - kWarpArrivalDistance));
+    const scene_rebase star_rebase = scene_rebase::between(
+        Vector3Scale(
+            kWarpDirection,
+            kWarpTravelDistance - kWarpArrivalDistance),
+        Vector3 { 0.0f, 0.0f, 0.0f });
+    const Vector3 star_position = star_rebase.apply(kFleetStarPosition);
 
     auto& main_star = objects_.add<star>(
         star_position, 255, 190, 155, 255);

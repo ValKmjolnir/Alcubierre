@@ -1,4 +1,4 @@
-#include "scene.hpp"
+#include "scenes/scene.hpp"
 
 scene::~scene() {
     // Unregister lights before objects are destroyed

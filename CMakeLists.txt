@@ -24,6 +24,7 @@ set(SOURCES
     lib/scenes/game_scene.cpp
     lib/scenes/fleet_scene.cpp
     lib/scenes/station_scene.cpp
+    lib/scenes/scene_rebase.cpp
     lib/object/laser_beam.cpp
     lib/object/projectile.cpp
     lib/object/star.cpp
@@ -67,12 +68,12 @@ set(SOURCES
     lib/utils/input_manager.cpp
     lib/utils/material_manager.cpp
     lib/utils/shader_manager.cpp
-    lib/scene.cpp
+    lib/scenes/scene.cpp
     lib/window.cpp
     lib/camera.cpp
     lib/light_base.cpp
     lib/lighting_system.cpp
-    lib/skybox.cpp
+    lib/rendering/skybox.cpp
     lib/main.cpp
 )
 

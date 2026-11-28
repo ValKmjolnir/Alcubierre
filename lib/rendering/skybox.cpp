@@ -4,7 +4,7 @@
 #include <cmath>
 #include <vector>
 
-#include "skybox.hpp"
+#include "rendering/skybox.hpp"
 #include "utils/material_manager.hpp"
 #include "utils/shader_manager.hpp"
 

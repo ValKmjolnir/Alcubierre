@@ -21,7 +21,7 @@ void fleet_scene::build(game_window& window) {
     const float titan_yaw = 105.0f;
 
     auto& main_star = objects_.add<star>(
-        Vector3 { 0.0f, 50.0f, 3000.0f }, 255, 190, 155, 255);
+        kFleetStarPosition, 255, 190, 155, 255);
     main_star.set_intensity(10.0f);
     main_star.set_scale(1000.0f);
 

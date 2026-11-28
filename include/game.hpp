@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "window.hpp"
-#include "scene.hpp"
+#include "scenes/scene.hpp"
 #include "camera.hpp"
-#include "skybox.hpp"
+#include "rendering/skybox.hpp"
 #include "rendering/grid.hpp"
 #include "ui/anchor_menu.hpp"
 #include "ui/menu.hpp"
