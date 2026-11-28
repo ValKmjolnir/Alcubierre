@@ -380,8 +380,9 @@ void game::clear_target() {
 }
 
 void game::select_target_at_mouse() {
+    const Vector2 mouse = GetMousePosition();
     const Ray ray = GetScreenToWorldRayEx(
-        GetMousePosition(), camera_.get_camera(), window_.width(), window_.height());
+        mouse, camera_.get_camera(), window_.width(), window_.height());
     const Vector3 end = Vector3Add(
         ray.position, Vector3Scale(ray.direction, 20000.0f));
 
@@ -401,7 +402,29 @@ void game::select_target_at_mouse() {
         }
     }
 
-    set_target(best);
+    if (best) {
+        set_target(best);
+        return;
+    }
+
+    best = brackets_.pick(camera_, window_.width(), window_.height(),
+                          hostiles_, target_ship_, mouse);
+    if (best) {
+        set_target(best);
+        return;
+    }
+
+    if (target_ship_) {
+        const float lock_progress = target_locked_
+            ? 1.0f
+            : lock_elapsed_ / kTargetLockSeconds;
+        if (marker_.contains(camera_, window_.width(), window_.height(),
+                             *target_ship_, lock_progress, mouse)) {
+            return;
+        }
+    }
+
+    set_target(nullptr);
 }
 
 void game::render() {

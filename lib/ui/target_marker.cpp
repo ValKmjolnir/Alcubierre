@@ -92,6 +92,36 @@ void draw_offscreen(const camera_3d& camera, int width, int height,
                color);
 }
 
+bool marker_geometry(const camera_3d& camera, int width, int height,
+                     const ship& target, float progress,
+                     Vector2* screen, float* radius) {
+    const Vector3 center = target.aim_point();
+    const Vector3 to_target = Vector3Subtract(center, camera.position());
+    const Vector3 forward = Vector3Normalize(
+        Vector3Subtract(camera.target(), camera.position()));
+    if (Vector3DotProduct(to_target, forward) <= 0.01f) {
+        return false;
+    }
+
+    const Vector2 projected = GetWorldToScreenEx(
+        center, camera.get_camera(), width, height);
+    if (projected.x < 0.0f || projected.x > float(width)
+        || projected.y < 0.0f || projected.y > float(height)) {
+        return false;
+    }
+
+    const float camera_distance = Vector3Length(to_target);
+    const float px_per_unit = float(height)
+        / (2.0f * camera_distance * tanf(camera.fovy() * DEG2RAD * 0.5f));
+    float r = 0.5f * target.ship_class().length * px_per_unit;
+    r = Clamp(r, kMinRadius, kMaxRadiusFraction * fminf(width, height));
+    r *= 1.45f - 0.45f * ease_out(progress);
+
+    *screen = projected;
+    *radius = r;
+    return true;
+}
+
 }
 
 void target_marker::draw(const camera_3d& camera, int width, int height,
@@ -101,31 +131,14 @@ void target_marker::draw(const camera_3d& camera, int width, int height,
         return;
     }
 
-    const Vector3 center = target.aim_point();
-    const Vector3 to_target = Vector3Subtract(center, camera.position());
-    const Vector3 forward = Vector3Normalize(
-        Vector3Subtract(camera.target(), camera.position()));
-    const float along = Vector3DotProduct(to_target, forward);
-
-    if (along <= 0.01f) {
-        draw_offscreen(camera, width, height, center, distance_km, locked);
+    Vector2 screen;
+    float radius = 0.0f;
+    if (!marker_geometry(camera, width, height, target, progress,
+                         &screen, &radius)) {
+        draw_offscreen(camera, width, height, target.aim_point(),
+                       distance_km, locked);
         return;
     }
-
-    const Vector2 screen = GetWorldToScreenEx(
-        center, camera.get_camera(), width, height);
-    if (screen.x < 0.0f || screen.x > float(width)
-        || screen.y < 0.0f || screen.y > float(height)) {
-        draw_offscreen(camera, width, height, center, distance_km, locked);
-        return;
-    }
-
-    const float camera_distance = Vector3Length(to_target);
-    const float px_per_unit = float(height)
-        / (2.0f * camera_distance * tanf(camera.fovy() * DEG2RAD * 0.5f));
-    float radius = 0.5f * target.ship_class().length * px_per_unit;
-    radius = Clamp(radius, kMinRadius, kMaxRadiusFraction * fminf(width, height));
-    radius *= 1.45f - 0.45f * ease_out(progress);
 
     const Color color = bracket_color(locked);
 
@@ -167,4 +180,21 @@ void target_marker::draw(const camera_3d& camera, int width, int height,
     snprintf(label, sizeof(label), "%s  %s",
              target.ship_class().name, distance);
     draw_label(label, screen.x, screen.y + radius + 8.0f, 12, color);
+}
+
+bool target_marker::contains(const camera_3d& camera, int width, int height,
+                             const ship& target, float progress,
+                             Vector2 point) const {
+    if (target.destroyed()) {
+        return false;
+    }
+
+    Vector2 screen;
+    float radius = 0.0f;
+    if (!marker_geometry(camera, width, height, target, progress,
+                         &screen, &radius)) {
+        return false;
+    }
+
+    return Vector2Distance(point, screen) <= radius + 6.0f;
 }

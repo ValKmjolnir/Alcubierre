@@ -1,5 +1,7 @@
 #pragma once
 
+#include <raylib.h>
+
 class camera_3d;
 class ship;
 
@@ -9,4 +11,6 @@ class target_marker {
 public:
     void draw(const camera_3d& camera, int width, int height, const ship& target,
               float distance_km, float progress, bool locked) const;
+    bool contains(const camera_3d& camera, int width, int height,
+                  const ship& target, float progress, Vector2 point) const;
 };
