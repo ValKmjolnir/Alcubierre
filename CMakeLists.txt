@@ -38,6 +38,7 @@ set(SOURCES
     lib/ui/ui_window.cpp
     lib/ui/debug_window.cpp
     lib/ui/grid_toggle.cpp
+    lib/ui/mouse_cursor.cpp
     lib/ui/ship_status.cpp
     lib/ui/start_screen.cpp
     lib/ui/target_marker.cpp

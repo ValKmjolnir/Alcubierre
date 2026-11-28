@@ -2,21 +2,19 @@
 
 #include "utils/input_manager.hpp"
 
-input_manager::input_manager(): show_mouse_(false) {
-    DisableCursor();
+input_manager::input_manager() {
+    HideCursor();
     SetExitKey(KEY_NULL);
 }
 
 void input_manager::hide_mouse() {
-    if (show_mouse_) {
-        show_mouse_ = false;
-        DisableCursor();
+    if (!IsCursorHidden()) {
+        HideCursor();
     }
 }
 
 void input_manager::show_mouse() {
-    if (!show_mouse_) {
-        show_mouse_ = true;
-        EnableCursor();
+    if (IsCursorHidden()) {
+        ShowCursor();
     }
 }

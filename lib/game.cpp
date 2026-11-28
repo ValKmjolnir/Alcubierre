@@ -32,6 +32,7 @@ game::game()
     , start_screen_(window_)
     , status_(window_)
     , target_status_(window_)
+    , cursor_()
     , input_()
 {
     game_config::singleton().set_max_fps(80);
@@ -205,7 +206,7 @@ void game::handle_input(float dt) {
 
     debug_window_.set_visible(config.get_enable_debug_hud());
 
-    input_.show_mouse();
+    input_.hide_mouse();
 
     if (!started_) {
         if (!menu_.get_show_menu()) {
@@ -424,6 +425,7 @@ void game::render() {
         window_.apply();
         start_screen_.draw();
         menu_.draw(true);
+        cursor_.draw();
         return;
     }
 
@@ -486,6 +488,8 @@ void game::render() {
         debug_window_.update(beta, camForward, timings);
         debug_window_.draw();
     }
+
+    cursor_.draw();
 }
 
 // ============================================================================

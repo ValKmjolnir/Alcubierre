@@ -10,6 +10,7 @@
 #include "ui/menu.hpp"
 #include "ui/debug_window.hpp"
 #include "ui/grid_toggle.hpp"
+#include "ui/mouse_cursor.hpp"
 #include "ui/ship_status.hpp"
 #include "ui/start_screen.hpp"
 #include "ui/target_marker.hpp"
@@ -32,6 +33,7 @@ private:
     grid_toggle grid_button_;
     target_marker marker_;
     target_status target_status_;
+    mouse_cursor cursor_;
     input_manager input_;
     ambient_light ambient_;
 
