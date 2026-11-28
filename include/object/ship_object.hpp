@@ -31,6 +31,7 @@ public:
     ship_object& operator=(const ship_object&) = delete;
 
     void set_pose(const Vector3& position, float yaw_deg) override;
+    void translate(const Vector3& delta) override;
     void draw(const camera_3d& cam, int window_height) const override;
     bool blocks_line(const Vector3& from, const Vector3& to) const override;
 

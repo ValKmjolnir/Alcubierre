@@ -51,6 +51,10 @@ station_object::station_object(mesh_renderer& renderer, const Vector3& position,
 
 station_object::~station_object() = default;
 
+void station_object::translate(const Vector3& delta) {
+    position_ = Vector3Add(position_, delta);
+}
+
 void station_object::draw(const camera_3d& camera, int window_height) const {
     (void)camera;
     (void)window_height;

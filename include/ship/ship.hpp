@@ -32,6 +32,7 @@ public:
     Matrix model_matrix() const;
 
     void set_position(const Vector3& position);
+    void translate(const Vector3& delta) override;
     void set_yaw_deg(float yaw_deg);
     bool align_yaw_to(float target_yaw_deg, float max_turn_deg_per_sec, float dt);
 

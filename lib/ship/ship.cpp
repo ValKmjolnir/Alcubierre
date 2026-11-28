@@ -51,6 +51,10 @@ void ship::set_position(const Vector3& position) {
     }
 }
 
+void ship::translate(const Vector3& delta) {
+    set_position(Vector3Add(position_, delta));
+}
+
 void ship::set_yaw_deg(float yaw_deg) {
     while (yaw_deg > 180.0f) {
         yaw_deg -= 360.0f;

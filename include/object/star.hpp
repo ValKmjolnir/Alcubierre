@@ -34,6 +34,7 @@ public:
     int color_alpha() const { return color_alpha_; }
 
     void set_color(int r, int g, int b, int alpha = 255);
+    void translate(const Vector3& delta) override;
     void set_scale(float s) { scale_ = s; }
     float scale() const { return scale_; }
 

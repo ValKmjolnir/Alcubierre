@@ -141,6 +141,10 @@ void ship_object::set_pose(const Vector3& position, float yaw_deg) {
         MatrixTranslate(position_.x, position_.y, position_.z));
 }
 
+void ship_object::translate(const Vector3& delta) {
+    set_pose(Vector3Add(position_, delta), yaw_deg_);
+}
+
 void ship_object::draw(const camera_3d& cam, int window_height) const {
     (void)cam;
     (void)window_height;

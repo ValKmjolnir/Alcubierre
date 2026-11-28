@@ -22,6 +22,10 @@ public:
     virtual Vector2 draw_flares(const camera_3d& camera, int rt_width,
                                 int rt_height, int window_height) const;
 
+    void translate(const Vector3& delta);
+    void set_preview_mode(bool preview);
+    void set_lights_active(bool active);
+
     ship* player() const { return player_; }
     const std::vector<ship*>& hostiles() const { return hostiles_; }
     virtual const warp_anchor* anchor() const { return nullptr; }

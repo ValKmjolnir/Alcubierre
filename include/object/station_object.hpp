@@ -18,6 +18,7 @@ public:
     station_object& operator=(const station_object&) = delete;
 
     void draw(const camera_3d& camera, int window_height) const override;
+    void translate(const Vector3& delta) override;
     bool blocks_line(const Vector3& from, const Vector3& to) const override;
 
 private:

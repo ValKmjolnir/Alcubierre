@@ -99,6 +99,10 @@ void model_object::set_pose(const Vector3& position, float yaw_deg) {
     update_world();
 }
 
+void model_object::translate(const Vector3& delta) {
+    set_pose(Vector3Add(position_, delta), yaw_deg_);
+}
+
 model_object::~model_object() = default;
 
 void model_object::draw(const camera_3d& cam, int window_height) const {

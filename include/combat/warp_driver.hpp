@@ -16,6 +16,8 @@ public:
 
     void reset();
 
+    static Vector3 destination_position(const Vector3& player, const Vector3& anchor);
+
     bool start_alignment(const ship& player, const Vector3& anchor,
                          bool warp_after, bool to_fleet);
     event update(float dt, ship& player, warp_renderer& warp);

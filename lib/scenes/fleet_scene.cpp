@@ -3,7 +3,6 @@
 #include <raymath.h>
 
 #include "object/star.hpp"
-#include "object/station_object.hpp"
 #include "rendering/mesh_renderer.hpp"
 #include "scenes/warp_path.hpp"
 #include "ship/ship.hpp"
@@ -44,10 +43,6 @@ void fleet_scene::build(mesh_renderer& renderer) {
         renderer, ship_class_of("corvette_glb"), player_pos, 0.0f);
     player_ = &player;
 
-    objects_.add<station_object>(
-        renderer,
-        Vector3Add(player_pos, Vector3Scale(kWarpDirection, kWarpTravelDistance)),
-        kWarpStationYawDeg);
     auto& escort = objects_.add<ship>(
         renderer, ship_class_of("corvette_glb"), escort_pos, escort_yaw);
     auto& titan = objects_.add<ship>(

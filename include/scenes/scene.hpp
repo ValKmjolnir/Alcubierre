@@ -39,8 +39,20 @@ public:
         }
     }
 
+    void translate_all(const Vector3& delta) {
+        for (auto& obj : objects_) {
+            obj->translate(delta);
+        }
+    }
+
+    void set_lights_active(bool active);
+    void set_flare_sources_visible(bool visible);
+
     void draw_all(const camera_3d& cam, int window_height) const {
         for (auto& obj : objects_) {
+            if (!obj->visible()) {
+                continue;
+            }
             obj->draw(cam, window_height);
         }
     }
@@ -49,7 +61,7 @@ public:
         Vector2 origin { -1.0f, -1.0f };
         BeginBlendMode(BLEND_ADDITIVE);
         for (auto& obj : objects_) {
-            if (!obj->is_flare_source()) {
+            if (!obj->visible() || !obj->is_flare_source()) {
                 continue;
             }
 

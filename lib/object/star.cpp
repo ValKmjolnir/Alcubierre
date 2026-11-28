@@ -178,6 +178,10 @@ void star::set_color(int r, int g, int b, int alpha) {
     load_flare_texture();
 }
 
+void star::translate(const Vector3& delta) {
+    set_position(Vector3Add(position_, delta));
+}
+
 void star::draw(const camera_3d& cam, int window_height) const {
     float dist = Vector3Distance(cam.position(), position_);
     if (dist < 0.001f) {

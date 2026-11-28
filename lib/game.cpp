@@ -60,10 +60,14 @@ void game::setup_scene() {
 }
 
 void game::enter_scene(std::unique_ptr<game_scene> next) {
+    next->build(window_);
+    adopt_scene(std::move(next));
+}
+
+void game::adopt_scene(std::unique_ptr<game_scene> next) {
     warp_.reset();
 
     active_scene_ = std::move(next);
-    active_scene_->build(window_);
 
     player_ship_ = active_scene_->player();
     hostiles_ = active_scene_->hostiles();
@@ -81,6 +85,25 @@ void game::enter_scene(std::unique_ptr<game_scene> next) {
             45.0f);
         camera_.update(0.0f, false);
     }
+}
+
+void game::prepare_pending_scene(bool to_fleet, const Vector3& destination) {
+    std::unique_ptr<game_scene> next = to_fleet
+        ? std::unique_ptr<game_scene>(
+            std::make_unique<fleet_scene>(lighting_system::instance()))
+        : std::unique_ptr<game_scene>(
+            std::make_unique<station_scene>(lighting_system::instance()));
+    next->build(window_);
+
+    const Vector3 player_position = next->player()
+        ? next->player()->position()
+        : Vector3 { 0.0f, 0.0f, 0.0f };
+    pending_offset_ = Vector3Subtract(destination, player_position);
+
+    next->translate(pending_offset_);
+    next->set_preview_mode(true);
+    next->set_lights_active(false);
+    pending_scene_ = std::move(next);
 }
 
 // ============================================================================
@@ -241,15 +264,24 @@ void game::handle_input(float dt) {
         case anchor_action::align_to:
             if (const warp_anchor* anchor = active_scene_->anchor();
                 anchor && player_ship_) {
-                warp_.start_alignment(
-                    *player_ship_, anchor->position(), false, false);
+                if (warp_.start_alignment(
+                        *player_ship_, anchor->position(), false, false)) {
+                    pending_scene_.reset();
+                    pending_offset_ = {};
+                }
             }
             break;
         case anchor_action::warp_to:
             if (const warp_anchor* anchor = active_scene_->anchor();
                 anchor && player_ship_) {
-                warp_.start_alignment(*player_ship_, anchor->position(), true,
-                                      active_scene_->warp_to_fleet());
+                const bool to_fleet = active_scene_->warp_to_fleet();
+                if (warp_.start_alignment(
+                        *player_ship_, anchor->position(), true, to_fleet)) {
+                    prepare_pending_scene(
+                        to_fleet,
+                        warp_driver::destination_position(
+                            player_ship_->position(), anchor->position()));
+                }
             }
             break;
         case anchor_action::none:
@@ -375,12 +407,11 @@ void game::handle_warp_jump() {
     const bool to_fleet = warp_.to_fleet();
     const float arrival_yaw = player_ship_->yaw_deg();
 
-    std::unique_ptr<game_scene> next = to_fleet
-        ? std::unique_ptr<game_scene>(
-            std::make_unique<fleet_scene>(lighting_system::instance()))
-        : std::unique_ptr<game_scene>(
-            std::make_unique<station_scene>(lighting_system::instance()));
-    enter_scene(std::move(next));
+    pending_scene_->set_preview_mode(false);
+    pending_scene_->translate(Vector3Negate(pending_offset_));
+    adopt_scene(std::move(pending_scene_));
+    active_scene_->set_lights_active(true);
+    pending_offset_ = {};
 
     if (player_ship_) {
         if (to_fleet) {
@@ -487,6 +518,9 @@ void game::render() {
 
     sky_.draw(camera_.get_camera(), window_.get_warp_renderer().get_velocity());
     active_scene_->draw(camera_, window_.height());
+    if (pending_scene_) {
+        pending_scene_->draw(camera_, window_.height());
+    }
 
     if (!warp_active
         && game_config::singleton().get_enable_grid_draw()

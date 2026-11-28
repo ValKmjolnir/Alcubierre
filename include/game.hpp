@@ -37,6 +37,8 @@ private:
 
     game_window window_;
     std::unique_ptr<game_scene> active_scene_;
+    std::unique_ptr<game_scene> pending_scene_;
+    Vector3 pending_offset_ {};
     camera_3d camera_;
     skybox sky_;
     grid grid_;
@@ -74,6 +76,8 @@ private:
     mouse_routing route_mouse() const;
     void setup_scene();
     void enter_scene(std::unique_ptr<game_scene> next);
+    void adopt_scene(std::unique_ptr<game_scene> next);
+    void prepare_pending_scene(bool to_fleet, const Vector3& destination);
     void setup_ui();
     void setup_post_processing();
 

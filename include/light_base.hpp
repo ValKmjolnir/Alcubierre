@@ -26,6 +26,7 @@ public:
     virtual float inner_cutoff() const { return 1.0f; }
     virtual float range() const { return 0.0f; }
     virtual bool is_active() const { return true; }
+    virtual void set_active(bool active) = 0;
 };
 
 // Point light - emits in all directions
@@ -42,7 +43,7 @@ public:
     void set_position(const Vector3& pos) { position_ = pos; }
     void set_color(const Vector3& col) { color_ = col; }
     void set_intensity(float intensity) { intensity_ = intensity; }
-    void set_active(bool active) { active_ = active; }
+    void set_active(bool active) override { active_ = active; }
     bool is_active() const override { return active_; }
 
 protected:
@@ -67,7 +68,7 @@ public:
     void set_sky_color(const Vector3& color) { sky_color_ = color; }
     void set_ground_color(const Vector3& color) { ground_color_ = color; }
     void set_intensity(float intensity) { intensity_ = intensity; }
-    void set_active(bool active) { active_ = active; }
+    void set_active(bool active) override { active_ = active; }
     bool is_active() const override { return active_; }
 
 private:
@@ -100,7 +101,7 @@ public:
     void set_intensity(float intensity) { intensity_ = intensity; }
     void set_angles(float inner_angle_deg, float outer_angle_deg);
     void set_range(float range) { range_ = range; }
-    void set_active(bool active) { active_ = active; }
+    void set_active(bool active) override { active_ = active; }
     bool is_active() const override { return active_; }
 
 private:
