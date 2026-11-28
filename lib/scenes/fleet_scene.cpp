@@ -1,19 +1,17 @@
 #include "scenes/fleet_scene.hpp"
 
+#include <raymath.h>
+
 #include "object/star.hpp"
+#include "object/station_object.hpp"
+#include "scenes/warp_path.hpp"
 #include "ship/ship.hpp"
 #include "ship/ship_class.hpp"
 #include "window.hpp"
 
-namespace {
-
-constexpr Vector3 kAnchorPosition { -7.6967469e10f, 0.0f, -1.28279116e11f };
-
-}
-
 fleet_scene::fleet_scene(lighting_system& lights)
     : game_scene(lights)
-    , anchor_(kAnchorPosition, "STATION") {}
+    , anchor_(Vector3Scale(kWarpDirection, 10.0f * kWarpUnitsPerAu), "STATION") {}
 
 void fleet_scene::build(game_window& window) {
     const Vector3 player_pos { 0.0f, 0.0f, 0.0f };
@@ -45,6 +43,11 @@ void fleet_scene::build(game_window& window) {
     auto& player = objects_.add<ship>(
         window, ship_class_of("corvette_glb"), player_pos, 0.0f);
     player_ = &player;
+
+    objects_.add<station_object>(
+        window,
+        Vector3Add(player_pos, Vector3Scale(kWarpDirection, kWarpTravelDistance)),
+        kWarpStationYawDeg);
     auto& escort = objects_.add<ship>(
         window, ship_class_of("corvette_glb"), escort_pos, escort_yaw);
     auto& titan = objects_.add<ship>(

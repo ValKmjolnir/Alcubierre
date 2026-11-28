@@ -15,6 +15,7 @@ public:
     virtual ~game_scene() = default;
 
     virtual void build(game_window& window) = 0;
+    virtual void on_warp_start() {}
 
     virtual void update(float dt);
     virtual void draw(const camera_3d& camera, int window_height) const;
@@ -24,6 +25,7 @@ public:
     ship* player() const { return player_; }
     const std::vector<ship*>& hostiles() const { return hostiles_; }
     virtual const warp_anchor* anchor() const { return nullptr; }
+    virtual bool warp_to_fleet() const { return false; }
 
 protected:
     scene objects_;

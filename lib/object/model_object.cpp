@@ -3,6 +3,8 @@
 #include <raymath.h>
 
 #include <cmath>
+#include <string>
+#include <unordered_map>
 
 #include "window.hpp"
 
@@ -10,6 +12,23 @@ namespace {
 
 constexpr float kSpecStrength = 0.4f;
 constexpr float kShininess = 14.0f;
+
+std::unordered_map<std::string, Model> model_cache;
+
+Model* load_cached_model(const char* path) {
+    auto found = model_cache.find(path);
+    if (found != model_cache.end()) {
+        return &found->second;
+    }
+
+    Model model = LoadModel(path);
+    if (model.meshCount == 0) {
+        return nullptr;
+    }
+
+    auto inserted = model_cache.emplace(path, model);
+    return &inserted.first->second;
+}
 
 // lit_object.fs pushes anything above ~0.5 albedo straight to white at this
 // scene's star intensity; kit assets ship much brighter base colours, so bring
@@ -44,13 +63,13 @@ bool ray_hits_bounds(const Vector3& a, const Vector3& b, const BoundingBox& box)
 model_object::model_object(game_window& win, const char* path, float target_length,
                            const Vector3& position, float yaw_deg)
     : window_(&win) {
-    model_ = LoadModel(path);
-    if (model_.meshCount == 0) {
+    model_ = load_cached_model(path);
+    if (!model_) {
         return;
     }
 
     loaded_ = true;
-    bounds_ = GetModelBoundingBox(model_);
+    bounds_ = GetModelBoundingBox(*model_);
 
     const Vector3 size = Vector3Subtract(bounds_.max, bounds_.min);
     const float longest = fmaxf(size.x, fmaxf(size.y, size.z));
@@ -80,30 +99,26 @@ void model_object::set_pose(const Vector3& position, float yaw_deg) {
     update_world();
 }
 
-model_object::~model_object() {
-    if (loaded_) {
-        UnloadModel(model_);
-    }
-}
+model_object::~model_object() = default;
 
 void model_object::draw(const camera_3d& cam, int window_height) const {
     (void)cam;
     (void)window_height;
-    if (!loaded_) {
+    if (!loaded_ || !model_) {
         return;
     }
 
-    const Matrix transform = MatrixMultiply(model_.transform, world_);
-    for (int i = 0; i < model_.meshCount; i++) {
-        const int index = model_.meshMaterial[i];
+    const Matrix transform = MatrixMultiply(model_->transform, world_);
+    for (int i = 0; i < model_->meshCount; i++) {
+        const int index = model_->meshMaterial[i];
 
         lit_surface surface;
         surface.albedo = Color { 255, 255, 255, 255 };
         surface.spec_strength = kSpecStrength;
         surface.shininess = kShininess;
 
-        if (index >= 0 && index < model_.materialCount) {
-            const Material& material = model_.materials[index];
+        if (index >= 0 && index < model_->materialCount) {
+            const Material& material = model_->materials[index];
             const Color color = material.maps[MATERIAL_MAP_DIFFUSE].color;
             surface.albedo = Color {
                 static_cast<unsigned char>(color.r * kAlbedoScale),
@@ -114,7 +129,7 @@ void model_object::draw(const camera_3d& cam, int window_height) const {
             surface.texture = material.maps[MATERIAL_MAP_DIFFUSE].texture;
         }
 
-        window_->draw_lit_mesh(model_.meshes[i], transform, surface);
+        window_->draw_lit_mesh(model_->meshes[i], transform, surface);
     }
 }
 

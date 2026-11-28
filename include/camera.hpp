@@ -32,6 +32,11 @@ public:
     float fovy() const { return camera_.fovy; }
     void set_fovy(float fovy) { camera_.fovy = fovy; }
 
+    float distance() const { return distance_; }
+    float yaw() const { return yaw_; }
+    float pitch() const { return pitch_; }
+    void set_orbit(float distance, float yaw, float pitch);
+
     int projection() const { return camera_.projection; }
     void set_projection(int projection) { camera_.projection = projection; }
 

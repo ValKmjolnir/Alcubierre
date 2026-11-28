@@ -31,6 +31,7 @@ public:
     Vector3 aim_point() const;
     Matrix model_matrix() const;
 
+    void set_position(const Vector3& position);
     void set_yaw_deg(float yaw_deg);
     bool align_yaw_to(float target_yaw_deg, float max_turn_deg_per_sec, float dt);
 

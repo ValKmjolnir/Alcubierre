@@ -24,13 +24,13 @@ public:
     bool blocks_line(const Vector3& from, const Vector3& to) const override;
 
     bool loaded() const { return loaded_; }
-    int mesh_count() const { return model_.meshCount; }
+    int mesh_count() const { return model_ ? model_->meshCount : 0; }
 
 private:
     void update_world();
 
     game_window* window_;
-    Model model_ {};
+    Model* model_ = nullptr;
     bool loaded_ = false;
     Matrix world_ {};
     BoundingBox bounds_ {};

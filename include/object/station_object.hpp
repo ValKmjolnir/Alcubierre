@@ -25,9 +25,9 @@ private:
     Vector3 position_;
     float yaw_deg_;
 
-    Mesh ring_;
-    Mesh core_;
-    Mesh arm_x_;
-    Mesh arm_z_;
-    Mesh module_;
+    const Mesh* ring_;
+    const Mesh* core_;
+    const Mesh* arm_x_;
+    const Mesh* arm_z_;
+    const Mesh* module_;
 };

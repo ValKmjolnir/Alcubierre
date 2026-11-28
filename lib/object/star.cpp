@@ -2,8 +2,67 @@
 #include <raymath.h>
 #include <rlgl.h>
 #include <cmath>
+#include <cstdint>
+#include <map>
 
 #include "object/star.hpp"
+
+Image generate_layered_star(int size, const Color& base_color);
+Image generate_flare_dot(int size, const Color& base_color);
+
+namespace {
+
+std::map<std::uint32_t, Texture2D> star_texture_cache;
+std::map<std::uint32_t, Texture2D> flare_texture_cache;
+
+std::uint32_t color_key(int r, int g, int b, int a) {
+    return (std::uint32_t(r) << 24) | (std::uint32_t(g) << 16)
+        | (std::uint32_t(b) << 8) | std::uint32_t(a);
+}
+
+Texture2D cached_star_texture(int r, int g, int b, int a) {
+    const std::uint32_t key = color_key(r, g, b, a);
+    auto found = star_texture_cache.find(key);
+    if (found != star_texture_cache.end()) {
+        return found->second;
+    }
+
+    const Color base_color {
+        static_cast<unsigned char>(r),
+        static_cast<unsigned char>(g),
+        static_cast<unsigned char>(b),
+        static_cast<unsigned char>(a)
+    };
+
+    Image img = generate_layered_star(512, base_color);
+    Texture2D texture = LoadTextureFromImage(img);
+    UnloadImage(img);
+    star_texture_cache.emplace(key, texture);
+    return texture;
+}
+
+Texture2D cached_flare_texture(int r, int g, int b, int a) {
+    const std::uint32_t key = color_key(r, g, b, a);
+    auto found = flare_texture_cache.find(key);
+    if (found != flare_texture_cache.end()) {
+        return found->second;
+    }
+
+    const Color base_color {
+        static_cast<unsigned char>(r),
+        static_cast<unsigned char>(g),
+        static_cast<unsigned char>(b),
+        static_cast<unsigned char>(a)
+    };
+
+    Image img = generate_flare_dot(64, base_color);
+    Texture2D texture = LoadTextureFromImage(img);
+    UnloadImage(img);
+    flare_texture_cache.emplace(key, texture);
+    return texture;
+}
+
+}
 
 Color single_pixel(int x, int y, float center, const Color& base_color) {
     float dx = (x - center) / center;
@@ -95,35 +154,14 @@ star::star(const Vector3& position, int r, int g, int b, int alpha)
     load_flare_texture();
 }
 
-star::~star() {
-    UnloadTexture(texture_);
-    UnloadTexture(flare_texture_);
-}
+star::~star() = default;
 
 void star::load_texture() {
-    const auto base_color = Color {
-        static_cast<unsigned char>(color_r_),
-        static_cast<unsigned char>(color_g_),
-        static_cast<unsigned char>(color_b_),
-        static_cast<unsigned char>(color_alpha_)
-    };
-
-    Image img = generate_layered_star(512, base_color);
-    texture_ = LoadTextureFromImage(img);
-    UnloadImage(img);
+    texture_ = cached_star_texture(color_r_, color_g_, color_b_, color_alpha_);
 }
 
 void star::load_flare_texture() {
-    const auto base_color = Color {
-        static_cast<unsigned char>(color_r_),
-        static_cast<unsigned char>(color_g_),
-        static_cast<unsigned char>(color_b_),
-        static_cast<unsigned char>(color_alpha_)
-    };
-
-    Image img = generate_flare_dot(64, base_color);
-    flare_texture_ = LoadTextureFromImage(img);
-    UnloadImage(img);
+    flare_texture_ = cached_flare_texture(color_r_, color_g_, color_b_, color_alpha_);
 }
 
 void star::set_color(int r, int g, int b, int alpha) {
@@ -135,9 +173,7 @@ void star::set_color(int r, int g, int b, int alpha) {
     // light color
     color_ = { r / 255.0f, g / 255.0f, b / 255.0f };
 
-    UnloadTexture(texture_);
     load_texture();
-    UnloadTexture(flare_texture_);
     load_flare_texture();
 }
 

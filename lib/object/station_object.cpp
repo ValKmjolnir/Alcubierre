@@ -17,6 +17,25 @@ constexpr float kTiltDegrees = 35.0f;
 const Color kRingColor { 158, 166, 178, 255 };
 const Color kCoreColor { 126, 134, 146, 255 };
 
+struct station_meshes {
+    Mesh ring;
+    Mesh core;
+    Mesh arm_x;
+    Mesh arm_z;
+    Mesh module;
+};
+
+const station_meshes& cached_station_meshes() {
+    static const station_meshes meshes {
+        GenMeshTorus(kRingRadius, kRingThickness, 48, 12),
+        GenMeshCylinder(kCoreRadius, kCoreHeight, 16),
+        GenMeshCube(kRingRadius * 2.0f, 4.0f, 6.0f),
+        GenMeshCube(6.0f, 4.0f, kRingRadius * 2.0f),
+        GenMeshCube(kModuleSize, kModuleSize, kModuleSize)
+    };
+    return meshes;
+}
+
 }
 
 station_object::station_object(game_window& window, const Vector3& position,
@@ -24,19 +43,13 @@ station_object::station_object(game_window& window, const Vector3& position,
     : window_(&window)
     , position_(position)
     , yaw_deg_(yaw_deg)
-    , ring_(GenMeshTorus(kRingRadius, kRingThickness, 48, 12))
-    , core_(GenMeshCylinder(kCoreRadius, kCoreHeight, 16))
-    , arm_x_(GenMeshCube(kRingRadius * 2.0f, 4.0f, 6.0f))
-    , arm_z_(GenMeshCube(6.0f, 4.0f, kRingRadius * 2.0f))
-    , module_(GenMeshCube(kModuleSize, kModuleSize, kModuleSize)) {}
+    , ring_(&cached_station_meshes().ring)
+    , core_(&cached_station_meshes().core)
+    , arm_x_(&cached_station_meshes().arm_x)
+    , arm_z_(&cached_station_meshes().arm_z)
+    , module_(&cached_station_meshes().module) {}
 
-station_object::~station_object() {
-    UnloadMesh(ring_);
-    UnloadMesh(core_);
-    UnloadMesh(arm_x_);
-    UnloadMesh(arm_z_);
-    UnloadMesh(module_);
-}
+station_object::~station_object() = default;
 
 void station_object::draw(const camera_3d& camera, int window_height) const {
     (void)camera;
@@ -50,18 +63,18 @@ void station_object::draw(const camera_3d& camera, int window_height) const {
     const lit_surface ring_surface { kRingColor, 0.28f, 10.0f, {} };
     const lit_surface core_surface { kCoreColor, 0.35f, 12.0f, {} };
 
-    window_->draw_lit_mesh(ring_, base, ring_surface);
+    window_->draw_lit_mesh(*ring_, base, ring_surface);
     window_->draw_lit_mesh(
-        core_, MatrixMultiply(base, MatrixTranslate(0.0f, -kCoreHeight * 0.5f, 0.0f)),
+        *core_, MatrixMultiply(base, MatrixTranslate(0.0f, -kCoreHeight * 0.5f, 0.0f)),
         core_surface);
-    window_->draw_lit_mesh(arm_x_, base, ring_surface);
-    window_->draw_lit_mesh(arm_z_, base, ring_surface);
+    window_->draw_lit_mesh(*arm_x_, base, ring_surface);
+    window_->draw_lit_mesh(*arm_z_, base, ring_surface);
 
     for (int i = 0; i < 4; i++) {
         const float angle = i * PI * 0.5f;
         const Matrix local = MatrixTranslate(
             cosf(angle) * kRingRadius, 0.0f, sinf(angle) * kRingRadius);
-        window_->draw_lit_mesh(module_, MatrixMultiply(base, local), ring_surface);
+        window_->draw_lit_mesh(*module_, MatrixMultiply(base, local), ring_surface);
     }
 }
 

@@ -20,6 +20,12 @@
 #include "ui/target_status.hpp"
 #include "utils/input_manager.hpp"
 
+enum class warp_stage {
+    idle,
+    spooling,
+    arriving
+};
+
 class game_scene;
 class ship;
 
@@ -55,6 +61,12 @@ private:
     bool warp_after_alignment_ = false;
     float align_target_yaw_ = 0.0f;
 
+    warp_stage warp_stage_ = warp_stage::idle;
+    float warp_stage_time_ = 0.0f;
+    Vector3 warp_start_position_ {};
+    Vector3 warp_end_position_ {};
+    bool warp_to_fleet_ = false;
+
     Vector2 press_position_ {};
     bool pick_armed_ = false;
     bool grid_press_armed_ = false;
@@ -76,6 +88,8 @@ private:
     void update_target_lock(float dt);
     void start_alignment(bool warp_after);
     void update_alignment(float dt);
+    void start_warp_spool();
+    void update_warp_sequence(float dt);
     void select_target_at_mouse();
     void set_target(ship* target);
     void clear_target();

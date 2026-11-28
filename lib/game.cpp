@@ -5,12 +5,77 @@
 #include "utils/game_config.hpp"
 #include "scenes/fleet_scene.hpp"
 #include "scenes/station_scene.hpp"
+#include "scenes/warp_path.hpp"
 #include "ship/ship.hpp"
 
 namespace {
 
 constexpr float kTargetLockSeconds = 0.8f;
 constexpr float kAlignTurnDegPerSec = 30.0f;
+
+constexpr float kWarpAccelSeconds = 1.3f;
+constexpr float kWarpCruiseSeconds = 0.9f;
+constexpr float kWarpDecelSeconds = 1.3f;
+constexpr float kWarpSpoolSeconds =
+    kWarpAccelSeconds + kWarpCruiseSeconds + kWarpDecelSeconds;
+constexpr float kWarpArrivalSeconds = 3.5f;
+constexpr float kWarpArrivalHoldSeconds = 0.5f;
+constexpr float kWarpPeakFactor = 4.5f;
+constexpr float kWarpPeakBeta = 0.9f;
+constexpr float kWarpArrivalResidual = 0.35f;
+
+constexpr float kWarpSpeedArea =
+    kWarpAccelSeconds * 0.5f + kWarpCruiseSeconds + kWarpDecelSeconds * 0.5f;
+
+float smooth01(float value) {
+    value = Clamp(value, 0.0f, 1.0f);
+    return value * value * (3.0f - 2.0f * value);
+}
+
+float warp_speed_shape(float elapsed) {
+    if (elapsed <= 0.0f || elapsed >= kWarpSpoolSeconds) {
+        return 0.0f;
+    }
+    if (elapsed < kWarpAccelSeconds) {
+        return smooth01(elapsed / kWarpAccelSeconds);
+    }
+    if (elapsed < kWarpAccelSeconds + kWarpCruiseSeconds) {
+        return 1.0f;
+    }
+    const float u = (elapsed - kWarpAccelSeconds - kWarpCruiseSeconds)
+        / kWarpDecelSeconds;
+    return 1.0f - smooth01(u);
+}
+
+float warp_progress(float elapsed) {
+    if (elapsed <= 0.0f) {
+        return 0.0f;
+    }
+    if (elapsed >= kWarpSpoolSeconds) {
+        return 1.0f;
+    }
+    if (elapsed < kWarpAccelSeconds) {
+        const float u = elapsed / kWarpAccelSeconds;
+        const float u2 = u * u;
+        return kWarpAccelSeconds * (u2 * u - 0.5f * u2 * u2)
+            / kWarpSpeedArea;
+    }
+    if (elapsed < kWarpAccelSeconds + kWarpCruiseSeconds) {
+        return (kWarpAccelSeconds * 0.5f
+            + (elapsed - kWarpAccelSeconds)) / kWarpSpeedArea;
+    }
+    const float u = (elapsed - kWarpAccelSeconds - kWarpCruiseSeconds)
+        / kWarpDecelSeconds;
+    const float speed_integral = u - u * u * u + 0.5f * u * u * u * u;
+    return (kWarpAccelSeconds * 0.5f + kWarpCruiseSeconds
+        + kWarpDecelSeconds * speed_integral) / kWarpSpeedArea;
+}
+
+Vector3 ship_forward(const ship& s) {
+    return Vector3Transform(
+        Vector3 { 0.0f, 0.0f, -1.0f },
+        MatrixRotateY(s.yaw_deg() * DEG2RAD));
+}
 
 }
 
@@ -55,7 +120,7 @@ game::~game() {
 // ============================================================================
 
 void game::setup_scene() {
-    window_.set_clip_planes(0.25f, 10000.0f);
+    window_.set_clip_planes(0.25f, 30000.0f);
 
     ambient_.set_sky_color({ 0.40f, 0.44f, 0.52f });
     ambient_.set_ground_color({ 0.10f, 0.11f, 0.13f });
@@ -68,6 +133,8 @@ void game::setup_scene() {
 void game::enter_scene(std::unique_ptr<game_scene> next) {
     aligning_ = false;
     warp_after_alignment_ = false;
+    warp_stage_ = warp_stage::idle;
+    warp_stage_time_ = 0.0f;
 
     active_scene_ = std::move(next);
     active_scene_->build(window_);
@@ -86,6 +153,7 @@ void game::enter_scene(std::unique_ptr<game_scene> next) {
             player_ship_->position(),
             Vector3 { 0.0f, 1.0f, 0.0f },
             45.0f);
+        camera_.update(0.0f, false);
     }
 }
 
@@ -189,14 +257,16 @@ void game::handle_input(float dt) {
     } else {
         const bool ui_owns_mouse = menu_.get_show_menu()
             || debug_window_.captures_mouse()
-            || anchor_menu_.visible();
+            || anchor_menu_.visible()
+            || warp_stage_ != warp_stage::idle;
 
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
             const Vector2 mouse = GetMousePosition();
             const warp_anchor* anchor = active_scene_->anchor();
             if (anchor_menu_.visible()) {
                 anchor_menu_.close();
-            } else if (!menu_.get_show_menu()
+            } else if (warp_stage_ == warp_stage::idle
+                       && !menu_.get_show_menu()
                        && !debug_window_.captures_mouse()
                        && anchor
                        && anchor->hit_test(camera_, window_.width(),
@@ -213,7 +283,8 @@ void game::handle_input(float dt) {
             grid_press_armed_ = over_grid
                 && !menu_.get_show_menu()
                 && !debug_window_.captures_mouse()
-                && !anchor_menu_.visible();
+                && !anchor_menu_.visible()
+                && warp_stage_ == warp_stage::idle;
             pick_armed_ = !ui_owns_mouse
                 && !over_grid
                 && !status_.contains(mouse_x, mouse_y)
@@ -249,38 +320,40 @@ void game::handle_input(float dt) {
     }
 
     if (started_) {
-        // Warp factor (PgUp / PgDn)
         auto& warp = window_.get_warp_renderer();
-        warp.update_warp_factor(dt);
 
-        // Velocity: beta (UP/DOWN), direction (LEFT/RIGHT)
-        Vector3 vel = warp.get_velocity();
-        float beta = Vector3Length(vel);
-        float dirX = 0.0f, dirZ = 1.0f;
-        if (beta > 0.001f) {
-            dirX = vel.x / beta;
-            dirZ = vel.z / beta;
+        if (warp_stage_ == warp_stage::idle) {
+            warp.update_warp_factor(dt);
+
+            // Velocity: beta (UP/DOWN), direction (LEFT/RIGHT)
+            Vector3 vel = warp.get_velocity();
+            float beta = Vector3Length(vel);
+            float dirX = 0.0f, dirZ = 1.0f;
+            if (beta > 0.001f) {
+                dirX = vel.x / beta;
+                dirZ = vel.z / beta;
+            }
+            float beta_step = 0.0025f * dt * 120.0f;
+            if (IsKeyDown(KEY_UP)) {
+                beta = fminf(beta + beta_step, 10.0f);
+            }
+            if (IsKeyDown(KEY_DOWN)) {
+                beta = fmaxf(beta - beta_step, 0.0f);
+            }
+            if (IsKeyDown(KEY_RIGHT) && beta > 0.001f) {
+                float angle = atan2f(dirX, dirZ) + 0.0025f * dt * 120.0f;
+                dirX = sinf(angle);
+                dirZ = cosf(angle);
+            }
+            if (IsKeyDown(KEY_LEFT) && beta > 0.001f) {
+                float angle = atan2f(dirX, dirZ) - 0.0025f * dt * 120.0f;
+                dirX = sinf(angle);
+                dirZ = cosf(angle);
+            }
+            vel.x = dirX * beta;
+            vel.z = dirZ * beta;
+            warp.set_velocity(vel);
         }
-        float beta_step = 0.0025f * dt * 120.0f;
-        if (IsKeyDown(KEY_UP)) {
-            beta = fminf(beta + beta_step, 10.0f);
-        }
-        if (IsKeyDown(KEY_DOWN)) {
-            beta = fmaxf(beta - beta_step, 0.0f);
-        }
-        if (IsKeyDown(KEY_RIGHT) && beta > 0.001f) {
-            float angle = atan2f(dirX, dirZ) + 0.0025f * dt * 120.0f;
-            dirX = sinf(angle);
-            dirZ = cosf(angle);
-        }
-        if (IsKeyDown(KEY_LEFT) && beta > 0.001f) {
-            float angle = atan2f(dirX, dirZ) - 0.0025f * dt * 120.0f;
-            dirX = sinf(angle);
-            dirZ = cosf(angle);
-        }
-        vel.x = dirX * beta;
-        vel.z = dirZ * beta;
-        warp.set_velocity(vel);
     }
 }
 
@@ -293,7 +366,11 @@ void game::update(float dt) {
     // The menu and the debug window own the mouse while the pointer is over them.
     const bool ui_owns_mouse = menu_.get_show_menu()
         || debug_window_.captures_mouse()
-        || anchor_menu_.visible();
+        || anchor_menu_.visible()
+        || warp_stage_ != warp_stage::idle;
+    const bool camera_accepts_mouse = !menu_.get_show_menu()
+        && !debug_window_.captures_mouse()
+        && !anchor_menu_.visible();
 
     if (!started_) {
         if (player_ship_) {
@@ -309,6 +386,8 @@ void game::update(float dt) {
         warp.set_fov_y(camera_.fovy());
         return;
     }
+
+    update_warp_sequence(dt);
 
     if (player_ship_) {
         camera_.set_target(player_ship_->position());
@@ -327,7 +406,7 @@ void game::update(float dt) {
         : lock_elapsed_ / kTargetLockSeconds;
     target_status_.update(dt, target_ship_, distance_km, lock_progress, target_locked_);
 
-    camera_.update(dt, !ui_owns_mouse);
+    camera_.update(dt, camera_accepts_mouse);
     lighting_system::instance().set_view_position(camera_.position());
     active_scene_->update(dt);
 
@@ -358,6 +437,10 @@ void game::update_target_lock(float dt) {
 }
 
 void game::start_alignment(bool warp_after) {
+    if (warp_stage_ != warp_stage::idle) {
+        return;
+    }
+
     const warp_anchor* anchor = active_scene_->anchor();
     if (!anchor || !player_ship_) {
         return;
@@ -392,7 +475,129 @@ void game::update_alignment(float dt) {
 
     if (warp_after) {
         TraceLog(LOG_INFO, "anchor: warp after alignment");
-        enter_scene(std::make_unique<station_scene>(lighting_system::instance()));
+        start_warp_spool();
+    }
+}
+
+void game::start_warp_spool() {
+    if (warp_stage_ != warp_stage::idle) {
+        return;
+    }
+
+    auto& warp = window_.get_warp_renderer();
+    warp.set_velocity(Vector3 { 0.0f, 0.0f, 0.0f });
+    warp.set_warp_factor(0.0f);
+
+    active_scene_->on_warp_start();
+
+    if (!player_ship_) {
+        return;
+    }
+
+    const warp_anchor* anchor = active_scene_->anchor();
+    if (!anchor) {
+        return;
+    }
+    const Vector3 to_anchor = Vector3Subtract(
+        anchor->position(), player_ship_->position());
+    const float anchor_distance = Vector3Length(to_anchor);
+    if (anchor_distance < 0.001f) {
+        return;
+    }
+    const Vector3 warp_direction = Vector3Scale(to_anchor, 1.0f / anchor_distance);
+
+    player_ship_->clear_targets();
+    camera_.set_target(player_ship_->position());
+    warp_to_fleet_ = active_scene_->warp_to_fleet();
+
+    warp_start_position_ = player_ship_->position();
+    warp_end_position_ = Vector3Add(
+        warp_start_position_,
+        Vector3Scale(
+            warp_direction,
+            kWarpTravelDistance - kWarpArrivalDistance));
+
+    warp_stage_ = warp_stage::spooling;
+    warp_stage_time_ = 0.0f;
+    anchor_menu_.close();
+    TraceLog(LOG_INFO, "warp: spooling");
+}
+
+void game::update_warp_sequence(float dt) {
+    if (warp_stage_ == warp_stage::idle || !player_ship_) {
+        return;
+    }
+
+    auto& warp = window_.get_warp_renderer();
+    warp_stage_time_ += dt;
+
+    if (warp_stage_ == warp_stage::spooling) {
+        const float elapsed = warp_stage_time_;
+        const float progress = warp_progress(elapsed);
+        const float speed = warp_speed_shape(elapsed);
+        const float attack = smooth01(elapsed / kWarpAccelSeconds);
+        const float envelope = attack
+            * (kWarpArrivalResidual + (1.0f - kWarpArrivalResidual) * speed);
+        warp.set_warp_factor(kWarpPeakFactor * envelope);
+        warp.set_velocity(Vector3Scale(
+            ship_forward(*player_ship_), kWarpPeakBeta * envelope));
+        player_ship_->set_position(Vector3Add(
+            warp_start_position_,
+            Vector3Scale(
+                Vector3Subtract(warp_end_position_, warp_start_position_),
+                progress)));
+
+        if (elapsed < kWarpSpoolSeconds) {
+            return;
+        }
+
+        const float orbit_distance = camera_.distance();
+        const float orbit_yaw = camera_.yaw();
+        const float orbit_pitch = camera_.pitch();
+        const bool to_fleet = warp_to_fleet_;
+        const float arrival_yaw = player_ship_->yaw_deg();
+        std::unique_ptr<game_scene> next = to_fleet
+            ? std::unique_ptr<game_scene>(
+                std::make_unique<fleet_scene>(lighting_system::instance()))
+            : std::unique_ptr<game_scene>(
+                std::make_unique<station_scene>(lighting_system::instance()));
+        enter_scene(std::move(next));
+        warp_to_fleet_ = false;
+        warp_stage_ = warp_stage::arriving;
+        warp_stage_time_ = 0.0f;
+
+        if (player_ship_) {
+            if (to_fleet) {
+                player_ship_->set_yaw_deg(arrival_yaw);
+            }
+            camera_.set_target(player_ship_->position());
+            camera_.set_orbit(orbit_distance, orbit_yaw, orbit_pitch);
+            camera_.update(0.0f, false);
+            warp.set_warp_factor(kWarpPeakFactor * kWarpArrivalResidual);
+            warp.set_velocity(Vector3Scale(
+                ship_forward(*player_ship_),
+                kWarpPeakBeta * kWarpArrivalResidual));
+        }
+        TraceLog(LOG_INFO, "warp: jump");
+        return;
+    }
+
+    const float fade_t = Clamp(
+        (warp_stage_time_ - kWarpArrivalHoldSeconds)
+            / (kWarpArrivalSeconds - kWarpArrivalHoldSeconds),
+        0.0f, 1.0f);
+    const float s = smooth01(fade_t);
+    warp.set_warp_factor(
+        kWarpPeakFactor * kWarpArrivalResidual * (1.0f - s));
+    warp.set_velocity(Vector3Scale(
+        ship_forward(*player_ship_),
+        kWarpPeakBeta * kWarpArrivalResidual * (1.0f - s)));
+
+    if (fade_t >= 1.0f) {
+        warp_stage_ = warp_stage::idle;
+        warp.set_warp_factor(0.0f);
+        warp.set_velocity(Vector3 { 0.0f, 0.0f, 0.0f });
+        TraceLog(LOG_INFO, "warp: arrival complete");
     }
 }
 
@@ -484,6 +689,8 @@ void game::render() {
         return;
     }
 
+    const bool warp_active = warp_stage_ != warp_stage::idle;
+
     clock::time_point scene_t0;
     if (show_hud) scene_t0 = clock::now();
 
@@ -493,7 +700,9 @@ void game::render() {
     sky_.draw(camera_.get_camera(), window_.get_warp_renderer().get_velocity());
     active_scene_->draw(camera_, window_.height());
 
-    if (game_config::singleton().get_enable_grid_draw() && player_ship_) {
+    if (!warp_active
+        && game_config::singleton().get_enable_grid_draw()
+        && player_ship_) {
         grid_.draw(player_ship_->position());
     }
 
@@ -516,25 +725,29 @@ void game::render() {
 
     window_.apply();
 
-    brackets_.draw(camera_, window_.width(), window_.height(), hostiles_, target_ship_);
+    if (!warp_active) {
+        brackets_.draw(camera_, window_.width(), window_.height(),
+                       hostiles_, target_ship_);
 
-    if (const warp_anchor* anchor = active_scene_->anchor(); anchor && player_ship_) {
-        anchor->draw(camera_, window_.width(), window_.height(),
-                     player_ship_->position());
-    }
+        if (const warp_anchor* anchor = active_scene_->anchor();
+            anchor && player_ship_) {
+            anchor->draw(camera_, window_.width(), window_.height(),
+                         player_ship_->position());
+        }
 
-    status_.draw();
-    grid_button_.draw(status_.bounds());
+        status_.draw();
+        grid_button_.draw(status_.bounds());
 
-    if (target_ship_ && player_ship_) {
-        const float distance_km = Vector3Distance(
-            player_ship_->position(), target_ship_->aim_point()) * 0.01f;
-        const float lock_progress = target_locked_
-            ? 1.0f
-            : lock_elapsed_ / kTargetLockSeconds;
-        marker_.draw(camera_, window_.width(), window_.height(),
-                     *target_ship_, distance_km, lock_progress, target_locked_);
-        target_status_.draw();
+        if (target_ship_ && player_ship_) {
+            const float distance_km = Vector3Distance(
+                player_ship_->position(), target_ship_->aim_point()) * 0.01f;
+            const float lock_progress = target_locked_
+                ? 1.0f
+                : lock_elapsed_ / kTargetLockSeconds;
+            marker_.draw(camera_, window_.width(), window_.height(),
+                         *target_ship_, distance_km, lock_progress, target_locked_);
+            target_status_.draw();
+        }
     }
 
     menu_.draw(!debug_window_.captures_mouse());

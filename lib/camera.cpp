@@ -19,6 +19,13 @@ camera_3d::camera_3d(const Vector3& position, const Vector3& target, const Vecto
     camera_.projection = CAMERA_PERSPECTIVE;
 }
 
+void camera_3d::set_orbit(float distance, float yaw, float pitch) {
+    distance_ = distance;
+    yaw_ = yaw;
+    pitch_ = pitch;
+    initialized_ = true;
+}
+
 void camera_3d::update(float dt, bool accept_mouse) {
     // lazy initialization
     if (!initialized_) {
