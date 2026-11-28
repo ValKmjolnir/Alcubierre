@@ -461,6 +461,8 @@ void game::render() {
 
     window_.apply();
 
+    brackets_.draw(camera_, window_.width(), window_.height(), hostiles_, target_ship_);
+
     status_.draw();
     grid_button_.draw(status_.bounds());
 
