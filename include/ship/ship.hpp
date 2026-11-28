@@ -7,14 +7,14 @@
 #include "object/object.hpp"
 #include "ship/ship_class.hpp"
 
-class game_window;
+class mesh_renderer;
 class weapon_mount;
 
 // Runtime hull: a ship class definition, current durability and the weapons
 // actually fitted to its hardpoints.
 class ship: public object {
 public:
-    ship(game_window& win, const ship_class_def& cls, const Vector3& position,
+    ship(mesh_renderer& renderer, const ship_class_def& cls, const Vector3& position,
          float yaw_deg = 0.0f);
     ~ship() override;
 
@@ -50,7 +50,7 @@ public:
     bool destroyed() const { return health_.structure <= 0.0f; }
 
 private:
-    game_window* window_;
+    mesh_renderer* renderer_;
     const ship_class_def* class_;
     Vector3 position_;
     float yaw_deg_;

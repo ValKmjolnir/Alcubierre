@@ -5,12 +5,12 @@
 
 #include "object/object.hpp"
 
-class game_window;
+class mesh_renderer;
 class camera_3d;
 
 class station_object: public object {
 public:
-    station_object(game_window& window, const Vector3& position,
+    station_object(mesh_renderer& renderer, const Vector3& position,
                    float yaw_deg = 0.0f);
     ~station_object() override;
 
@@ -21,7 +21,7 @@ public:
     bool blocks_line(const Vector3& from, const Vector3& to) const override;
 
 private:
-    game_window* window_;
+    mesh_renderer* renderer_;
     Vector3 position_;
     float yaw_deg_;
 

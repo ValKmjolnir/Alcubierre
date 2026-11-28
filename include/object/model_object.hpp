@@ -4,7 +4,7 @@
 
 #include "object/object.hpp"
 
-class game_window;
+class mesh_renderer;
 
 // Draws a .glb/.gltf through the engine's own lit shader instead of DrawModel,
 // so imported ships keep the scene lighting and Blinn-Phong response.
@@ -12,7 +12,7 @@ class game_window;
 // units, which doubles as the metre -> 10 m/unit conversion.
 class model_object: public object {
 public:
-    model_object(game_window& win, const char* path, float target_length,
+    model_object(mesh_renderer& renderer, const char* path, float target_length,
                  const Vector3& position, float yaw_deg = 0.0f);
     ~model_object() override;
 
@@ -29,7 +29,7 @@ public:
 private:
     void update_world();
 
-    game_window* window_;
+    mesh_renderer* renderer_;
     Model* model_ = nullptr;
     bool loaded_ = false;
     Matrix world_ {};

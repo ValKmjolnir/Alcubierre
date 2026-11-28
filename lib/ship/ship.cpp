@@ -8,11 +8,11 @@
 #include "combat/weapon_mount.hpp"
 #include "object/model_object.hpp"
 #include "object/ship_object.hpp"
-#include "window.hpp"
+#include "rendering/mesh_renderer.hpp"
 
-ship::ship(game_window& win, const ship_class_def& cls, const Vector3& position,
+ship::ship(mesh_renderer& renderer, const ship_class_def& cls, const Vector3& position,
            float yaw_deg)
-    : window_(&win)
+    : renderer_(&renderer)
     , class_(&cls)
     , position_(position)
     , yaw_deg_(yaw_deg)
@@ -20,11 +20,11 @@ ship::ship(game_window& win, const ship_class_def& cls, const Vector3& position,
     switch (cls.visual) {
     case hull_visual::procedural_titan:
         hull_ = std::make_unique<ship_object>(
-            win, hull_class::titan, position, yaw_deg);
+            renderer, hull_class::titan, position, yaw_deg);
         break;
     case hull_visual::glb: {
         auto model = std::make_unique<model_object>(
-            win, cls.model_path, cls.model_target_length, position, yaw_deg);
+            renderer, cls.model_path, cls.model_target_length, position, yaw_deg);
         if (!model->loaded()) {
             TraceLog(LOG_WARNING, "ship %s: model %s failed to load", cls.id, cls.model_path);
         }
@@ -107,7 +107,7 @@ void ship::draw(const camera_3d& cam, int window_height) const {
 
     for (const auto& mount : mounts_) {
         if (mount) {
-            mount->draw(*window_, cam, window_height);
+            mount->draw(*renderer_, cam, window_height);
         }
     }
 }

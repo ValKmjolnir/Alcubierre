@@ -19,6 +19,10 @@ camera_3d::camera_3d(const Vector3& position, const Vector3& target, const Vecto
     camera_.projection = CAMERA_PERSPECTIVE;
 }
 
+Vector3 camera_3d::forward() const {
+    return Vector3Normalize(Vector3Subtract(camera_.target, camera_.position));
+}
+
 void camera_3d::set_orbit(float distance, float yaw, float pitch) {
     distance_ = distance;
     yaw_ = yaw;

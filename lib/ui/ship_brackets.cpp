@@ -4,6 +4,7 @@
 #include "ui/ship_brackets.hpp"
 #include "camera.hpp"
 #include "ship/ship.hpp"
+#include "utils/screen_projection.hpp"
 
 namespace {
 
@@ -102,42 +103,19 @@ void draw_glyph(Vector2 center, ship_size size) {
     draw_class_glyph(center, size, kGlyph);
 }
 
-bool bracket_screen_position(const camera_3d& camera, int width, int height,
-                             const ship& candidate, const Vector3& forward,
-                             Vector2* screen) {
-    const Vector3 center = candidate.aim_point();
-    const Vector3 to_ship = Vector3Subtract(center, camera.position());
-    if (Vector3DotProduct(to_ship, forward) <= 0.0f) {
-        return false;
-    }
-
-    const Vector2 projected = GetWorldToScreenEx(
-        center, camera.get_camera(), width, height);
-    if (projected.x < 0.0f || projected.x > float(width)
-        || projected.y < 0.0f || projected.y > float(height)) {
-        return false;
-    }
-
-    *screen = projected;
-    return true;
-}
-
 }
 
 void ship_brackets::draw(const camera_3d& camera, int width, int height,
                          const std::vector<ship*>& ships,
                          const ship* target) const {
-    const Vector3 forward = Vector3Normalize(
-        Vector3Subtract(camera.target(), camera.position()));
-
     for (const ship* candidate : ships) {
         if (!candidate || candidate->destroyed() || candidate == target) {
             continue;
         }
 
         Vector2 screen;
-        if (!bracket_screen_position(camera, width, height, *candidate,
-                                     forward, &screen)) {
+        if (!screen_projection::project(
+                camera, width, height, candidate->aim_point(), &screen)) {
             continue;
         }
 
@@ -150,9 +128,6 @@ void ship_brackets::draw(const camera_3d& camera, int width, int height,
 ship* ship_brackets::pick(const camera_3d& camera, int width, int height,
                           const std::vector<ship*>& ships,
                           const ship* target, Vector2 point) const {
-    const Vector3 forward = Vector3Normalize(
-        Vector3Subtract(camera.target(), camera.position()));
-
     ship* best = nullptr;
     float best_screen_distance = kPickRadius;
     float best_camera_distance = 0.0f;
@@ -163,8 +138,8 @@ ship* ship_brackets::pick(const camera_3d& camera, int width, int height,
         }
 
         Vector2 screen;
-        if (!bracket_screen_position(camera, width, height, *candidate,
-                                     forward, &screen)) {
+        if (!screen_projection::project(
+                camera, width, height, candidate->aim_point(), &screen)) {
             continue;
         }
 

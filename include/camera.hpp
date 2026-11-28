@@ -29,6 +29,9 @@ public:
     Vector3 up() const { return camera_.up; }
     void set_up(const Vector3& up) { camera_.up = up; }
 
+    // Normalised view direction (target - position).
+    Vector3 forward() const;
+
     float fovy() const { return camera_.fovy; }
     void set_fovy(float fovy) { camera_.fovy = fovy; }
 

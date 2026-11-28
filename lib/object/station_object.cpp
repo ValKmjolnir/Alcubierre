@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "window.hpp"
+#include "rendering/mesh_renderer.hpp"
 
 namespace {
 
@@ -38,9 +38,9 @@ const station_meshes& cached_station_meshes() {
 
 }
 
-station_object::station_object(game_window& window, const Vector3& position,
+station_object::station_object(mesh_renderer& renderer, const Vector3& position,
                                float yaw_deg)
-    : window_(&window)
+    : renderer_(&renderer)
     , position_(position)
     , yaw_deg_(yaw_deg)
     , ring_(&cached_station_meshes().ring)
@@ -63,18 +63,18 @@ void station_object::draw(const camera_3d& camera, int window_height) const {
     const lit_surface ring_surface { kRingColor, 0.28f, 10.0f, {} };
     const lit_surface core_surface { kCoreColor, 0.35f, 12.0f, {} };
 
-    window_->draw_lit_mesh(*ring_, base, ring_surface);
-    window_->draw_lit_mesh(
+    renderer_->draw_lit_mesh(*ring_, base, ring_surface);
+    renderer_->draw_lit_mesh(
         *core_, MatrixMultiply(base, MatrixTranslate(0.0f, -kCoreHeight * 0.5f, 0.0f)),
         core_surface);
-    window_->draw_lit_mesh(*arm_x_, base, ring_surface);
-    window_->draw_lit_mesh(*arm_z_, base, ring_surface);
+    renderer_->draw_lit_mesh(*arm_x_, base, ring_surface);
+    renderer_->draw_lit_mesh(*arm_z_, base, ring_surface);
 
     for (int i = 0; i < 4; i++) {
         const float angle = i * PI * 0.5f;
         const Matrix local = MatrixTranslate(
             cosf(angle) * kRingRadius, 0.0f, sinf(angle) * kRingRadius);
-        window_->draw_lit_mesh(*module_, MatrixMultiply(base, local), ring_surface);
+        renderer_->draw_lit_mesh(*module_, MatrixMultiply(base, local), ring_surface);
     }
 }
 

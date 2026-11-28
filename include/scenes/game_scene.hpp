@@ -4,7 +4,7 @@
 
 #include "scenes/scene.hpp"
 
-class game_window;
+class mesh_renderer;
 class ship;
 class warp_anchor;
 
@@ -14,7 +14,7 @@ public:
 
     virtual ~game_scene() = default;
 
-    virtual void build(game_window& window) = 0;
+    virtual void build(mesh_renderer& renderer) = 0;
     virtual void on_warp_start() {}
 
     virtual void update(float dt);

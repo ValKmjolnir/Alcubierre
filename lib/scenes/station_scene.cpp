@@ -6,18 +6,18 @@
 
 #include "object/star.hpp"
 #include "object/station_object.hpp"
+#include "rendering/mesh_renderer.hpp"
 #include "scenes/scene_rebase.hpp"
 #include "scenes/warp_path.hpp"
 #include "ship/ship.hpp"
 #include "ship/ship_class.hpp"
-#include "window.hpp"
 
 station_scene::station_scene(lighting_system& lights)
     : game_scene(lights)
     , fleet_anchor_(
         Vector3Scale(kWarpDirection, -10.0f * kWarpUnitsPerAu), "FLEET") {}
 
-void station_scene::build(game_window& window) {
+void station_scene::build(mesh_renderer& renderer) {
     const scene_rebase star_rebase = scene_rebase::between(
         Vector3Scale(
             kWarpDirection,
@@ -31,7 +31,7 @@ void station_scene::build(game_window& window) {
     main_star.set_scale(1000.0f);
 
     objects_.add<station_object>(
-        window,
+        renderer,
         Vector3Scale(kWarpDirection, kWarpArrivalDistance),
         kWarpStationYawDeg);
 
@@ -42,7 +42,7 @@ void station_scene::build(game_window& window) {
 
     const float arrival_yaw = atan2f(-kWarpDirection.x, -kWarpDirection.z) * RAD2DEG;
     auto& player = objects_.add<ship>(
-        window, *corvette, Vector3 { 0.0f, 0.0f, 0.0f }, arrival_yaw);
+        renderer, *corvette, Vector3 { 0.0f, 0.0f, 0.0f }, arrival_yaw);
     player_ = &player;
 
     if (const weapon_def* weapon = find_weapon("pulse_laser_s")) {

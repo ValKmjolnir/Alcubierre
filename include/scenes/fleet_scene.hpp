@@ -7,7 +7,7 @@ class fleet_scene: public game_scene {
 public:
     explicit fleet_scene(lighting_system& lights);
 
-    void build(game_window& window) override;
+    void build(mesh_renderer& renderer) override;
     const warp_anchor* anchor() const override { return &anchor_; }
 
 private:

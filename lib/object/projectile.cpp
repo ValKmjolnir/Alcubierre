@@ -331,7 +331,7 @@ void projectile::draw(const camera_3d& cam, int /*window_height*/) const {
     SetShaderValue(shader_, loc_glow_radius, &glow, SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader_, loc_core_frac, &core_frac, SHADER_UNIFORM_FLOAT);
 
-    const Vector3 forward = Vector3Normalize(Vector3Subtract(cam.target(), cam.position()));
+    const Vector3 forward = cam.forward();
     const Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, cam.up()));
     const Vector3 up = Vector3CrossProduct(right, forward);
 

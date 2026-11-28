@@ -33,6 +33,8 @@ set(SOURCES
     lib/object/station_object.cpp
     lib/combat/weapon_def.cpp
     lib/combat/weapon_mount.cpp
+    lib/combat/target_lock.cpp
+    lib/combat/warp_driver.cpp
     lib/ship/ship.cpp
     lib/ship/ship_class.cpp
     lib/ui/widget/button.cpp
@@ -65,6 +67,7 @@ set(SOURCES
     lib/rendering/texture_handle.cpp
     lib/utils/draw_texture.cpp
     lib/utils/game_config.cpp
+    lib/utils/screen_projection.cpp
     lib/utils/input_manager.cpp
     lib/utils/material_manager.cpp
     lib/utils/shader_manager.cpp

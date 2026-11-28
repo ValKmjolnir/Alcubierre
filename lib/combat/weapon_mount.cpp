@@ -9,7 +9,7 @@
 #include "object/laser_beam.hpp"
 #include "object/projectile.hpp"
 #include "ship/ship.hpp"
-#include "window.hpp"
+#include "rendering/mesh_renderer.hpp"
 
 namespace {
 
@@ -291,18 +291,18 @@ void weapon_mount::update(float dt, const Matrix& ship_model) {
     }
 }
 
-void weapon_mount::draw(game_window& win, const camera_3d& cam, int window_height) const {
+void weapon_mount::draw(mesh_renderer& renderer, const camera_3d& cam, int window_height) const {
     lit_surface base_surface;
     base_surface.albedo = Color { 48, 52, 60, 255 };
     base_surface.spec_strength = 0.45f;
     base_surface.shininess = 14.0f;
-    win.draw_lit_mesh(base_mesh_, base_transform_, base_surface);
+    renderer.draw_lit_mesh(base_mesh_, base_transform_, base_surface);
 
     lit_surface gun_surface;
     gun_surface.albedo = Color { 74, 79, 88, 255 };
     gun_surface.spec_strength = 0.7f;
     gun_surface.shininess = 18.0f;
-    win.draw_lit_mesh(housing_mesh_, gun_transform_, gun_surface);
+    renderer.draw_lit_mesh(housing_mesh_, gun_transform_, gun_surface);
 
     if (def_->barrel_count > 0) {
         lit_surface barrel_surface;
@@ -314,7 +314,7 @@ void weapon_mount::draw(game_window& win, const camera_3d& cam, int window_heigh
             Matrix local = MatrixTranslate(0.0f, -def_->barrel_length * 0.5f, 0.0f);
             local = MatrixMultiply(local, MatrixRotateX(-90.0f * DEG2RAD));
             local = MatrixMultiply(local, MatrixTranslate(offset.x, offset.y, offset.z));
-            win.draw_lit_mesh(barrel_mesh_, MatrixMultiply(local, gun_transform_), barrel_surface);
+            renderer.draw_lit_mesh(barrel_mesh_, MatrixMultiply(local, gun_transform_), barrel_surface);
         }
     }
 

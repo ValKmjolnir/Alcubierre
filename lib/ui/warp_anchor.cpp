@@ -5,13 +5,14 @@
 
 #include "ui/warp_anchor.hpp"
 #include "camera.hpp"
+#include "utils/screen_projection.hpp"
+#include "utils/units.hpp"
 
 namespace {
 
 constexpr float kRadius = 10.0f;
 constexpr float kThickness = 1.6f;
 constexpr float kHitRadius = 14.0f;
-constexpr double kKmPerAu = 149597870.7;
 
 const Color kShadow { 0, 0, 0, 160 };
 const Color kColor { 0, 221, 255, 220 };
@@ -19,22 +20,7 @@ const Color kCore { 235, 244, 255, 235 };
 
 bool anchor_screen_position(const camera_3d& camera, int width, int height,
                             const Vector3& position, Vector2* screen) {
-    const Vector3 forward = Vector3Normalize(
-        Vector3Subtract(camera.target(), camera.position()));
-    const Vector3 to_anchor = Vector3Subtract(position, camera.position());
-    if (Vector3DotProduct(to_anchor, forward) <= 0.0f) {
-        return false;
-    }
-
-    const Vector2 projected = GetWorldToScreenEx(
-        position, camera.get_camera(), width, height);
-    if (projected.x < 0.0f || projected.x > float(width)
-        || projected.y < 0.0f || projected.y > float(height)) {
-        return false;
-    }
-
-    *screen = projected;
-    return true;
+    return screen_projection::project(camera, width, height, position, screen);
 }
 
 void draw_diamond(Vector2 center, Color color) {
@@ -66,7 +52,8 @@ void warp_anchor::draw(const camera_3d& camera, int width, int height,
     DrawCircleLines(int(screen.x), int(screen.y), 4.0f, kColor);
     DrawCircleV(screen, 1.2f, kCore);
 
-    const float distance_km = Vector3Distance(player_position, position_) * 0.01f;
+    const float distance_km = units_to_km(
+        Vector3Distance(player_position, position_));
     const double distance_au = double(distance_km) / kKmPerAu;
 
     char label[96];

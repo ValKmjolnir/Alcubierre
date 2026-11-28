@@ -7,7 +7,7 @@ class station_scene: public game_scene {
 public:
     explicit station_scene(lighting_system& lights);
 
-    void build(game_window& window) override;
+    void build(mesh_renderer& renderer) override;
     const warp_anchor* anchor() const override { return &fleet_anchor_; }
     bool warp_to_fleet() const override { return true; }
 

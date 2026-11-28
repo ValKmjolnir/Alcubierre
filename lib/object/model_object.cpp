@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "window.hpp"
+#include "rendering/mesh_renderer.hpp"
 
 namespace {
 
@@ -60,9 +60,9 @@ bool ray_hits_bounds(const Vector3& a, const Vector3& b, const BoundingBox& box)
 
 } // namespace
 
-model_object::model_object(game_window& win, const char* path, float target_length,
+model_object::model_object(mesh_renderer& renderer, const char* path, float target_length,
                            const Vector3& position, float yaw_deg)
-    : window_(&win) {
+    : renderer_(&renderer) {
     model_ = load_cached_model(path);
     if (!model_) {
         return;
@@ -129,7 +129,7 @@ void model_object::draw(const camera_3d& cam, int window_height) const {
             surface.texture = material.maps[MATERIAL_MAP_DIFFUSE].texture;
         }
 
-        window_->draw_lit_mesh(model_->meshes[i], transform, surface);
+        renderer_->draw_lit_mesh(model_->meshes[i], transform, surface);
     }
 }
 

@@ -9,7 +9,7 @@
 #include "combat/weapon_def.hpp"
 #include "ship/ship_class.hpp"
 
-class game_window;
+class mesh_renderer;
 class laser_beam;
 class projectile;
 class ship;
@@ -32,7 +32,7 @@ public:
     void clear_target();
 
     void update(float dt, const Matrix& ship_model);
-    void draw(game_window& win, const camera_3d& cam, int window_height) const;
+    void draw(mesh_renderer& renderer, const camera_3d& cam, int window_height) const;
 
 private:
     Vector3 fire_direction() const;

@@ -4,16 +4,16 @@
 
 #include "object/star.hpp"
 #include "object/station_object.hpp"
+#include "rendering/mesh_renderer.hpp"
 #include "scenes/warp_path.hpp"
 #include "ship/ship.hpp"
 #include "ship/ship_class.hpp"
-#include "window.hpp"
 
 fleet_scene::fleet_scene(lighting_system& lights)
     : game_scene(lights)
     , anchor_(Vector3Scale(kWarpDirection, 10.0f * kWarpUnitsPerAu), "STATION") {}
 
-void fleet_scene::build(game_window& window) {
+void fleet_scene::build(mesh_renderer& renderer) {
     const Vector3 player_pos { 0.0f, 0.0f, 0.0f };
     const Vector3 escort_pos { -46.0f, -4.5f, -40.0f };
     const float escort_yaw = -60.0f;
@@ -41,17 +41,17 @@ void fleet_scene::build(game_window& window) {
     };
 
     auto& player = objects_.add<ship>(
-        window, ship_class_of("corvette_glb"), player_pos, 0.0f);
+        renderer, ship_class_of("corvette_glb"), player_pos, 0.0f);
     player_ = &player;
 
     objects_.add<station_object>(
-        window,
+        renderer,
         Vector3Add(player_pos, Vector3Scale(kWarpDirection, kWarpTravelDistance)),
         kWarpStationYawDeg);
     auto& escort = objects_.add<ship>(
-        window, ship_class_of("corvette_glb"), escort_pos, escort_yaw);
+        renderer, ship_class_of("corvette_glb"), escort_pos, escort_yaw);
     auto& titan = objects_.add<ship>(
-        window, ship_class_of("titan_blockout"), titan_pos, titan_yaw);
+        renderer, ship_class_of("titan_blockout"), titan_pos, titan_yaw);
     hostiles_.push_back(&escort);
     hostiles_.push_back(&titan);
 

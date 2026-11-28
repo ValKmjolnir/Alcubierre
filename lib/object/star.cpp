@@ -6,6 +6,7 @@
 #include <map>
 
 #include "object/star.hpp"
+#include "utils/screen_projection.hpp"
 
 Image generate_layered_star(int size, const Color& base_color);
 Image generate_flare_dot(int size, const Color& base_color);
@@ -198,16 +199,10 @@ void star::draw(const camera_3d& cam, int window_height) const {
 }
 
 Vector2 star::draw_flare(const camera_3d& cam, int rt_width, int rt_height, int window_height) const {
-    const Vector3 forward = Vector3Subtract(cam.target(), cam.position());
-    if (Vector3DotProduct(Vector3Subtract(position_, cam.position()), forward) <= 0.0f) {
-        return Vector2 { -1.0f, -1.0f };
-    }
-
-    const Vector2 screen = GetWorldToScreenEx(position_, cam.get_camera(), rt_width, rt_height);
     const float size = flare_thickness_ * (float)rt_height;
-
-    if (screen.x + size < 0.0f || screen.y + size < 0.0f ||
-        screen.x - size > (float)rt_width || screen.y - size > (float)rt_height) {
+    Vector2 screen;
+    if (!screen_projection::project(cam, rt_width, rt_height, position_,
+                                    &screen, size)) {
         return Vector2 { -1.0f, -1.0f };
     }
 

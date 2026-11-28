@@ -8,19 +8,11 @@
 #include "rendering/bloom.hpp"
 #include "rendering/downsample.hpp"
 #include "rendering/frame_graph.hpp"
+#include "rendering/mesh_renderer.hpp"
 
 #include <memory>
 
-// Surface description for the lit shader: albedo (colour x optional texture)
-// and the per-surface Blinn-Phong response.
-struct lit_surface {
-    Color albedo { 255, 255, 255, 255 };
-    float spec_strength = 0.0f;
-    float shininess = 24.0f;
-    Texture2D texture {};
-};
-
-class game_window {
+class game_window: public mesh_renderer {
 private:
     int width_;
     int height_;
@@ -66,7 +58,7 @@ private:
 
 public:
     game_window(int width = 800, int height = 600, const char* title = "Game Window");
-    ~game_window();
+    ~game_window() override;
 
     void begin_drawing() { BeginDrawing(); }
     void end_drawing() { EndDrawing(); }
@@ -83,7 +75,8 @@ public:
     void set_clip_planes(float near_plane, float far_plane);
 
     // Draw methods using lit shader
-    void draw_lit_mesh(const Mesh& mesh, const Matrix& transform, const lit_surface& surface);
+    void draw_lit_mesh(const Mesh& mesh, const Matrix& transform,
+                       const lit_surface& surface) override;
     void draw_cube(const Vector3& position, float width, float height, float length, int r, int g, int b);
 
     // Bloom post-processing

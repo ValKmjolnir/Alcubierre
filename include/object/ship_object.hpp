@@ -6,7 +6,7 @@
 
 #include "object/object.hpp"
 
-class game_window;
+class mesh_renderer;
 
 // Local space: nose along -Z, origin at the hull centre.
 // titan — 1000 units long (10 km), macro blocks only
@@ -24,7 +24,7 @@ public:
         float shininess;
     };
 
-    ship_object(game_window& win, hull_class cls, const Vector3& position, float yaw_deg = 0.0f);
+    ship_object(mesh_renderer& renderer, hull_class cls, const Vector3& position, float yaw_deg = 0.0f);
     ~ship_object() override;
 
     ship_object(const ship_object&) = delete;
@@ -45,7 +45,7 @@ private:
     void build_titan();
     void add(Mesh mesh, const Matrix& transform, Color color, float spec_strength, float shininess);
 
-    game_window* window_;
+    mesh_renderer* renderer_;
     std::vector<part> parts_;
     hull_class class_;
     Vector3 position_;

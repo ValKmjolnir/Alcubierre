@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-#include "window.hpp"
+#include "rendering/mesh_renderer.hpp"
 
 namespace {
 
@@ -115,8 +115,8 @@ Mesh make_tapered_box(float front_hw, float front_hh,
 
 } // namespace
 
-ship_object::ship_object(game_window& win, hull_class cls, const Vector3& position, float yaw_deg)
-    : window_(&win)
+ship_object::ship_object(mesh_renderer& renderer, hull_class cls, const Vector3& position, float yaw_deg)
+    : renderer_(&renderer)
     , class_(cls)
     , position_(position)
     , yaw_deg_(yaw_deg) {
@@ -149,7 +149,7 @@ void ship_object::draw(const camera_3d& cam, int window_height) const {
         surface.albedo = p.color;
         surface.spec_strength = p.spec_strength;
         surface.shininess = p.shininess;
-        window_->draw_lit_mesh(p.mesh, MatrixMultiply(p.transform, model_), surface);
+        renderer_->draw_lit_mesh(p.mesh, MatrixMultiply(p.transform, model_), surface);
     }
 }
 

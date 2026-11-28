@@ -7,6 +7,7 @@
 #include "ui/target_marker.hpp"
 #include "camera.hpp"
 #include "ship/ship.hpp"
+#include "utils/screen_projection.hpp"
 
 namespace {
 
@@ -51,8 +52,7 @@ void format_distance(char* out, size_t size, float km) {
 
 void draw_offscreen(const camera_3d& camera, int width, int height,
                     const Vector3& target_center, float distance_km, bool locked) {
-    const Vector3 forward = Vector3Normalize(
-        Vector3Subtract(camera.target(), camera.position()));
+    const Vector3 forward = camera.forward();
     const Vector3 right = Vector3Normalize(
         Vector3CrossProduct(forward, camera.up()));
     const Vector3 up = Vector3CrossProduct(right, forward);
@@ -96,21 +96,14 @@ bool marker_geometry(const camera_3d& camera, int width, int height,
                      const ship& target, float progress,
                      Vector2* screen, float* radius) {
     const Vector3 center = target.aim_point();
-    const Vector3 to_target = Vector3Subtract(center, camera.position());
-    const Vector3 forward = Vector3Normalize(
-        Vector3Subtract(camera.target(), camera.position()));
-    if (Vector3DotProduct(to_target, forward) <= 0.01f) {
+    Vector2 projected;
+    if (!screen_projection::project(camera, width, height, center, &projected,
+                                    0.0f, 0.01f)) {
         return false;
     }
 
-    const Vector2 projected = GetWorldToScreenEx(
-        center, camera.get_camera(), width, height);
-    if (projected.x < 0.0f || projected.x > float(width)
-        || projected.y < 0.0f || projected.y > float(height)) {
-        return false;
-    }
-
-    const float camera_distance = Vector3Length(to_target);
+    const float camera_distance = Vector3Length(
+        Vector3Subtract(center, camera.position()));
     const float px_per_unit = float(height)
         / (2.0f * camera_distance * tanf(camera.fovy() * DEG2RAD * 0.5f));
     float r = 0.5f * target.ship_class().length * px_per_unit;
