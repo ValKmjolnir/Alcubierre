@@ -31,6 +31,9 @@ public:
     Vector3 aim_point() const;
     Matrix model_matrix() const;
 
+    void set_yaw_deg(float yaw_deg);
+    bool align_yaw_to(float target_yaw_deg, float max_turn_deg_per_sec, float dt);
+
     void aim_at(const Vector3& world_point);
     void aim_at(ship& target);
     void clear_targets();

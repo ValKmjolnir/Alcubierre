@@ -44,6 +44,34 @@ Matrix ship::model_matrix() const {
         MatrixTranslate(position_.x, position_.y, position_.z));
 }
 
+void ship::set_yaw_deg(float yaw_deg) {
+    while (yaw_deg > 180.0f) {
+        yaw_deg -= 360.0f;
+    }
+    while (yaw_deg <= -180.0f) {
+        yaw_deg += 360.0f;
+    }
+
+    yaw_deg_ = yaw_deg;
+    if (hull_) {
+        hull_->set_pose(position_, yaw_deg_);
+    }
+}
+
+bool ship::align_yaw_to(float target_yaw_deg, float max_turn_deg_per_sec, float dt) {
+    float delta = target_yaw_deg - yaw_deg_;
+    delta = fmodf(delta + 540.0f, 360.0f) - 180.0f;
+
+    const float step = max_turn_deg_per_sec * dt;
+    if (fabsf(delta) <= step) {
+        set_yaw_deg(target_yaw_deg);
+        return true;
+    }
+
+    set_yaw_deg(yaw_deg_ + copysignf(step, delta));
+    return false;
+}
+
 Vector3 ship::aim_point() const {
     return Vector3Add(position_, Vector3 { 0.0f, class_->length * 0.03f, 0.0f });
 }

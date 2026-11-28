@@ -54,16 +54,30 @@ model_object::model_object(game_window& win, const char* path, float target_leng
 
     const Vector3 size = Vector3Subtract(bounds_.max, bounds_.min);
     const float longest = fmaxf(size.x, fmaxf(size.y, size.z));
-    const float scale = (longest > 1e-6f) ? (target_length / longest) : 1.0f;
+    scale_ = (longest > 1e-6f) ? (target_length / longest) : 1.0f;
 
     // Kit assets are rarely centred on their origin, so recentre on the bounds
     // before placing: the position argument then means the hull centre.
-    const Vector3 center = Vector3Scale(Vector3Add(bounds_.min, bounds_.max), 0.5f);
+    center_ = Vector3Scale(Vector3Add(bounds_.min, bounds_.max), 0.5f);
+    position_ = position;
+    yaw_deg_ = yaw_deg;
+    update_world();
+}
 
-    world_ = MatrixScale(scale, scale, scale);
-    world_ = MatrixMultiply(world_, MatrixTranslate(-center.x * scale, -center.y * scale, -center.z * scale));
-    world_ = MatrixMultiply(world_, MatrixRotateY(yaw_deg * DEG2RAD));
-    world_ = MatrixMultiply(world_, MatrixTranslate(position.x, position.y, position.z));
+void model_object::update_world() {
+    world_ = MatrixScale(scale_, scale_, scale_);
+    world_ = MatrixMultiply(
+        world_,
+        MatrixTranslate(-center_.x * scale_, -center_.y * scale_, -center_.z * scale_));
+    world_ = MatrixMultiply(world_, MatrixRotateY(yaw_deg_ * DEG2RAD));
+    world_ = MatrixMultiply(
+        world_, MatrixTranslate(position_.x, position_.y, position_.z));
+}
+
+void model_object::set_pose(const Vector3& position, float yaw_deg) {
+    position_ = position;
+    yaw_deg_ = yaw_deg;
+    update_world();
 }
 
 model_object::~model_object() {

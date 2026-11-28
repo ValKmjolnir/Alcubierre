@@ -133,6 +133,14 @@ ship_object::~ship_object() {
     }
 }
 
+void ship_object::set_pose(const Vector3& position, float yaw_deg) {
+    position_ = position;
+    yaw_deg_ = yaw_deg;
+    model_ = MatrixMultiply(
+        MatrixRotateY(yaw_deg_ * DEG2RAD),
+        MatrixTranslate(position_.x, position_.y, position_.z));
+}
+
 void ship_object::draw(const camera_3d& cam, int window_height) const {
     (void)cam;
     (void)window_height;

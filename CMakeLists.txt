@@ -21,11 +21,15 @@ include_directories(${RAYLIB_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 # Source files
 set(SOURCES
     lib/game.cpp
+    lib/scenes/game_scene.cpp
+    lib/scenes/fleet_scene.cpp
+    lib/scenes/station_scene.cpp
     lib/object/laser_beam.cpp
     lib/object/projectile.cpp
     lib/object/star.cpp
     lib/object/ship_object.cpp
     lib/object/model_object.cpp
+    lib/object/station_object.cpp
     lib/combat/weapon_def.cpp
     lib/combat/weapon_mount.cpp
     lib/ship/ship.cpp
@@ -42,8 +46,10 @@ set(SOURCES
     lib/ui/ship_brackets.cpp
     lib/ui/ship_status.cpp
     lib/ui/start_screen.cpp
+    lib/ui/anchor_menu.cpp
     lib/ui/target_marker.cpp
     lib/ui/target_status.cpp
+    lib/ui/warp_anchor.cpp
     lib/ui/durability_style.cpp
     lib/ui/text_wrap.cpp
     lib/ui/menu.cpp

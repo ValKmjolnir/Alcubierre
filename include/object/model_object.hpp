@@ -19,6 +19,7 @@ public:
     model_object(const model_object&) = delete;
     model_object& operator=(const model_object&) = delete;
 
+    void set_pose(const Vector3& position, float yaw_deg) override;
     void draw(const camera_3d& cam, int window_height) const override;
     bool blocks_line(const Vector3& from, const Vector3& to) const override;
 
@@ -26,9 +27,15 @@ public:
     int mesh_count() const { return model_.meshCount; }
 
 private:
+    void update_world();
+
     game_window* window_;
     Model model_ {};
     bool loaded_ = false;
     Matrix world_ {};
     BoundingBox bounds_ {};
+    Vector3 position_ {};
+    float yaw_deg_ = 0.0f;
+    float scale_ = 1.0f;
+    Vector3 center_ {};
 };

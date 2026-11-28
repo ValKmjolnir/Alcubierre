@@ -9,6 +9,10 @@ public:
     virtual ~object() = default;
 
     virtual void update(float dt) {}
+    virtual void set_pose(const Vector3& position, float yaw_deg) {
+        (void)position;
+        (void)yaw_deg;
+    }
     virtual void draw(const camera_3d& cam, int window_height) const {}
     virtual Vector2 draw_flare(const camera_3d& cam, int rt_width, int rt_height, int window_height) const { return Vector2 { -1.0f, -1.0f }; }
     virtual bool is_flare_source() const { return false; }

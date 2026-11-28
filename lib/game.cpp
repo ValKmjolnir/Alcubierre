@@ -3,13 +3,14 @@
 
 #include "game.hpp"
 #include "utils/game_config.hpp"
-#include "object/star.hpp"
+#include "scenes/fleet_scene.hpp"
+#include "scenes/station_scene.hpp"
 #include "ship/ship.hpp"
-#include "ship/ship_class.hpp"
 
 namespace {
 
 constexpr float kTargetLockSeconds = 0.8f;
+constexpr float kAlignTurnDegPerSec = 30.0f;
 
 }
 
@@ -19,7 +20,6 @@ constexpr float kTargetLockSeconds = 0.8f;
 
 game::game()
     : window_(1600, 800, "Alcubierre Warp Drive")
-    , scene_(lighting_system::instance())
     , camera_(
         Vector3 { 8.0f, 10.0f, 38.0f },
         Vector3 { 0.0f, 0.0f, 0.0f },
@@ -51,87 +51,42 @@ game::~game() {
 }
 
 // ============================================================================
-// Scene setup — all objects registered via scene_
+// Scene setup
 // ============================================================================
 
 void game::setup_scene() {
-    // The capital ship still sits well beyond the near fleet, so the far plane
-    // has to clear raylib's 1000-unit default; near is raised to keep 24-bit
-    // depth usable.
     window_.set_clip_planes(0.25f, 10000.0f);
 
-    // Fleet layout, shared by the hulls and the laser attach points.
-    const Vector3 player_pos { 0.0f, 0.0f, 0.0f };
-    const Vector3 escort_pos { -46.0f, -4.5f, -40.0f };
-    const float escort_yaw = -60.0f;
-    const Vector3 titan_pos { 110.0f, 40.0f, -1500.0f };
-    const float titan_yaw = 105.0f;
-
-    // --- Ambient light ---
     ambient_.set_sky_color({ 0.40f, 0.44f, 0.52f });
     ambient_.set_ground_color({ 0.10f, 0.11f, 0.13f });
     ambient_.set_intensity(1.0f);
     lighting_system::instance().add(&ambient_);
 
-    // --- Star ---
-    auto& main_star = scene_.add<star>(
-        Vector3 { 0.0f, 50.0f, 600.0f }, 255, 190, 155, 255);
-    main_star.set_intensity(10.0f);
-    main_star.set_scale(1000.0f);
+    enter_scene(std::make_unique<fleet_scene>(lighting_system::instance()));
+}
 
-    // --- Fleet ---
-    // 1 unit = 10 m: the player craft and the escort are 15-unit corvettes,
-    // the capital ship is a 10 km titan 15 km out so both frame together.
-    const auto ship_class_of = [](const char* id) -> const ship_class_def& {
-        const ship_class_def* def = find_ship_class(id);
-        if (!def) {
-            TraceLog(LOG_FATAL, "unknown ship class %s", id);
-        }
-        return *def;
-    };
-    const auto weapon_of = [](const char* id) -> const weapon_def& {
-        const weapon_def* def = find_weapon(id);
-        if (!def) {
-            TraceLog(LOG_FATAL, "unknown weapon %s", id);
-        }
-        return *def;
-    };
+void game::enter_scene(std::unique_ptr<game_scene> next) {
+    aligning_ = false;
+    warp_after_alignment_ = false;
 
-    auto& player = scene_.add<ship>(
-        window_, ship_class_of("corvette_glb"), player_pos, 0.0f);
-    player_ship_ = &player;
-    auto& escort = scene_.add<ship>(
-        window_, ship_class_of("corvette_glb"), escort_pos, escort_yaw);
-    auto& titan = scene_.add<ship>(
-        window_, ship_class_of("titan_blockout"), titan_pos, titan_yaw);
-    hostiles_.push_back(&escort);
-    hostiles_.push_back(&titan);
+    active_scene_ = std::move(next);
+    active_scene_->build(window_);
 
-    // Player: three of the hull's sockets, the remaining four stay empty.
-    player.install_weapon(0, weapon_of("pulse_laser_s"));
-    player.install_weapon(1, weapon_of("autocannon_s"));
-    player.install_weapon(2, weapon_of("shield_restorer_s"));
+    player_ship_ = active_scene_->player();
+    hostiles_ = active_scene_->hostiles();
+    clear_target();
+    anchor_menu_.close();
 
-    // Escort: five dorsal laser sockets, two ventral point-defence sockets.
-    for (int i = 0; i < 5; i++) {
-        escort.install_weapon(i, weapon_of("pulse_laser_s"));
+    window_.get_warp_renderer().set_velocity(Vector3 { 0.0f, 0.0f, 0.0f });
+    window_.get_warp_renderer().set_warp_factor(0.0f);
+
+    if (player_ship_) {
+        camera_ = camera_3d(
+            Vector3 { 8.0f, 10.0f, 38.0f },
+            player_ship_->position(),
+            Vector3 { 0.0f, 1.0f, 0.0f },
+            45.0f);
     }
-    escort.install_weapon(5, weapon_of("point_defence_s"));
-    escort.install_weapon(6, weapon_of("point_defence_s"));
-
-    // Titan: spinal lance, two dorsal barbettes, two ventral batteries and
-    // four point-defence clusters.
-    titan.install_weapon(0, weapon_of("spinal_lance_c"));
-    titan.install_weapon(1, weapon_of("beam_lance_c"));
-    titan.install_weapon(2, weapon_of("beam_lance_c"));
-    titan.install_weapon(3, weapon_of("flak_battery_c"));
-    titan.install_weapon(4, weapon_of("flak_battery_c"));
-    for (int i = 5; i < 9; i++) {
-        titan.install_weapon(i, weapon_of("point_defence_c"));
-    }
-
-    player.aim_at(escort);
-    escort.aim_at(player);
 }
 
 // ============================================================================
@@ -192,10 +147,15 @@ void game::handle_input(float dt) {
     auto& config = game_config::singleton();
 
     if (IsKeyPressed(KEY_ESCAPE)) {
-        menu_.set_show_menu(!menu_.get_show_menu());
+        if (anchor_menu_.visible()) {
+            anchor_menu_.close();
+        } else {
+            menu_.set_show_menu(!menu_.get_show_menu());
+        }
     }
     if (IsKeyPressed(KEY_F1)) {
         config.set_enable_debug_hud(!config.get_enable_debug_hud());
+        anchor_menu_.close();
     }
     if (IsKeyPressed(KEY_B)) {
         config.set_enable_bloom(!config.get_enable_bloom());
@@ -227,7 +187,24 @@ void game::handle_input(float dt) {
             start_screen_.cancel_input();
         }
     } else {
-        const bool ui_owns_mouse = menu_.get_show_menu() || debug_window_.captures_mouse();
+        const bool ui_owns_mouse = menu_.get_show_menu()
+            || debug_window_.captures_mouse()
+            || anchor_menu_.visible();
+
+        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+            const Vector2 mouse = GetMousePosition();
+            const warp_anchor* anchor = active_scene_->anchor();
+            if (anchor_menu_.visible()) {
+                anchor_menu_.close();
+            } else if (!menu_.get_show_menu()
+                       && !debug_window_.captures_mouse()
+                       && anchor
+                       && anchor->hit_test(camera_, window_.width(),
+                                           window_.height(), mouse)) {
+                anchor_menu_.open(mouse, window_.width(), window_.height());
+            }
+        }
+
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             press_position_ = GetMousePosition();
             const int mouse_x = int(press_position_.x);
@@ -235,7 +212,8 @@ void game::handle_input(float dt) {
             const bool over_grid = grid_button_.contains(status_.bounds(), mouse_x, mouse_y);
             grid_press_armed_ = over_grid
                 && !menu_.get_show_menu()
-                && !debug_window_.captures_mouse();
+                && !debug_window_.captures_mouse()
+                && !anchor_menu_.visible();
             pick_armed_ = !ui_owns_mouse
                 && !over_grid
                 && !status_.contains(mouse_x, mouse_y)
@@ -255,6 +233,19 @@ void game::handle_input(float dt) {
             grid_press_armed_ = false;
             pick_armed_ = false;
         }
+
+        switch (anchor_menu_.update()) {
+        case anchor_action::align_to:
+            start_alignment(false);
+            break;
+        case anchor_action::warp_to:
+            start_alignment(true);
+            break;
+        case anchor_action::none:
+            break;
+        }
+
+        update_alignment(dt);
     }
 
     if (started_) {
@@ -300,7 +291,9 @@ void game::update(float dt) {
     frame_graph.set_enable("fxaa", config.get_enable_fxaa());
 
     // The menu and the debug window own the mouse while the pointer is over them.
-    const bool ui_owns_mouse = menu_.get_show_menu() || debug_window_.captures_mouse();
+    const bool ui_owns_mouse = menu_.get_show_menu()
+        || debug_window_.captures_mouse()
+        || anchor_menu_.visible();
 
     if (!started_) {
         if (player_ship_) {
@@ -336,7 +329,7 @@ void game::update(float dt) {
 
     camera_.update(dt, !ui_owns_mouse);
     lighting_system::instance().set_view_position(camera_.position());
-    scene_.update_all(dt);
+    active_scene_->update(dt);
 
     Vector3 camForward = Vector3Normalize(
         Vector3Subtract(camera_.target(), camera_.position()));
@@ -361,6 +354,45 @@ void game::update_target_lock(float dt) {
     if (lock_elapsed_ >= kTargetLockSeconds) {
         lock_elapsed_ = kTargetLockSeconds;
         target_locked_ = true;
+    }
+}
+
+void game::start_alignment(bool warp_after) {
+    const warp_anchor* anchor = active_scene_->anchor();
+    if (!anchor || !player_ship_) {
+        return;
+    }
+
+    const Vector3 direction = Vector3Subtract(
+        anchor->position(), player_ship_->position());
+    if (fabsf(direction.x) < 1e-4f && fabsf(direction.z) < 1e-4f) {
+        return;
+    }
+
+    align_target_yaw_ = atan2f(-direction.x, -direction.z) * RAD2DEG;
+    aligning_ = true;
+    warp_after_alignment_ = warp_after;
+    TraceLog(LOG_INFO, "anchor: aligning to %.1f deg", align_target_yaw_);
+}
+
+void game::update_alignment(float dt) {
+    if (!aligning_ || !player_ship_) {
+        return;
+    }
+
+    if (!player_ship_->align_yaw_to(
+            align_target_yaw_, kAlignTurnDegPerSec, dt)) {
+        return;
+    }
+
+    aligning_ = false;
+    const bool warp_after = warp_after_alignment_;
+    warp_after_alignment_ = false;
+    TraceLog(LOG_INFO, "anchor: alignment complete");
+
+    if (warp_after) {
+        TraceLog(LOG_INFO, "anchor: warp after alignment");
+        enter_scene(std::make_unique<station_scene>(lighting_system::instance()));
     }
 }
 
@@ -459,7 +491,7 @@ void game::render() {
     window_.begin_mode_3d(camera_.get_camera());
 
     sky_.draw(camera_.get_camera(), window_.get_warp_renderer().get_velocity());
-    scene_.draw_all(camera_, window_.height());
+    active_scene_->draw(camera_, window_.height());
 
     if (game_config::singleton().get_enable_grid_draw() && player_ship_) {
         grid_.draw(player_ship_->position());
@@ -470,7 +502,7 @@ void game::render() {
 
     auto& bloom_pass = window_.get_bloom_renderer();
     bloom_pass.begin_flare_pass();
-    Vector2 flare_origin = scene_.draw_flares(
+    Vector2 flare_origin = active_scene_->draw_flares(
         camera_, bloom_pass.flare_width(), bloom_pass.flare_height(), window_.height());
     bloom_pass.end_flare_pass();
     bloom_pass.set_streak_origin(flare_origin);
@@ -485,6 +517,11 @@ void game::render() {
     window_.apply();
 
     brackets_.draw(camera_, window_.width(), window_.height(), hostiles_, target_ship_);
+
+    if (const warp_anchor* anchor = active_scene_->anchor(); anchor && player_ship_) {
+        anchor->draw(camera_, window_.width(), window_.height(),
+                     player_ship_->position());
+    }
 
     status_.draw();
     grid_button_.draw(status_.bounds());
@@ -514,6 +551,7 @@ void game::render() {
         debug_window_.draw();
     }
 
+    anchor_menu_.draw();
     cursor_.draw();
 }
 
