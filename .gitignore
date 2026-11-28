@@ -5,3 +5,8 @@
 build/
 build_cmake/
 build_cmake_unix/
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.webp
