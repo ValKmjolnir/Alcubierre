@@ -41,12 +41,15 @@ game::game()
     SetWindowIcon(icon);
     UnloadImage(icon);
 
+    tunnel_.load();
+
     setup_scene();
     setup_ui();
     setup_post_processing();
 }
 
 game::~game() {
+    tunnel_.unload();
     lighting_system::instance().remove(&ambient_);
 }
 
@@ -533,6 +536,14 @@ void game::render() {
     active_scene_->draw(camera_, window_.height());
     if (kShowExitCorridor && pending_scene_) {
         pending_scene_->draw(camera_, window_.height());
+    }
+
+    if (player_ship_) {
+        const Vector3 forward = Vector3Transform(
+            Vector3 { 0.0f, 0.0f, -1.0f },
+            MatrixRotateY(player_ship_->yaw_deg() * DEG2RAD));
+        tunnel_.draw(player_ship_->position(), forward,
+                     warp_.tunnel_amount(), warp_.tunnel_time());
     }
 
     if (!warp_active

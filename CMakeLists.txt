@@ -77,6 +77,7 @@ set(SOURCES
     lib/light_base.cpp
     lib/lighting_system.cpp
     lib/rendering/skybox.cpp
+    lib/rendering/warp_tunnel.cpp
     lib/main.cpp
 )
 

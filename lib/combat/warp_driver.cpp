@@ -225,3 +225,14 @@ void warp_driver::begin_arrival(ship& player, warp_renderer& warp) {
         ship_forward(player),
         kWarpPeakBeta * kWarpArrivalResidual));
 }
+
+float warp_driver::tunnel_amount() const {
+    if (stage_ != stage::spooling) {
+        return 0.0f;
+    }
+
+    const float p = Clamp(stage_time_ / kWarpSpoolSeconds, 0.0f, 1.0f);
+    const float ramp_in = smooth01(p / 0.15f);
+    const float ramp_out = 1.0f - smooth01((p - 0.55f) / 0.40f);
+    return ramp_in * ramp_out;
+}

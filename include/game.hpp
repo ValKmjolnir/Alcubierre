@@ -9,6 +9,7 @@
 #include "combat/target_lock.hpp"
 #include "combat/warp_driver.hpp"
 #include "rendering/skybox.hpp"
+#include "rendering/warp_tunnel.hpp"
 #include "rendering/grid.hpp"
 #include "ui/anchor_menu.hpp"
 #include "ui/menu.hpp"
@@ -41,6 +42,7 @@ private:
     Vector3 pending_corridor_offset_ {};
     camera_3d camera_;
     skybox sky_;
+    warp_tunnel tunnel_;
     grid grid_;
     menu menu_;
     debug_window debug_window_;

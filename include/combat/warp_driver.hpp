@@ -25,6 +25,8 @@ public:
 
     bool active() const { return stage_ != stage::idle; }
     bool to_fleet() const { return to_fleet_; }
+    float tunnel_amount() const;
+    float tunnel_time() const { return stage_time_; }
 
 private:
     enum class stage {
