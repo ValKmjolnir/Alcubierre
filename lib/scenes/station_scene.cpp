@@ -15,13 +15,13 @@
 station_scene::station_scene(lighting_system& lights)
     : game_scene(lights)
     , fleet_anchor_(
-        Vector3Scale(kWarpDirection, -10.0f * kWarpUnitsPerAu), "FLEET") {}
+        Vector3Scale(kWarpDirection, -kWarpRouteDistance), "FLEET") {}
 
 void station_scene::build(mesh_renderer& renderer) {
     const scene_rebase star_rebase = scene_rebase::between(
         Vector3Scale(
             kWarpDirection,
-            kWarpTravelDistance - kWarpArrivalDistance),
+            kWarpCorridorDistance - kWarpArrivalDistance),
         Vector3 { 0.0f, 0.0f, 0.0f });
     const Vector3 star_position = star_rebase.apply(kFleetStarPosition);
 

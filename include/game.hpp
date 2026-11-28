@@ -38,7 +38,7 @@ private:
     game_window window_;
     std::unique_ptr<game_scene> active_scene_;
     std::unique_ptr<game_scene> pending_scene_;
-    Vector3 pending_offset_ {};
+    Vector3 pending_corridor_offset_ {};
     camera_3d camera_;
     skybox sky_;
     grid grid_;

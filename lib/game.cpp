@@ -8,6 +8,12 @@
 #include "scenes/station_scene.hpp"
 #include "ship/ship.hpp"
 
+namespace {
+
+constexpr bool kShowExitCorridor = true;
+
+}
+
 // ============================================================================
 // Constructor
 // ============================================================================
@@ -87,7 +93,7 @@ void game::adopt_scene(std::unique_ptr<game_scene> next) {
     }
 }
 
-void game::prepare_pending_scene(bool to_fleet, const Vector3& destination) {
+void game::prepare_pending_scene(bool to_fleet, const Vector3& corridor_end) {
     std::unique_ptr<game_scene> next = to_fleet
         ? std::unique_ptr<game_scene>(
             std::make_unique<fleet_scene>(lighting_system::instance()))
@@ -98,9 +104,14 @@ void game::prepare_pending_scene(bool to_fleet, const Vector3& destination) {
     const Vector3 player_position = next->player()
         ? next->player()->position()
         : Vector3 { 0.0f, 0.0f, 0.0f };
-    pending_offset_ = Vector3Subtract(destination, player_position);
 
-    next->translate(pending_offset_);
+    if (kShowExitCorridor) {
+        pending_corridor_offset_ = Vector3Subtract(corridor_end, player_position);
+        next->translate(pending_corridor_offset_);
+    } else {
+        pending_corridor_offset_ = {};
+    }
+
     next->set_preview_mode(true);
     next->set_lights_active(false);
     pending_scene_ = std::move(next);
@@ -267,7 +278,7 @@ void game::handle_input(float dt) {
                 if (warp_.start_alignment(
                         *player_ship_, anchor->position(), false, false)) {
                     pending_scene_.reset();
-                    pending_offset_ = {};
+                    pending_corridor_offset_ = {};
                 }
             }
             break;
@@ -279,7 +290,7 @@ void game::handle_input(float dt) {
                         *player_ship_, anchor->position(), true, to_fleet)) {
                     prepare_pending_scene(
                         to_fleet,
-                        warp_driver::destination_position(
+                        warp_driver::corridor_end_position(
                             player_ship_->position(), anchor->position()));
                 }
             }
@@ -408,10 +419,12 @@ void game::handle_warp_jump() {
     const float arrival_yaw = player_ship_->yaw_deg();
 
     pending_scene_->set_preview_mode(false);
-    pending_scene_->translate(Vector3Negate(pending_offset_));
+    if (kShowExitCorridor) {
+        pending_scene_->translate(Vector3Negate(pending_corridor_offset_));
+    }
     adopt_scene(std::move(pending_scene_));
     active_scene_->set_lights_active(true);
-    pending_offset_ = {};
+    pending_corridor_offset_ = {};
 
     if (player_ship_) {
         if (to_fleet) {
@@ -518,7 +531,7 @@ void game::render() {
 
     sky_.draw(camera_.get_camera(), window_.get_warp_renderer().get_velocity());
     active_scene_->draw(camera_, window_.height());
-    if (pending_scene_) {
+    if (kShowExitCorridor && pending_scene_) {
         pending_scene_->draw(camera_, window_.height());
     }
 

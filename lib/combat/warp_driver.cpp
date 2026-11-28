@@ -92,7 +92,7 @@ void warp_driver::reset() {
     to_fleet_ = false;
 }
 
-Vector3 warp_driver::destination_position(const Vector3& player, const Vector3& anchor) {
+Vector3 warp_driver::corridor_end_position(const Vector3& player, const Vector3& anchor) {
     const Vector3 to_anchor = Vector3Subtract(anchor, player);
     const float distance = Vector3Length(to_anchor);
     if (distance < 0.001f) {
@@ -103,7 +103,7 @@ Vector3 warp_driver::destination_position(const Vector3& player, const Vector3& 
         player,
         Vector3Scale(
             to_anchor,
-            (kWarpTravelDistance - kWarpArrivalDistance) / distance));
+            (kWarpCorridorDistance - kWarpArrivalDistance) / distance));
 }
 
 bool warp_driver::start_alignment(const ship& player, const Vector3& anchor,
@@ -136,7 +136,7 @@ bool warp_driver::begin_warp(ship& player, warp_renderer& warp) {
     warp.set_warp_factor(0.0f);
 
     start_position_ = player.position();
-    end_position_ = destination_position(start_position_, anchor_);
+    end_position_ = corridor_end_position(start_position_, anchor_);
 
     stage_ = stage::spooling;
     stage_time_ = 0.0f;

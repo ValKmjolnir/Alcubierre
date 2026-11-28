@@ -16,7 +16,7 @@ public:
 
     void reset();
 
-    static Vector3 destination_position(const Vector3& player, const Vector3& anchor);
+    static Vector3 corridor_end_position(const Vector3& player, const Vector3& anchor);
 
     bool start_alignment(const ship& player, const Vector3& anchor,
                          bool warp_after, bool to_fleet);

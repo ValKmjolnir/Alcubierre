@@ -10,7 +10,7 @@
 
 fleet_scene::fleet_scene(lighting_system& lights)
     : game_scene(lights)
-    , anchor_(Vector3Scale(kWarpDirection, 10.0f * kWarpUnitsPerAu), "STATION") {}
+    , anchor_(Vector3Scale(kWarpDirection, kWarpRouteDistance), "STATION") {}
 
 void fleet_scene::build(mesh_renderer& renderer) {
     const Vector3 player_pos { 0.0f, 0.0f, 0.0f };
